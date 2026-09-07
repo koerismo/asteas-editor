@@ -9,9 +9,10 @@
 A simple and polished Hotspot texture editor, licensed under GPLv3+
 
 Supports:
-- Importing and exporting png, jpeg, webp, and vtf
-- Importing and exporting Strata text format files
-- Embedding and extracting Strata resources
+- Importing and exporting vtf, png, jpeg, and webp
+- Importing and exporting Strata text files
+- Embedding and extracting Strata embedded resources
+- Previewing texture application
 
 ## Documentation
 
