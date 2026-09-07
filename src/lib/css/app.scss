@@ -1,0 +1,68 @@
+@use 'palette.scss';
+
+:root {
+	--sans: system-ui, 'Segoe UI', Roboto, sans-serif;
+	--heading: system-ui, 'Segoe UI', Roboto, sans-serif;
+	--mono: ui-monospace, Consolas, monospace;
+
+	background-color: var(--bg);
+	color: var(--text);
+	
+	font-family: var(--sans);
+	font-size: 11pt;
+}
+
+body, html {
+	margin: 0;
+	padding: 0;
+	overflow: hidden;
+}
+
+* {
+	box-sizing: border-box;
+}
+
+h1,
+h2 {
+	font-family: var(--heading);
+	font-weight: 500;
+	color: var(--text-h);
+}
+
+h1 {
+	font-size: 56px;
+	letter-spacing: -1.68px;
+	margin: 32px 0;
+
+	@media (max-width: 1024px) {
+		font-size: 36px;
+		margin: 20px 0;
+	}
+}
+
+h2 {
+	font-size: 24px;
+	line-height: 118%;
+	letter-spacing: -0.24px;
+	margin: 0 0 8px;
+
+	@media (max-width: 1024px) {
+		font-size: 20px;
+	}
+}
+
+p {
+	margin: 0;
+}
+
+code {
+	color: var(--text);
+	font-family: var(--mono);
+	font-size: 0.75em;
+}
+
+#app {
+	min-height: 100svh;
+	display: flex;
+	flex-direction: column;
+}

@@ -1,0 +1,145 @@
+<script lang="ts">
+	import PickerFlags from './pickers/PickerFlags.svelte';
+	import { HotSpotRectFlags } from 'vtf-js/resources';
+	import { RectEntry } from '$lib/core/file.svelte.js';
+	import Checkbox from './buttons/Checkbox.svelte';
+
+	import RotateClockwise from "carbon-icons-svelte/lib/RotateClockwise.svelte";
+	// import ReflectHorizontal from "carbon-icons-svelte/lib/ReflectHorizontal.svelte";
+	import PanHorizontal from "carbon-icons-svelte/lib/PanHorizontal.svelte";
+
+	let {
+		index,
+		rect = $bindable(),
+		setFlags,
+		isIdSelected,
+		selectId,
+	}: {
+		index: number;
+		rect: RectEntry;
+		setFlags(flags: number, mask: number): void;
+		isIdSelected(index: number): boolean;
+		selectId(index: number): void;
+	} = $props();
+
+	function onClick(event: MouseEvent) {
+		selectId(index);
+	}
+
+	function onAltCheckbox(event: MouseEvent) {
+		event.stopPropagation();
+		setFlags(rect.flags ^ HotSpotRectFlags.AltGroup, HotSpotRectFlags.AltGroup);
+	}
+
+	function onFlagsSet(value: number) {
+		setFlags(value, value ^ rect.flags);
+	}
+
+</script>
+
+<button
+	aria-label="Region {index}"
+	class="rect"
+	class:active={isIdSelected(index)}
+	onclick={onClick}
+>
+	<div class="rect-info">
+		<code>#{index}</code>
+		<code>{rect.min_x},{rect.min_y} - {rect.width}x{rect.height}</code>
+	</div>
+	<!-- <div class="rect-body">
+
+	</div> -->
+	<div class="rect-props">
+		<!-- <span>transform</span>
+		<span>tile</span>
+		<span>alt</span> -->
+		<PickerFlags
+			oninput={onFlagsSet}
+			options={[
+				[RotateClockwise, HotSpotRectFlags.AllowRotation, 'Allow rotation'],
+				[PanHorizontal, HotSpotRectFlags.AllowReflection, 'Allow reflection'],
+			]}
+			value={rect.flags}
+		></PickerFlags>
+		<PickerFlags
+			oninput={onFlagsSet}
+			options={[
+				['x', HotSpotRectFlags.TileX, 'Tile horizontal'],
+				['y', HotSpotRectFlags.TileY, 'Tile vertical'],
+			]}
+			value={rect.flags}
+		></PickerFlags>
+		<Checkbox
+			checked={!!(rect.flags & HotSpotRectFlags.AltGroup)}
+			onclick={onAltCheckbox}
+		></Checkbox>
+		<span>transform</span>
+		<span>tile</span>
+		<span>alt</span>
+	</div>
+</button>
+
+<style>
+	button.rect {
+		display: flex;
+		flex-direction: column;
+		gap: 0.3em;
+
+		min-width: 12em;
+
+		padding: 0.4em 0.6em;
+		user-select: none;
+
+		background-color: var(--bg-3);
+		border: 1px solid var(--bg);
+		border-radius: var(--radius-lg);
+
+		/* cursor: pointer; */
+
+		&.active {
+			background-color: var(--bg-4);
+
+			border-color: var(--text-3);
+			outline: 1px solid var(--bg-2);
+			outline-offset: -2px;
+
+			/* outline: 1px solid var(--accent); */
+		}
+	}
+
+	button.rect.active div.rect-info {
+		code {
+			color: var(--text);
+		}
+	}
+
+	div.rect-info {
+		display: flex;
+		justify-content: space-between;
+
+		code {
+			color: var(--text-3);
+			font-family: var(--mono);
+			font-size: 0.75em;
+		}
+
+		code:first-child {
+			color: var(--text-2);
+		}
+	}
+
+	div.rect-props {
+		display: grid;
+		grid-template-columns: 1fr 1fr auto;
+		grid-auto-rows: auto;
+		width: 200px;
+		gap: 0.2em 0.5em;
+		font-size: 0.85em;
+
+		span {
+			color: var(--text-3);
+			place-self: start;
+		}
+	}
+</style>

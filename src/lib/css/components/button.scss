@@ -1,0 +1,68 @@
+@mixin btn-fill {
+	appearance: none;
+	border: none;
+
+	background-color: var(--bg);
+	color: var(--text-3);
+
+	padding: 0.2em 0.6em;
+	font-size: 1em;
+
+	&:hover, &:focus-visible {
+		background: var(--bg-2);
+		color: var(--text);
+	}
+
+	&:focus-visible {
+		outline: solid 1px var(--accent-500);
+		outline-offset: -1px;
+	}
+}
+
+@mixin btn-fill-arbitrary($color, $color-hover) {
+	background-color: #{$color};
+	color: var(--text-h);
+
+	@if $color-hover {
+		&:hover, &:focus-visible {
+			background-color: #{$color-hover};
+		}
+
+		&:focus-visible {
+			outline: solid 1px var(--accent-300);
+			outline-offset: -1px;
+		}
+	}
+}
+
+@mixin btn-fill-accent($hoverable: true) {
+	@include btn-fill-arbitrary(var(--accent), var(--accent-400));
+}
+
+@mixin btn-fill-danger($hoverable: true) {
+	@include btn-fill-arbitrary(var(--danger-500), var(--danger-500));
+}
+
+@mixin btn-radius() {
+	background: var(--bg);
+	overflow: hidden;
+	border: 1px solid var(--bg);
+	border-radius: var(--radius-md);
+}
+
+@mixin btn-group-accent($active-hoverable) {
+	@include btn-radius;
+
+	display: flex;
+	gap: 1px;
+
+	& > button {
+		@include btn-fill;
+
+		flex-grow: 1;
+
+		&[aria-checked='true'] {
+			@include btn-fill-accent($active-hoverable);
+		}
+	}
+}
