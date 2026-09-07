@@ -32,6 +32,13 @@ export class UndoRedo {
 		this.position += 1;
 		this.history.length = this.position - 1;
 		this.history.push({ ...entry, timestamp: Date.now() });
+		
+		// TODO: TEST THIS CODE
+		if (this.history.length > 200) {
+			this.history.shift();
+			this.position -= 1;
+		}
+
 		console.log('ACTION:', entry.type);
 	}
 

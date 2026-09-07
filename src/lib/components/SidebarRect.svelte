@@ -71,6 +71,7 @@
 			value={rect.flags}
 		></PickerFlags>
 		<Checkbox
+			class="check-alt"
 			checked={!!(rect.flags & HotSpotRectFlags.AltGroup)}
 			onclick={onAltCheckbox}
 		></Checkbox>
@@ -140,6 +141,10 @@
 		span {
 			color: var(--text-3);
 			place-self: start;
+		}
+
+		:global(input.check-alt) {
+			height: 100%;
 		}
 	}
 </style>
