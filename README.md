@@ -1,8 +1,8 @@
 # Asteas Web Editor
 
-![https://pride-badges.pony.workers.dev/static/v1?label=enbyware&labelColor=%23555&stripeWidth=8&stripeColors=FCF434%2CFFFFFF%2C9C59D1%2C2C2C2C](enbyware)
-
-![https://pride-badges.pony.workers.dev/static/v1?label=a+girl+made+this%21&labelColor=%23555&stripeWidth=7&stripeColors=74DEFF%2CFFE1ED%2CFFB5D6%2CFF8CBF%2CFFB5D6%2CFFE1ED%2C74DEFF](a girl made this!)
+![build status](https://github.com/koerismo/asteas-editor/actions/workflows/pages/badge.svg)
+![enbyware](https://pride-badges.pony.workers.dev/static/v1?label=enbyware&labelColor=%23555&stripeWidth=8&stripeColors=FCF434%2CFFFFFF%2C9C59D1%2C2C2C2C)
+![a girl made this!](https://pride-badges.pony.workers.dev/static/v1?label=a+girl+made+this%21&labelColor=%23555&stripeWidth=7&stripeColors=74DEFF%2CFFE1ED%2CFFB5D6%2CFF8CBF%2CFFB5D6%2CFFE1ED%2C74DEFF)
 
 ## About
 
