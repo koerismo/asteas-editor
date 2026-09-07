@@ -5,6 +5,7 @@ import { defineConfig } from 'vite'
 // https://vite.dev/config/
 export default defineConfig({
   plugins: [svelte()],
+  base: '/asteas-editor/',
   resolve: {
 	alias: {
 		'$lib': resolve('./src/lib')
