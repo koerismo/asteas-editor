@@ -13,7 +13,7 @@
 		@include btn.btn-fill;
 		@include btn.btn-radius;
 
-		&:active {
+		&:active:not(:disabled) {
 			@include btn.btn-fill-accent(false);
 		}
 

@@ -9,8 +9,13 @@
 	font-size: 1em;
 
 	&:hover, &:focus-visible {
-		background: var(--bg-2);
+		background-color: var(--bg-2);
 		color: var(--text);
+	}
+
+	&:disabled {
+		background-color: var(--bg-2);
+		color: var(--text-4);
 	}
 
 	&:focus-visible {
@@ -48,6 +53,10 @@
 	overflow: hidden;
 	border: 1px solid var(--bg);
 	border-radius: var(--radius-md);
+
+	&:disabled {
+		border-color: var(--bg);
+	}
 }
 
 @mixin btn-group-accent($active-hoverable) {

@@ -4,9 +4,8 @@
 	import { RectEntry } from '$lib/core/file.svelte.js';
 	import Checkbox from './buttons/Checkbox.svelte';
 
-	import RotateClockwise from "carbon-icons-svelte/lib/RotateClockwise.svelte";
-	// import ReflectHorizontal from "carbon-icons-svelte/lib/ReflectHorizontal.svelte";
-	import PanHorizontal from "carbon-icons-svelte/lib/PanHorizontal.svelte";
+	import IconRotate from "@lucide/svelte/icons/rotate-cw";
+	import IconFlip from "@lucide/svelte/icons/flip-horizontal-2";
 
 	let {
 		index,
@@ -57,8 +56,8 @@
 		<PickerFlags
 			oninput={onFlagsSet}
 			options={[
-				[RotateClockwise, HotSpotRectFlags.AllowRotation, 'Allow rotation'],
-				[PanHorizontal, HotSpotRectFlags.AllowReflection, 'Allow reflection'],
+				[IconRotate, HotSpotRectFlags.AllowRotation, 'Allow rotation'],
+				[IconFlip, HotSpotRectFlags.AllowReflection, 'Allow reflection'],
 			]}
 			value={rect.flags}
 		></PickerFlags>
@@ -86,8 +85,6 @@
 		display: flex;
 		flex-direction: column;
 		gap: 0.3em;
-
-		min-width: 12em;
 
 		padding: 0.4em 0.6em;
 		user-select: none;
@@ -134,7 +131,7 @@
 		display: grid;
 		grid-template-columns: 1fr 1fr auto;
 		grid-auto-rows: auto;
-		width: 200px;
+		width: 100%;
 		gap: 0.2em 0.5em;
 		font-size: 0.85em;
 

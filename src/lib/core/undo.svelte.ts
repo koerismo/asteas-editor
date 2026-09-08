@@ -9,6 +9,9 @@ export class UndoRedo {
 	history: UndoRedoAction[] = [];
 	position: number = 0;
 
+	sCanUndo = $state(false);
+	sCanRedo = $state(false);
+
 	mount() {
 		const cb = this._onKeyDown.bind(this);
 		document.addEventListener('keydown', cb);
@@ -39,20 +42,36 @@ export class UndoRedo {
 			this.position -= 1;
 		}
 
-		console.log('ACTION:', entry.type);
+		this.updateSubscribers();
+		// console.log('ACTION:', entry.type);
+	}
+
+	canRedo() {
+		return this.position < this.history.length;
+	}
+
+	canUndo() {
+		return this.position > 0;
+	}
+
+	updateSubscribers() {
+		this.sCanUndo = this.canUndo();
+		this.sCanRedo = this.canRedo();
 	}
 
 	redo() {
 		if (this.position >= this.history.length) return;
 		this.history[this.position].redo();
-		console.log('REDO:', this.history[this.position].type);
+		// console.log('REDO:', this.history[this.position].type);
 		this.position += 1;
+		this.updateSubscribers();
 	}
 
 	undo() {
 		if (this.position <= 0) return;
 		this.position -= 1;
 		this.history[this.position].undo();
-		console.log('UNDO:', this.history[this.position].type);
+		// console.log('UNDO:', this.history[this.position].type);
+		this.updateSubscribers();
 	}
 }

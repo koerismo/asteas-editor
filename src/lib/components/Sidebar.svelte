@@ -6,10 +6,12 @@
 	import SidebarList from './SidebarList.svelte';
 	import Button from './buttons/Button.svelte';
 
-	import Undo from 'carbon-icons-svelte/lib/Undo.svelte';
-	import Redo from 'carbon-icons-svelte/lib/Redo.svelte';
-	import TrashCan from 'carbon-icons-svelte/lib/TrashCan.svelte';
+	import IconUndo from '@lucide/svelte/icons/undo';
+	import IconRedo from '@lucide/svelte/icons/redo';
+	import TrashCan from '@lucide/svelte/icons/trash';
+	import SelectIcon from '@lucide/svelte/icons/square-split-vertical';
 
+	let rectList = $state<SidebarList>();
 	let file = $state<RectFile>(
 		RectFile.fromRects([
 			new HotspotRect(0x10, 10, 10, 20, 20),
@@ -25,13 +27,14 @@
 <aside>
 	<section class="s-header">
 		<div>
-			<Button onclick={() => file.history.undo()} ><Undo></Undo></Button>
-			<Button onclick={() => file.history.redo()} ><Redo></Redo></Button>
-			<Button><TrashCan></TrashCan></Button>
+			<Button disabled={!file.history.sCanUndo} onclick={() => file.history.undo()} ><IconUndo></IconUndo></Button>
+			<Button disabled={!file.history.sCanRedo} onclick={() => file.history.redo()} ><IconRedo></IconRedo></Button>
+			<Button disabled={!(rectList?.getSelectionSize())} onclick={() => rectList?.removeSelected()}><TrashCan></TrashCan></Button>
+			<Button><SelectIcon></SelectIcon></Button>
 		</div>
 	</section>
 	<section>
-		<SidebarList file={file}></SidebarList>
+		<SidebarList bind:this={rectList} file={file}></SidebarList>
 	</section>
 </aside>
 
@@ -48,6 +51,8 @@
 		scrollbar-width: thin;
 		scrollbar-color: var(--bg-3) var(--bg-2);
 		height: 100vh;
+
+		min-width: 16em;
 	}
 
 	section {

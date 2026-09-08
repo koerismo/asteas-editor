@@ -5,7 +5,7 @@
 	// import Counter from './lib/TopBar.svelte'
 
 	import Canvas from '$lib/components/Canvas.svelte';
-	import TopBar from '$lib/TopBar.svelte';
+	import Header from '$lib/components/Header.svelte';
 	import Sidebar from '$lib/components/Sidebar.svelte';
 </script>
 
@@ -15,7 +15,7 @@
 
 <!-- main body -->
 <main>
-	<TopBar></TopBar>
+	<Header></Header>
 	<div>
 		<Canvas></Canvas>
 	</div>

@@ -32,5 +32,6 @@
 	
 	div {
 		@include btn.btn-group-accent(false);
+		font-size: 0.8em;
 	}
 </style>

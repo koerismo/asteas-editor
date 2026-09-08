@@ -1,10 +1,12 @@
 <script lang="ts">
 	import { SvelteSet } from 'svelte/reactivity';
 	import { RectFile } from '$lib/core/file.svelte.js';
-	import SidebarRect from './SidebarRect.svelte';
-	import { onMount } from 'svelte';
-	import SidebarRectGhost from './SidebarRectGhost.svelte';
 	import { HotspotRect } from 'vtf-js/resources';
+
+	import SidebarRect from './SidebarRect.svelte';
+	import SidebarRectGhost from './SidebarRectGhost.svelte';
+	
+	import { onMount } from 'svelte';
 	import { scale } from 'svelte/transition';
 	import { cubicOut } from 'svelte/easing';
 
@@ -22,7 +24,7 @@
 		shiftKey = event.shiftKey;
 
 		if (event.key === 'Delete' || event.key === 'Backspace') {
-			deleteSelected();
+			removeSelected();
 			return;
 		}
 		
@@ -36,7 +38,11 @@
 		shiftKey = event.shiftKey;
 	}
 
-	function deleteSelected() {
+	export function getSelectionSize(): number {
+		return activeRects.size;
+	}
+
+	export function removeSelected() {
 		if (!activeRects.size) return;
 		file.removeRects(Array.from(activeRects.values()));
 		activeRects.clear();

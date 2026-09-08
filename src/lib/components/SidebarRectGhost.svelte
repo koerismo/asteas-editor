@@ -22,8 +22,6 @@
 		display: flex;
 		flex-direction: column;
 
-		min-width: 12em;
-
 		padding: 0.8em 0.6em;
 		user-select: none;
 
