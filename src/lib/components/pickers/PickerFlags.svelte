@@ -16,6 +16,10 @@
 	}
 </script>
 
+{#snippet renderIcon(Icon: Component)}
+	<Icon size="12px"></Icon>
+{/snippet}
+
 <div>
 	{#each options as [optContent, v, desc], i (i)}
 		<button
@@ -26,8 +30,7 @@
 			{#if typeof optContent === 'string'}
 				{optContent}
 			{:else}
-				<!-- svelte-ignore svelte_component_deprecated -->
-				<svelte:component this={optContent}></svelte:component>
+				{@render renderIcon(optContent)}
 			{/if}
 		</button>
 	{/each}
@@ -40,9 +43,14 @@
 		@include btn.btn-group-accent(true);
 	}
 
+	button {
+		display: flex;
+		justify-content: center;
+		place-items: center;
+	}
+
 	button > :global(svg) {
-		width: 1.6ch;
-		vertical-align: middle;
+		height: 0.95em;
 	}
 
 </style>

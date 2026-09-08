@@ -42,6 +42,16 @@
 		return activeRects.size;
 	}
 
+	export function toggleAllSelected() {
+		if (activeRects.size) {
+			activeRects.clear();
+			return;
+		}
+	
+		for (let i=0; i<file.rects.length; i++)
+			activeRects.add(i);
+	}
+
 	export function removeSelected() {
 		if (!activeRects.size) return;
 		file.removeRects(Array.from(activeRects.values()));

@@ -50,9 +50,6 @@
 
 	</div> -->
 	<div class="rect-props">
-		<!-- <span>transform</span>
-		<span>tile</span>
-		<span>alt</span> -->
 		<PickerFlags
 			oninput={onFlagsSet}
 			options={[

@@ -9,7 +9,7 @@
 	import IconUndo from '@lucide/svelte/icons/undo';
 	import IconRedo from '@lucide/svelte/icons/redo';
 	import TrashCan from '@lucide/svelte/icons/trash';
-	import SelectIcon from '@lucide/svelte/icons/square-split-vertical';
+	import IconSelect from '@lucide/svelte/icons/square-dashed-text';
 
 	let rectList = $state<SidebarList>();
 	let file = $state<RectFile>(
@@ -27,10 +27,10 @@
 <aside>
 	<section class="s-header">
 		<div>
-			<Button disabled={!file.history.sCanUndo} onclick={() => file.history.undo()} ><IconUndo></IconUndo></Button>
-			<Button disabled={!file.history.sCanRedo} onclick={() => file.history.redo()} ><IconRedo></IconRedo></Button>
+			<Button disabled={!file?.history.sCanUndo} onclick={() => file.history.undo()} ><IconUndo></IconUndo></Button>
+			<Button disabled={!file?.history.sCanRedo} onclick={() => file.history.redo()} ><IconRedo></IconRedo></Button>
 			<Button disabled={!(rectList?.getSelectionSize())} onclick={() => rectList?.removeSelected()}><TrashCan></TrashCan></Button>
-			<Button><SelectIcon></SelectIcon></Button>
+			<Button disabled={!rectList} onclick={() => rectList!.toggleAllSelected()}><IconSelect></IconSelect></Button>
 		</div>
 	</section>
 	<section>
@@ -64,6 +64,12 @@
 	}
 
 	section.s-header {
+		
+		> div {
+			display: flex;
+			gap: 0.2em;
+		}
+
 		background-color: var(--bg-2);
 		padding-top: 0.4em;
 		position: sticky;

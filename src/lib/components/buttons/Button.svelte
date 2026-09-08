@@ -16,10 +16,13 @@
 		&:active:not(:disabled) {
 			@include btn.btn-fill-accent(false);
 		}
+		
+		display: flex;
+		justify-content: center;
+		place-items: center;
 
 		> :global(svg) {
-			width: 1.6ch;
-			vertical-align: middle;
+			height: 0.9em;
 		}
 	}
 </style>
