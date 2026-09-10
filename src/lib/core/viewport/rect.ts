@@ -1,5 +1,4 @@
 import * as Three from 'three';
-import { SCALE } from './constants.js';
 
 const handleUrl = './viewport/handle.png';
 const handleGeometry = new Three.PlaneGeometry(1, 1);
@@ -30,6 +29,7 @@ const centerActiveMaterial = new Three.MeshBasicMaterial({
 	transparent: true,
 });
 
+const HANDLE_SIZE = 32;
 const V_XNEG = new Three.Vector3(-1, 1, 1);
 const V_YNEG = new Three.Vector3(1, -1, 1);
 
@@ -41,14 +41,13 @@ export const RectMode = {
 } as const;
 
 export class SelectionRect extends Three.Object3D {
-	protected bounds!: Three.Box2;
-	protected pixelSize: number = 0.1;
+	bounds!: Three.Box2;
+	mode!: RectMode;
 
+	protected pixelSize: number = 0.0;
 	protected handleMeshes = new Three.InstancedMesh(handleGeometry, handleMaterial, 4);
 	protected borderMeshes = new Three.InstancedMesh(rectGeometry, borderMaterial, 4);
 	protected centerMesh = new Three.Mesh(rectGeometry, centerMaterial);
-
-	protected mode!: RectMode;
 
 	constructor(bounds: Three.Box2) {
 		super();
@@ -89,6 +88,25 @@ export class SelectionRect extends Three.Object3D {
 		this.updateMesh();
 	}
 
+	// getRectDistance(pt: Three.Vector2Like, corner: number) {
+	// 	const cx = corner & 1 ? this.bounds.max.x : this.bounds.min.x;
+	// 	const cy = corner & 2 ? this.bounds.max.y : this.bounds.min.y;
+	// 	const r = this.pixelSize * HANDLE_SIZE * 0.5;
+	// 	return Math.max(Math.abs(pt.x - cx), Math.abs(pt.y - cy));
+	// }
+
+	getPointCorner(pt: Three.Vector2Like): number {
+		const bottom = pt.y > (this.bounds.max.y + this.bounds.min.y) * 0.5;
+		const right = pt.x > (this.bounds.max.x + this.bounds.min.x) * 0.5;
+		
+		const cx = right ? this.bounds.max.x : this.bounds.min.x;
+		const cy = bottom ? this.bounds.max.y : this.bounds.min.y;
+		const r = this.pixelSize * HANDLE_SIZE * 0.5;
+
+		if (Math.abs(pt.x - cx) > r || Math.abs(pt.y - cy) > r) return -1;
+		return (bottom ? 2 : 0) + (+right);
+	}
+
 	setPixelSize(pixelSize: number) {
 		if (pixelSize === this.pixelSize) return;
 		this.pixelSize = pixelSize;
@@ -102,7 +120,7 @@ export class SelectionRect extends Three.Object3D {
 		const min = this.bounds.min;
 		const max = this.bounds.max;
 
-		const S = 32 * this.pixelSize;
+		const S = HANDLE_SIZE * this.pixelSize;
 
 		mat4.makeTranslation(min.x, min.y, 0);
 		mat4.scale(V_YNEG);

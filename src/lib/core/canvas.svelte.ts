@@ -27,6 +27,9 @@ export class CanvasRenderer extends MouseBound {
 	pixelSize: number = 1.0;
 	zoom: number = 1.0;
 
+	heldRectId: number = -1;
+	heldRectCorner: number = -1;
+
 	constructor(public canvas: HTMLCanvasElement) {
 		super(canvas);
 
@@ -104,20 +107,17 @@ export class CanvasRenderer extends MouseBound {
 		this.needsCameraUpdate = true;
 	}
 
-	_mouseHeld = false;
-
 	onMouseMove(event: MouseEvent): void {
-		if (!this._mouseHeld) return;
+		this.updatePotentialSelections();
+		if (!this._mouseButton) return;
 		this.camera.position.x -= event.movementX * this.pixelSize * devicePixelRatio;
 		this.camera.position.y += event.movementY * this.pixelSize * devicePixelRatio;
 	}
 
 	onMouseDown(event: MouseEvent): void {
-		this._mouseHeld = event.buttons === 1;
 	}
 
 	onMouseUp(event: MouseEvent): void {
-		this._mouseHeld = false;
 	}
 
 	updateRects(rects: RectEntry[]) {
@@ -140,8 +140,44 @@ export class CanvasRenderer extends MouseBound {
 			}
 
 			const rect = rects[i];
-			this.rectBoxes[0].setMode(2);
 			this.rectBoxes[i].setBounds(rect.min_x, rect.min_y, rect.max_x, rect.max_y);
+		}
+	}
+
+	worldToScreen(i: Three.Vector2Like, out: { x: number; y: number; }) {
+		const m = this.camera.projectionMatrix.elements;
+		const v = this.camera.matrixWorldInverse.elements;
+		out.x = m[0] * i.x + m[4] * i.y + m[12] + v[12];
+		out.y = m[1] * i.x + m[5] * i.y + m[13] + v[13];
+		out.x = out.x * 0.5 + 0.5;
+		out.y = out.y * -0.5 - 0.5;
+	}
+
+	screenToWorld(i: Three.Vector2Like, out: { x: number; y: number; }) {
+		const m = this.camera.projectionMatrixInverse.elements;
+		const v = this.camera.matrixWorld.elements;
+		const x = i.x * 2 - 1;
+		const y = i.y * -2 + 1;
+		out.x = m[0] * x + m[4] * y + m[12] + v[12];
+		out.y = m[1] * x + m[5] * y + m[13] + v[13];
+	}
+
+	updatePotentialSelections() {
+		const mouseWorld = { x: 0, y: 0 };
+		this.screenToWorld(this._mousePosNorm, mouseWorld);
+
+		let fnd = false;
+		for (let i = 0; i < this.rectBoxes.length; i++) {
+			const r = this.rectBoxes[i];
+			if (fnd) {
+				r.setMode(RectMode.None);
+				continue;
+			}
+			const idx = r.getPointCorner(mouseWorld);
+			r.setMode(idx !== -1 ? RectMode.Active : RectMode.None);
+			if (idx !== -1) {
+				fnd = true;
+			}
 		}
 	}
 
