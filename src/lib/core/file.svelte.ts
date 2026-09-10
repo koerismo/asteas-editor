@@ -1,6 +1,6 @@
 import type { HotspotRect, VHotspotResource } from "vtf-js/resources";
 import { createContext } from 'svelte';
-import { UndoRedo } from "./undo.svelte.js";
+import { UndoRedo } from './undo.svelte.js';
 
 export const [getFile, setFile] = createContext<RectFile>();
 

@@ -23,7 +23,10 @@
 		<button
 			role="radio"
 			aria-checked={i === index}
-			onclick={() => setValue(i)}>{option}</button>
+			onclick={() => setValue(i)}
+			onmousedown={e => e.stopPropagation()}
+			>
+			{option}</button>
 	{/each}
 </div>
 

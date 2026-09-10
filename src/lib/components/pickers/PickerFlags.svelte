@@ -17,7 +17,7 @@
 </script>
 
 {#snippet renderIcon(Icon: Component)}
-	<Icon size="12px"></Icon>
+	<Icon size="1em"></Icon>
 {/snippet}
 
 <div>
@@ -26,7 +26,9 @@
 			role="checkbox"
 			aria-label={desc ?? 'Flag'}
 			aria-checked={!!(value & v)}
-			onclick={e => onclick(e, v)}>
+			onclick={e => onclick(e, v)}
+			onmousedown={e => e.stopPropagation()}
+			>
 			{#if typeof optContent === 'string'}
 				{optContent}
 			{:else}
@@ -48,9 +50,4 @@
 		justify-content: center;
 		place-items: center;
 	}
-
-	button > :global(svg) {
-		height: 0.95em;
-	}
-
 </style>

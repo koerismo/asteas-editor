@@ -9,32 +9,75 @@
 	import IconUndo from '@lucide/svelte/icons/undo';
 	import IconRedo from '@lucide/svelte/icons/redo';
 	import TrashCan from '@lucide/svelte/icons/trash';
-	import IconSelect from '@lucide/svelte/icons/square-dashed-text';
+	import IconSelect from '@lucide/svelte/icons/square-dashed-mouse-pointer';
+	import IconDeselect from '@lucide/svelte/icons/square-minus';
+	import IconCollapse from '@lucide/svelte/icons/chevrons-down-up';
+	import IconExpand from '@lucide/svelte/icons/unfold-vertical';
 
+	let collapsed = $state(false);
 	let rectList = $state<SidebarList>();
-	let file = $state<RectFile>(
-		RectFile.fromRects([
-			new HotspotRect(0x10, 10, 10, 20, 20),
-			new HotspotRect(0x01, 10, 10, 40, 40),
-			new HotspotRect(0x02, 10, 20, 20, 80),
-			new HotspotRect(0x06, 10, 20, 80, 80),
-		])
-	);
+	let { file }: { file: RectFile } = $props();
 
-	onMount(file.history.mount.bind(file.history));
+	$effect(() => {
+		return file.history.mount();
+	});
 </script>
 
 <aside>
 	<section class="s-header">
 		<div>
-			<Button disabled={!file?.history.sCanUndo} onclick={() => file.history.undo()} ><IconUndo></IconUndo></Button>
-			<Button disabled={!file?.history.sCanRedo} onclick={() => file.history.redo()} ><IconRedo></IconRedo></Button>
-			<Button disabled={!(rectList?.getSelectionSize())} onclick={() => rectList?.removeSelected()}><TrashCan></TrashCan></Button>
-			<Button disabled={!rectList} onclick={() => rectList!.toggleAllSelected()}><IconSelect></IconSelect></Button>
+			<Button
+				variant="icon"
+				disabled={!file?.history.sCanUndo}
+				onclick={() => file.history.undo()}
+				title="Undo"
+				><IconUndo></IconUndo></Button
+			>
+			<Button
+				variant="icon"
+				disabled={!file?.history.sCanRedo}
+				onclick={() => file.history.redo()}
+				title="Redo"
+				><IconRedo></IconRedo></Button
+			>
+			<Button
+				variant="icon"
+				disabled={!rectList?.getSelectionSize()}
+				onclick={() => rectList?.removeSelected()}
+				title="Delete selected"
+				><TrashCan></TrashCan></Button
+			>
+			<div class="divider"></div>
+			<Button
+				variant="icon"
+				disabled={!rectList}
+				onclick={() => rectList!.toggleAllSelected()}
+				title="Toggle all selected"
+			>
+				{#if rectList?.getSelectionSize()}
+					<IconDeselect></IconDeselect>
+				{:else}
+					<IconSelect></IconSelect>
+				{/if}
+			</Button>
+			<Button
+				variant="icon"
+				onclick={() => {collapsed = !collapsed;
+				}}
+				title="Toggle items collapsed"
+			>
+				{#if collapsed}
+					<IconExpand></IconExpand>
+				{:else}
+					<IconCollapse></IconCollapse>
+				{/if}
+			</Button>
 		</div>
 	</section>
 	<section>
-		<SidebarList bind:this={rectList} file={file}></SidebarList>
+		{#if file}
+			<SidebarList {collapsed} bind:this={rectList} {file}></SidebarList>
+		{/if}
 	</section>
 </aside>
 
@@ -46,7 +89,7 @@
 
 		display: flex;
 		flex-direction: column;
-		
+
 		overflow-y: scroll;
 		scrollbar-width: thin;
 		scrollbar-color: var(--bg-3) var(--bg-2);
@@ -64,16 +107,19 @@
 	}
 
 	section.s-header {
-		
 		> div {
 			display: flex;
 			gap: 0.2em;
+
+			> div {
+				flex-grow: 1;
+			}
 		}
 
 		background-color: var(--bg-2);
 		padding-top: 0.4em;
 		position: sticky;
 		top: 0;
-		font-size: 0.85em;
+		font-size: 1em;
 	}
 </style>

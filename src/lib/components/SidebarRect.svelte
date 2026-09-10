@@ -6,24 +6,20 @@
 
 	import IconRotate from "@lucide/svelte/icons/rotate-cw";
 	import IconFlip from "@lucide/svelte/icons/flip-horizontal-2";
+	import type { HTMLButtonAttributes } from 'svelte/elements';
 
 	let {
 		index,
+		selected,	
 		rect = $bindable(),
 		setFlags,
-		isIdSelected,
-		selectId,
-	}: {
+		...args
+	}: Omit<HTMLButtonAttributes, 'class'> & {
 		index: number;
+		selected: boolean;
 		rect: RectEntry;
 		setFlags(flags: number, mask: number): void;
-		isIdSelected(index: number): boolean;
-		selectId(index: number): void;
 	} = $props();
-
-	function onClick(event: MouseEvent) {
-		selectId(index);
-	}
 
 	function onAltCheckbox(event: MouseEvent) {
 		event.stopPropagation();
@@ -39,16 +35,13 @@
 <button
 	aria-label="Region {index}"
 	class="rect"
-	class:active={isIdSelected(index)}
-	onclick={onClick}
+	class:active={selected}
+	{...args}
 >
 	<div class="rect-info">
 		<code>#{index}</code>
 		<code>{rect.min_x},{rect.min_y} - {rect.width}x{rect.height}</code>
 	</div>
-	<!-- <div class="rect-body">
-
-	</div> -->
 	<div class="rect-props">
 		<PickerFlags
 			oninput={onFlagsSet}
@@ -70,6 +63,7 @@
 			class="check-alt"
 			checked={!!(rect.flags & HotSpotRectFlags.AltGroup)}
 			onclick={onAltCheckbox}
+			onmousedown={e => e.stopPropagation()}
 		></Checkbox>
 		<span>transform</span>
 		<span>tile</span>
@@ -90,16 +84,22 @@
 		border: 1px solid var(--bg);
 		border-radius: var(--radius-lg);
 
-		/* cursor: pointer; */
-
 		&.active {
 			background-color: var(--bg-4);
 
 			border-color: var(--text-3);
 			outline: 1px solid var(--bg-2);
 			outline-offset: -2px;
+		}
 
-			/* outline: 1px solid var(--accent); */
+		:global(div.collapsed > div) > & {
+			> div.rect-props {
+				font-size: 0.85em;
+			}
+
+			> div.rect-props > span {
+				display: none;
+			}
 		}
 	}
 
@@ -130,7 +130,7 @@
 		grid-auto-rows: auto;
 		width: 100%;
 		gap: 0.2em 0.5em;
-		font-size: 0.85em;
+		font-size: 0.9em;
 
 		span {
 			color: var(--text-3);

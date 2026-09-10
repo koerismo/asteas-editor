@@ -1,24 +1,31 @@
 <script lang="ts">
-    function createCanvas(canvas: HTMLCanvasElement) {
-        
+	import { CanvasRenderer } from '$lib/core/canvas.svelte.js';
+	import type { RectFile } from '$lib/core/file.svelte';
+	import { onMount } from 'svelte';
 
-        return () => {
+	let { file }: { file: RectFile } = $props();
 
-        };
-    }
+	let canvas: HTMLCanvasElement;
+	let renderer: CanvasRenderer;
+
+	onMount(() => {
+		renderer = new CanvasRenderer(canvas);
+		return () => {
+			renderer.dispose();
+		}
+	});
+	
+	$effect(() => {
+		if (!renderer) return;
+		renderer.setFile(file);
+	})
 </script>
 
-<canvas width=512 height=512 {@attach createCanvas}></canvas>
+<canvas bind:this={canvas}></canvas>
 
 <style>
-    canvas {
-        border: 1px solid var(--border);
-        background-color: var(--bg-2);
-		aspect-ratio: 1 / 1;
-
-		/* height: 80vh; */
-		width: 60%;
-
-		flex-shrink: 1;
-    }
+	canvas {
+		width: 100%;
+		height: 100%;
+	}
 </style>

@@ -1,3 +1,5 @@
+import { bound } from './binder.js';
+
 export interface UndoRedoAction {
 	type: string;
 	timestamp: number;
@@ -13,9 +15,7 @@ export class UndoRedo {
 	sCanRedo = $state(false);
 
 	mount() {
-		const cb = this._onKeyDown.bind(this);
-		document.addEventListener('keydown', cb);
-		return () => document.removeEventListener('keydown', cb);
+		return bound(document, 'keydown', this._onKeyDown.bind(this));
 	}
 
 	_onKeyDown(event: KeyboardEvent) {

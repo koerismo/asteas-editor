@@ -9,22 +9,64 @@
 	import { onMount } from 'svelte';
 	import { scale } from 'svelte/transition';
 	import { cubicOut } from 'svelte/easing';
+	import Binder from '$lib/core/binder.js';
 
-	let { file = $bindable() }: { file: RectFile } = $props();
+	let { file = $bindable(), collapsed }: { file: RectFile, collapsed: boolean } = $props();
+
+	const HoverSelect = {
+		None: 0,
+		Select: 1,
+		Deselect: 2
+	};
 
 	let shiftKey = false;
+	let hoverSelect = HoverSelect.None;
 	let activeRects = new SvelteSet<number>();
 
 	onMount(() => {
-		document.addEventListener('keydown', onKeyDown);
-		document.addEventListener('keyup', onKeyUp);
+		return Binder(document)
+			.add('keydown', onKeyDown)
+			.add('keyup', onKeyUp)
+			.add('mouseup', onMouseUp);
 	});
+
+	function onMouseDownRect(rectId: number) {
+		if (!shiftKey) {
+			activeRects.clear();
+			activeRects.add(rectId);
+			hoverSelect = HoverSelect.Select;
+			return;
+		}
+
+		hoverSelect = isIdSelected(rectId)
+			? HoverSelect.Deselect
+			: HoverSelect.Select;
+
+		onMouseEnterRect(rectId);
+	}
+
+	function onMouseEnterRect(id: number) {
+		if (!hoverSelect) return;
+		if (hoverSelect === HoverSelect.Select)
+			activeRects.add(id);
+		else
+			activeRects.delete(id);
+	}
+
+	function onMouseUp() {
+		hoverSelect = HoverSelect.None;
+	}
 
 	function onKeyDown(event: KeyboardEvent) {
 		shiftKey = event.shiftKey;
 
 		if (event.key === 'Delete' || event.key === 'Backspace') {
 			removeSelected();
+			return;
+		}
+
+		if (event.key === 'a' && event.metaKey) {
+			toggleAllSelected();
 			return;
 		}
 		
@@ -58,15 +100,6 @@
 		activeRects.clear();
 	}
 
-	function selectId(rectId: number) {
-		if (shiftKey) {
-			if (activeRects.delete(rectId)) return;
-		} else {
-			activeRects.clear();
-		}
-		activeRects.add(rectId);
-	}
-
 	function isIdSelected(rectId: number) {
 		return activeRects.has(rectId);
 	}
@@ -85,10 +118,17 @@
 
 </script>
 
-<div>
+<div class:collapsed={collapsed}>
 	{#each file.rects as _rect, i (_rect.uuid)}
 		<div transition:scale={{ duration: 100, easing: cubicOut, start: 0.8 }}>
-			<SidebarRect rect={file.rects[i]} index={i} {selectId} {isIdSelected} setFlags={(v, m) => setFlags(i, v, m)}></SidebarRect>
+			<SidebarRect
+				rect={file.rects[i]}
+				index={i}
+				selected={activeRects.has(i)}
+				setFlags={(v, m) => setFlags(i, v, m)}
+				onmousedown={() => onMouseDownRect(i)}
+				onmouseenter={() => onMouseEnterRect(i)}
+				></SidebarRect>
 		</div>
 	{/each}
 	<SidebarRectGhost onclick={addRect}></SidebarRectGhost>

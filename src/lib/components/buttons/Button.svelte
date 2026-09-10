@@ -1,7 +1,7 @@
 <script lang="ts">
 	import type { Snippet } from 'svelte';
 	import type { HTMLButtonAttributes } from 'svelte/elements';
-	let { children, variant='primary', ...args }: { children?: Snippet, variant?: 'primary' | 'secondary' | 'outline' | 'danger' } & HTMLButtonAttributes = $props();
+	let { children, variant='', ...args }: { children?: Snippet, variant?: '' | 'icon' } & HTMLButtonAttributes = $props();
 </script>
 
 <button {...args} data-variant={variant}>{@render children?.()}</button>
@@ -17,12 +17,13 @@
 			@include btn.btn-fill-accent(false);
 		}
 		
+		&[data-variant="icon"] {
+			padding-left: 0.2em;
+			padding-right: 0.2em;
+		}
+		
 		display: flex;
 		justify-content: center;
 		place-items: center;
-
-		> :global(svg) {
-			height: 0.9em;
-		}
 	}
 </style>
