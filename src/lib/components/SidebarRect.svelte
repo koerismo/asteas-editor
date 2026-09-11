@@ -10,12 +10,14 @@
 
 	let {
 		index,
-		selected,	
+		active,
+		selected,
 		rect = $bindable(),
 		setFlags,
 		...args
 	}: Omit<HTMLButtonAttributes, 'class'> & {
 		index: number;
+		active: boolean;
 		selected: boolean;
 		rect: RectEntry;
 		setFlags(flags: number, mask: number): void;
@@ -35,7 +37,8 @@
 <button
 	aria-label="Region {index}"
 	class="rect"
-	class:active={selected}
+	class:active={active}
+	class:selected={selected}
 	{...args}
 >
 	<div class="rect-info">
@@ -84,12 +87,16 @@
 		border: 1px solid var(--bg);
 		border-radius: var(--radius-lg);
 
-		&.active {
+		&.selected {
 			background-color: var(--bg-4);
 
 			border-color: var(--text-3);
 			outline: 1px solid var(--bg-2);
 			outline-offset: -2px;
+		}
+
+		&.active {
+			border-color: var(--accent);
 		}
 
 		:global(div.collapsed > div) > & {
@@ -103,7 +110,7 @@
 		}
 	}
 
-	button.rect.active div.rect-info {
+	button.rect.selected div.rect-info {
 		code {
 			color: var(--text);
 		}

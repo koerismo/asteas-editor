@@ -5,9 +5,9 @@ import { UndoRedo } from './undo.svelte.js';
 export const [getFile, setFile] = createContext<RectFile>();
 
 export class RectFile {
-	rects: RectEntry[] = $state([]);
-	version: number = 1;
-	history: UndoRedo = new UndoRedo();
+	public rects: RectEntry[] = $state([]);
+	public version: number = 1;
+	public history: UndoRedo = new UndoRedo();
 
 	static fromResource(res: VHotspotResource) {
 		const file = new RectFile(res.version, []);

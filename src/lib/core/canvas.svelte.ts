@@ -8,19 +8,22 @@ import { bound } from './binder.js';
 // Viewport-specific
 import { clamp } from 'three/src/math/MathUtils.js';
 import { RectMode, SelectionRect } from './viewport/rect.js';
-import { MouseBound } from './viewport/mouse.js';
+import { Button, MouseBound } from './viewport/mouse.js';
+import { getEditorCtx, type EditorState } from './context.svelte.js';
 
 const commonQuad = new Three.PlaneGeometry();
 commonQuad.translate(0.5, 0.5, 0);
 
 export class CanvasRenderer extends MouseBound {
+	_mousePosWorld = new Three.Vector2();
+
+	state: EditorState;
 	alive: boolean = false;
 
 	renderer: Three.WebGLRenderer;
 	camera: Three.OrthographicCamera;
 	scene = new Three.Scene();
 
-    file: RectFile | undefined = $state.raw();
 	rectBoxes: SelectionRect[] = [];
 
 	needsCameraUpdate: boolean = true;
@@ -32,6 +35,8 @@ export class CanvasRenderer extends MouseBound {
 
 	constructor(public canvas: HTMLCanvasElement) {
 		super(canvas);
+
+		this.state = getEditorCtx();
 
 		this.renderer = new Three.WebGLRenderer({ canvas, antialias: true });
 		this.camera = new Three.OrthographicCamera();
@@ -49,9 +54,11 @@ export class CanvasRenderer extends MouseBound {
 			$effect.root(() => {
 				$effect(() => {
 					console.log('updating...');
-					this.updateRects(this.file?.rects ?? []);
-					// console.log('Rect count is', this.file?.rects.length);
+					this.rebuildRects(this.state.file?.rects ?? []);
 				});
+				$effect(() => {
+					this.setActiveRect(this.state.active);
+				})
 			})
 		);
 	}
@@ -88,42 +95,87 @@ export class CanvasRenderer extends MouseBound {
 		this.camera.updateProjectionMatrix();
 	}
 
-	onMouseWheel(event: WheelEvent): void {
+	onPan(x: number, y: number) {
+		this.camera.position.x -= x * this.pixelSize * devicePixelRatio;
+		this.camera.position.y += y * this.pixelSize * devicePixelRatio;
+	}
+
+	onZoom(deltaY: number): void {
 		const oldZoom = this.zoom;
 		this.zoom = clamp(
-			Math.pow(Math.E, Math.log(this.zoom) - event.deltaY * 0.001),
+			Math.pow(Math.E, Math.log(this.zoom) - deltaY * 0.001),
 			1 / 2048,
 			1 / 32,
 		);
 
-		// TODO: This is wrong and does not work
 		const farMovement = 1 / oldZoom - 1 / this.zoom;
+		const mX = this._mousePosNorm.x * 2 - 1;
+		const mY = this._mousePosNorm.y * 2 - 1;
 
-		const mX = event.offsetX / this.canvas.offsetWidth * 2 - 1;
-		const mY = event.offsetY / this.canvas.offsetHeight * 2 - 1;
-
-		this.camera.position.x += mX * farMovement;
+		this.camera.position.x += mX * farMovement * this.canvas.width / this.canvas.height;
 		this.camera.position.y -= mY * farMovement;
 		this.needsCameraUpdate = true;
 	}
 
 	onMouseMove(event: MouseEvent): void {
-		this.updatePotentialSelections();
-		if (!this._mouseButton) return;
-		this.camera.position.x -= event.movementX * this.pixelSize * devicePixelRatio;
-		this.camera.position.y += event.movementY * this.pixelSize * devicePixelRatio;
+		this.screenToWorld(this._mousePosNorm, this._mousePosWorld);
+
+		if (this._mouseButton === Button.Left && this.heldRectId !== -1) {
+			if (this.heldRectCorner === -1) {
+				this.rectBoxes[this.heldRectId]
+					.translate({ x: event.movementX * this.pixelSize * 2, y: -event.movementY * this.pixelSize * 2 });
+			} else {
+				this.rectBoxes[this.heldRectId]
+					.setCorner(this.heldRectCorner, this._mousePosWorld);
+			}
+			return;
+		}
+
+		let cursor = '';
+		switch (this.getCornerAtPoint(this._mousePosWorld)) {
+			case 0: { cursor = 'sw-resize'; break }
+			case 1: { cursor = 'se-resize'; break }
+			case 2: { cursor = 'nw-resize'; break }
+			case 3: { cursor = 'ne-resize'; break }
+		}
+
+		this.setCursor(cursor);
 	}
 
 	onMouseDown(event: MouseEvent): void {
+		if (this._mouseButton !== Button.Left) return;
+
+		if (this.heldRectId !== -1) {
+			this.heldRectCorner = this.getCornerAtPoint(this._mousePosWorld);
+			console.log('New corner selection', this.heldRectCorner);
+		}
+
+		if (this.heldRectCorner === -1) {
+			this.heldRectId = this.getRectAtPoint(this._mousePosWorld);
+			this.state.active = this.heldRectId;
+			console.log('New rect selection:', this.heldRectId);
+		}
+
+		this.updateRectModes();
 	}
 
 	onMouseUp(event: MouseEvent): void {
+		this.heldRectCorner = -1;
 	}
 
-	updateRects(rects: RectEntry[]) {
+	setCursor(cursor?: string) {
+		this.canvas.style.cursor = cursor ?? 'initial';
+	}
+
+	rebuildRects(rects: RectEntry[]) {
 		const oldLength = this.rectBoxes.length;
 
 		if (oldLength > rects.length) {
+			if (this.heldRectId >= rects.length) {
+				this.heldRectId = -1;
+				this.heldRectCorner = -1;
+			}
+
 			for (let i = rects.length; i < oldLength; i++) {
 				this.rectBoxes[i].removeFromParent();
 			}
@@ -162,28 +214,34 @@ export class CanvasRenderer extends MouseBound {
 		out.y = m[1] * x + m[5] * y + m[13] + v[13];
 	}
 
-	updatePotentialSelections() {
-		const mouseWorld = { x: 0, y: 0 };
-		this.screenToWorld(this._mousePosNorm, mouseWorld);
-
-		let fnd = false;
-		for (let i = 0; i < this.rectBoxes.length; i++) {
-			const r = this.rectBoxes[i];
-			if (fnd) {
-				r.setMode(RectMode.None);
-				continue;
-			}
-			const idx = r.getPointCorner(mouseWorld);
-			r.setMode(idx !== -1 ? RectMode.Active : RectMode.None);
-			if (idx !== -1) {
-				fnd = true;
-			}
+	getRectAtPoint(point: Three.Vector2Like) {
+		for (let i=0; i<this.rectBoxes.length; i++) {
+			const rect = this.rectBoxes[i];
+			if (!rect.bounds.containsPoint(point as Three.Vector2)) continue;
+			return i;
 		}
+		return -1;
 	}
 
-	setFile(file: RectFile) {
-		console.log('Setting file...', file != null);
-		this.file = file;
+	getCornerAtPoint(point: Three.Vector2Like) {
+		if (this.heldRectId === -1) return -1;
+		return this.rectBoxes[this.heldRectId].getPointCorner(point);
+	}
+
+	setActiveRect(index: number) {
+		this.heldRectId = index;
+		this.updateRectModes();
+	}
+
+	updateRectModes() {
+		for (let i = 0; i < this.rectBoxes.length; i++) {
+			const r = this.rectBoxes[i];
+			if (this.heldRectId === i) {
+				r.setMode(RectMode.Active);
+			} else {
+				r.setMode(RectMode.None);
+			}
+		}
 	}
 
 	setImage(image: VImageData) {

@@ -88,6 +88,19 @@ export class SelectionRect extends Three.Object3D {
 		this.updateMesh();
 	}
 
+	translate(delta: Three.Vector2Like) {
+		this.bounds.translate(delta as Three.Vector2);
+		this.updateMesh();
+	}
+
+	setCorner(corner: number, pos: Three.Vector2Like) {
+		const vx = corner & 1 ? this.bounds.max : this.bounds.min;
+		const vy = corner & 2 ? this.bounds.max : this.bounds.min;
+		vx.x = pos.x;
+		vy.y = pos.y;
+		this.updateMesh();
+	}
+
 	// getRectDistance(pt: Three.Vector2Like, corner: number) {
 	// 	const cx = corner & 1 ? this.bounds.max.x : this.bounds.min.x;
 	// 	const cy = corner & 2 ? this.bounds.max.y : this.bounds.min.y;

@@ -1,9 +1,6 @@
 <script lang="ts">
-	import { CanvasRenderer } from '$lib/core/canvas.svelte.js';
-	import type { RectFile } from '$lib/core/file.svelte';
 	import { onMount } from 'svelte';
-
-	let { file }: { file: RectFile } = $props();
+	import { CanvasRenderer } from '$lib/core/canvas.svelte.js';
 
 	let canvas: HTMLCanvasElement;
 	let renderer: CanvasRenderer;
@@ -14,11 +11,6 @@
 			renderer.dispose();
 		}
 	});
-	
-	$effect(() => {
-		if (!renderer) return;
-		renderer.setFile(file);
-	})
 </script>
 
 <canvas bind:this={canvas}></canvas>

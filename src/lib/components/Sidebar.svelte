@@ -1,7 +1,9 @@
 <script lang="ts">
 	import { HotspotRect } from 'vtf-js/resources';
-	import { RectFile } from '$lib/core/file.svelte';
 	import { onMount } from 'svelte';
+
+	import { RectFile } from '$lib/core/file.svelte.js';
+	import { getEditorCtx } from '$lib/core/context.svelte.js';
 
 	import SidebarList from './SidebarList.svelte';
 	import Button from './buttons/Button.svelte';
@@ -14,13 +16,16 @@
 	import IconCollapse from '@lucide/svelte/icons/chevrons-down-up';
 	import IconExpand from '@lucide/svelte/icons/unfold-vertical';
 
+	const context = getEditorCtx();
+
 	let collapsed = $state(false);
 	let rectList = $state<SidebarList>();
-	let { file }: { file: RectFile } = $props();
+	let file = $derived(context.file!);
 
 	$effect(() => {
 		return file.history.mount();
 	});
+
 </script>
 
 <aside>
@@ -42,8 +47,8 @@
 			>
 			<Button
 				variant="icon"
-				disabled={!rectList?.getSelectionSize()}
-				onclick={() => rectList?.removeSelected()}
+				disabled={!context.getSelectSize()}
+				onclick={() => context.deleteSelected()}
 				title="Delete selected"
 				><TrashCan></TrashCan></Button
 			>
@@ -76,7 +81,7 @@
 	</section>
 	<section>
 		{#if file}
-			<SidebarList {collapsed} bind:this={rectList} {file}></SidebarList>
+			<SidebarList {collapsed} bind:this={rectList}></SidebarList>
 		{/if}
 	</section>
 </aside>
