@@ -1,9 +1,7 @@
-import type { VImageData } from 'vtf-js';
 import * as Three from 'three';
 
 // General utility
-import type { RectEntry, RectFile } from './file.svelte.js';
-import { bound } from './binder.js';
+import type { RectEntry } from './file.svelte.js';
 
 // Viewport-specific
 import { clamp } from 'three/src/math/MathUtils.js';
@@ -12,6 +10,7 @@ import { Button, MouseBound } from './viewport/mouse.js';
 import { getEditorCtx, type EditorState } from './context.svelte.js';
 
 import { GridObject } from './viewport/grid.js';
+import { VTFLoader } from './viewport/vtexture.js';
 
 const commonQuad = new Three.PlaneGeometry();
 commonQuad.translate(0.5, 0.5, 0);
@@ -33,6 +32,7 @@ export class CanvasRenderer extends MouseBound {
 	scene = new Three.Scene();
 
 	rectBoxes: SelectionRect[] = [];
+	makingRectCopy: boolean = false;
 
 	needsCameraUpdate: boolean = true;
 	pixelSize: number = 1.0;
@@ -40,6 +40,12 @@ export class CanvasRenderer extends MouseBound {
 
 	heldRectId: number = -1;
 	heldRectCorner: number = -1;
+
+	image: Three.Texture | undefined;
+	imagePlane = new Three.Mesh(
+		commonQuad,
+		new Three.MeshBasicMaterial()
+	);
 
 	getActiveRect(): SelectionRect | undefined {
 		if (this.heldRectId !== -1)
@@ -51,13 +57,12 @@ export class CanvasRenderer extends MouseBound {
 
 		this.state = getEditorCtx();
 
-		this.renderer = new Three.WebGLRenderer({ canvas, antialias: true });
+		this.renderer = new Three.WebGLRenderer({ canvas, antialias: true, depth: false });
 		this.camera = new Three.OrthographicCamera();
-		this.camera.position.z = 1;
+		this.camera.position.z = 10;
 
 		this.alive = true;
 		this.scene.background = new Three.Color(0x111111);
-		this.scene.add(this.grid);
 
 		this.init();
 		this.resize();
@@ -81,9 +86,11 @@ export class CanvasRenderer extends MouseBound {
 	}
 
 	init() {
-		// const quadMaterial = new Three.MeshBasicMaterial({ wireframe: true, color: '#fff' });
-		// const quadSingle = new Three.Mesh(commonQuad, quadMaterial);
-		// this.scene.add(quadSingle);
+		this.scene.add(this.imagePlane);
+		this.scene.add(this.grid);
+
+		this.imagePlane.position.z = -10;
+		this.setImage();
 	}
 
 	resize() {
@@ -94,10 +101,6 @@ export class CanvasRenderer extends MouseBound {
 			false
 		);
 		this.needsCameraUpdate = true;
-	}
-
-	getGridSnap() {
-
 	}
 
 	updateCamera() {
@@ -171,6 +174,8 @@ export class CanvasRenderer extends MouseBound {
 			case 3: { cursor = 'ne-resize'; break }
 		}
 
+		if (this.canBegin)
+
 		if (!cursor) {
 			if (this.getActiveRect()?.aabb.containsPoint(this._mousePosWorld)) {
 				cursor = 'move';
@@ -185,13 +190,19 @@ export class CanvasRenderer extends MouseBound {
 
 		if (this.heldRectId !== -1) {
 			this.heldRectCorner = this.getCornerAtPoint(this._mousePosWorld);
-			console.log('New corner selection', this.heldRectCorner);
 		}
 
-		if (this.heldRectCorner === -1 && !(this.getActiveRect()?.aabb.containsPoint(this._mousePosWorld))) {
+		const mouseInActiveRect = this.getActiveRect()?.aabb.containsPoint(this._mousePosWorld);
+		if (this.heldRectCorner === -1 && !mouseInActiveRect) {
 			this.heldRectId = this.getRectAtPoint(this._mousePosWorld);
 			this.state.active = this.heldRectId;
-			console.log('New rect selection:', this.heldRectId);
+		}
+
+
+		if (this.heldRectId !== -1 && this.heldRectCorner === -1 && mouseInActiveRect && event.shiftKey) {
+			this.state.file.copyRect(this.heldRectId);
+			this.state.setActive(this.state.file.rects.length - 1);
+			this.makingRectCopy = true;
 		}
 
 		this.updateRectModes();
@@ -200,9 +211,10 @@ export class CanvasRenderer extends MouseBound {
 	onMouseUp(event: MouseEvent): void {
 		if (this.heldRectId !== -1 && this._mouseDragged) {
 			const box = this.rectBoxes[this.heldRectId];
-			this.state.file.setRectBounds(this.heldRectId, box.aabb);
+			this.state.file.setRectBounds(this.heldRectId, box.aabb, this.makingRectCopy);
 			this.rectBoxes[this.heldRectId].visualSync();
 		}
+		this.makingRectCopy = false;
 		this.heldRectCorner = -1;
 	}
 
@@ -284,8 +296,19 @@ export class CanvasRenderer extends MouseBound {
 		}
 	}
 
-	setImage(image: VImageData) {
+	async setImage(url: string = 'test.vtf') {
+		const v = await new VTFLoader().load(url);
+		console.log(v);
+		this.setTexture(v);
+	}
 
+	setTexture(v: Three.Texture) {
+		this.image = v;
+		this.imagePlane.material.map = v;
+		this.imagePlane.material.needsUpdate = true;
+
+		this.imagePlane.scale.x = v.width;
+		this.imagePlane.scale.y = v.height;
 	}
 
 	dispose() {

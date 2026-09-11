@@ -22,6 +22,10 @@ void main() {
 	
 	vPixelUnit = uInvProjectionMatrix[1].y / uPixelSize.y;
 	vPosition = (invViewMatrix * uInvProjectionMatrix * vec4(position, 1.0)).xyz;
-	// vPosition = (projectionMatrix * vec4(position, 1.0)).xyz;
-	gl_Position = vec4(position, 1.0);
+	
+	gl_Position = vec4(
+		position.xy,
+		-1.0, // (projectionMatrix * vec4(position.xy, -1.0, 1.0)).z,
+		1.0
+	);
 }

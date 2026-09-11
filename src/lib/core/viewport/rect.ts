@@ -6,7 +6,6 @@ const handleGeometry = new Three.PlaneGeometry(1, 1);
 const handleMaterial = new Three.MeshBasicMaterial({
 	map: await (new Three.TextureLoader().loadAsync(handleUrl)),
 	side: Three.DoubleSide,
-	// transparent: true,
 	alphaTest: 0.5,
 });
 
@@ -61,6 +60,9 @@ export class SelectionRect extends Three.Object3D {
 
 		this.rect = rect;
 		this.aabb.copy(rect);
+		this.handleMeshes.renderOrder = 10;
+		this.borderMeshes.renderOrder = 10;
+		this.centerMesh.renderOrder = 10;
 
 		this.add(this.handleMeshes);
 		this.add(this.borderMeshes);

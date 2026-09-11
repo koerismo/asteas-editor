@@ -8,13 +8,13 @@ const gridMaterial = new Three.ShaderMaterial({
 		uInvProjectionMatrix: { value: new Three.Matrix4() },
 		uPixelSize: { value: new Three.Vector2(1.0, 1.0) },
 		uGridPower: { value: 1.0 },
-		uGridColor: { value: new Three.Color(0xaaaaaa) },
 		uMousePos: { value: new Three.Vector2() },
+		opacity: { value: 1.0 },
 	},
 	vertexShader: GridVert,
 	fragmentShader: GridFrag,
 	side: Three.DoubleSide,
-	transparent: true
+	transparent: true,
 });
 
 export class GridObject extends Three.Mesh<
@@ -29,6 +29,7 @@ export class GridObject extends Three.Mesh<
 			gridMaterial
 		);
 
+		this.renderOrder = 99;
 		this.frustumCulled = false;
 	}
 
@@ -40,7 +41,6 @@ export class GridObject extends Three.Mesh<
 		material: Three.Material,
 		group: Three.Group,
 	): void {
-		// this.material.uniforms.vInvViewMatrix.value.copy(camera.modelViewMatrix).invert();
 		this.material.uniforms.uInvProjectionMatrix.value = camera.projectionMatrixInverse;
 		renderer.getSize(this.material.uniforms.uPixelSize.value);
 	}

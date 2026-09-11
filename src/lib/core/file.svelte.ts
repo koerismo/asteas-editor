@@ -47,6 +47,23 @@ export class RectFile {
 		return entry;
 	}
 
+	copyRect(index: number): RectEntry {
+		const entry = new RectEntry().copy(this.rects[index]);
+		this.rects.push(entry);
+
+		this.history.add({
+			type: 'add_rect',
+			undo: () => {
+				this.rects.pop();
+			},
+			redo: () => {
+				this.rects.push(entry);
+			}
+		});
+
+		return entry;
+	}
+
 	removeRects(indices: number[]) {
 		indices.sort((a, b) => a - b);
 
@@ -105,9 +122,14 @@ export class RectFile {
 		redo();
 	}
 
-	setRectBounds(index: number, bounds: AABB) {
+	setRectBounds(index: number, bounds: AABB, noEntry: boolean = false) {
 		if (this.rects[index].equals(bounds))
 			return;
+
+		if (noEntry) {
+			this.rects[index].copy(bounds);
+			return;
+		}
 
 		const newBounds = new AABB().copy(bounds);
 		const oldBounds = new AABB().copy(this.rects[index]);
@@ -215,10 +237,12 @@ export class RectEntry extends AABB_Methods {
 	static g_rectCount = 0;
 	uuid = (RectEntry.g_rectCount++);
 
-	constructor(rect: HotspotRect) {
+	constructor(rect?: HotspotRect | RectEntry) {
 		super();
-		this.copy(rect);
-		this.flags = rect.flags;
+		if (rect) {
+			this.copy(rect);
+			this.flags = rect.flags;
+		}
 	}
 
 	get width() { return this.max_x - this.min_x; }
