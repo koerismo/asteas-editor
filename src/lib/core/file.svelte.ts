@@ -104,9 +104,108 @@ export class RectFile {
 
 		redo();
 	}
+
+	setRectBounds(index: number, bounds: AABB) {
+		if (this.rects[index].equals(bounds))
+			return;
+
+		const newBounds = new AABB().copy(bounds);
+		const oldBounds = new AABB().copy(this.rects[index]);
+
+		const redo = () => {
+			this.rects[index].copy(newBounds);
+		}
+
+		const undo = () => {
+			this.rects[index].copy(oldBounds);
+		}
+
+		this.history.add({
+			type: 'set_size',
+			undo, redo
+		});
+		
+		redo();
+	}
 }
 
-export class RectEntry {
+export interface Vec2Like {
+	x: number;
+	y: number;
+}
+
+class AABB_Methods {
+	declare min_x: number;
+	declare min_y: number;
+	declare max_x: number;
+	declare max_y: number;
+
+	get center_x() {
+		return (this.min_x + this.max_x) * 0.5;
+	}
+
+	get center_y() {
+		return (this.min_y + this.max_y) * 0.5;
+	}
+
+	getSize(v: Vec2Like = {} as Vec2Like): Vec2Like {
+		v.x = this.width;
+		v.y = this.height;
+		return v;
+	}
+
+	containsPoint(v: Vec2Like): boolean {
+		return (
+			v.x >= this.min_x && v.x <= this.max_x &&
+			v.y >= this.min_y && v.y <= this.max_y
+		);
+	}
+
+	set(x1: number, y1: number, x2: number, y2: number) {
+		this.min_x = x1;
+		this.min_y = y1;
+		this.max_x = x2;
+		this.max_y = y2;
+		return this;
+	}
+
+	equals(v: AABB) {
+		return (
+			v.min_x === this.min_x && v.min_y === this.min_y &&
+			v.max_x === this.max_x && v.max_y === this.max_y
+		);
+	}
+
+	translate(x: number, y: number) {
+		this.min_x += x;
+		this.max_x += x;
+		this.min_y += y;
+		this.max_y += y;
+		return this;
+	}
+
+	copy(b: { min_x: number; max_x: number; min_y: number; max_y: number; }) {
+		this.set(b.min_x, b.min_y, b.max_x, b.max_y);
+		return this;
+	}
+
+	get width() {
+		return this.max_x - this.min_x;
+	}
+
+	get height() {
+		return this.max_y - this.min_y;
+	}
+}
+
+export class AABB extends AABB_Methods {
+	min_x = 0;
+	min_y = 0;
+	max_x = 0;
+	max_y = 0;
+}
+
+export class RectEntry extends AABB_Methods {
 	flags: number = $state(0);
 	min_x: number = $state(0);
 	min_y: number = $state(0);
@@ -117,11 +216,9 @@ export class RectEntry {
 	uuid = (RectEntry.g_rectCount++);
 
 	constructor(rect: HotspotRect) {
+		super();
+		this.copy(rect);
 		this.flags = rect.flags;
-		this.min_x = rect.min_x;
-		this.min_y = rect.min_y;
-		this.max_x = rect.max_x;
-		this.max_y = rect.max_y;
 	}
 
 	get width() { return this.max_x - this.min_x; }

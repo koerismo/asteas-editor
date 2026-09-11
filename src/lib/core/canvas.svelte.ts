@@ -11,11 +11,15 @@ import { RectMode, SelectionRect } from './viewport/rect.js';
 import { Button, MouseBound } from './viewport/mouse.js';
 import { getEditorCtx, type EditorState } from './context.svelte.js';
 
+import { GridObject } from './viewport/grid.js';
+
 const commonQuad = new Three.PlaneGeometry();
 commonQuad.translate(0.5, 0.5, 0);
 
 export class CanvasRenderer extends MouseBound {
 	_mousePosWorld = new Three.Vector2();
+
+	grid: GridObject = new GridObject();
 
 	state: EditorState;
 	alive: boolean = false;
@@ -44,21 +48,25 @@ export class CanvasRenderer extends MouseBound {
 
 		this.alive = true;
 		this.scene.background = new Three.Color(0x111111);
+		this.scene.add(this.grid);
 
 		this.init();
 		this.resize();
 		this.render();
 
-		this.disposables.push(bound(window, 'resize', this.resize.bind(this)));
+		const observer = new ResizeObserver(this.resize.bind(this));
+		observer.observe(this.canvas);
+		
+		this.disposables.push(() => observer.disconnect());
 		this.disposables.push(
 			$effect.root(() => {
 				$effect(() => {
-					console.log('updating...');
+					console.log('Building rects...');
 					this.rebuildRects(this.state.file?.rects ?? []);
 				});
 				$effect(() => {
 					this.setActiveRect(this.state.active);
-				})
+				});
 			})
 		);
 	}
@@ -76,6 +84,7 @@ export class CanvasRenderer extends MouseBound {
 			parentEl.clientHeight * devicePixelRatio,
 			false
 		);
+		this.updateCamera();
 	}
 
 	updateCamera() {
@@ -104,7 +113,7 @@ export class CanvasRenderer extends MouseBound {
 		const oldZoom = this.zoom;
 		this.zoom = clamp(
 			Math.pow(Math.E, Math.log(this.zoom) - deltaY * 0.001),
-			1 / 2048,
+			1 / 4096,
 			1 / 32,
 		);
 
@@ -119,14 +128,21 @@ export class CanvasRenderer extends MouseBound {
 
 	onMouseMove(event: MouseEvent): void {
 		this.screenToWorld(this._mousePosNorm, this._mousePosWorld);
+		this.grid.setMousePos(this._mousePosWorld);
 
 		if (this._mouseButton === Button.Left && this.heldRectId !== -1) {
 			if (this.heldRectCorner === -1) {
 				this.rectBoxes[this.heldRectId]
-					.translate({ x: event.movementX * this.pixelSize * 2, y: -event.movementY * this.pixelSize * 2 });
+					.visualSetTranslation(
+						Math.round((event.offsetX - this._mouseDownPos.x) * this.pixelSize * 2),
+						Math.round((event.offsetY - this._mouseDownPos.y) * this.pixelSize * -2),
+					);
 			} else {
 				this.rectBoxes[this.heldRectId]
-					.setCorner(this.heldRectCorner, this._mousePosWorld);
+					.visualSetCorner(this.heldRectCorner, {
+						x: Math.round(this._mousePosWorld.x),
+						y: Math.round(this._mousePosWorld.y),
+					});
 			}
 			return;
 		}
@@ -160,6 +176,11 @@ export class CanvasRenderer extends MouseBound {
 	}
 
 	onMouseUp(event: MouseEvent): void {
+		if (this.heldRectId !== -1 && this._mouseDragged) {
+			const box = this.rectBoxes[this.heldRectId];
+			this.state.file.setRectBounds(this.heldRectId, box.aabb);
+			this.rectBoxes[this.heldRectId].visualSync();
+		}
 		this.heldRectCorner = -1;
 	}
 
@@ -185,14 +206,11 @@ export class CanvasRenderer extends MouseBound {
 
 		for (let i = 0; i < rects.length; i++) {
 			if (i >= oldLength) {
-				this.rectBoxes[i] = new SelectionRect(
-					new Three.Box2(new Three.Vector2(), new Three.Vector2())
-				);
+				this.rectBoxes[i] = new SelectionRect(rects[i], this.pixelSize);
 				this.scene.add(this.rectBoxes[i]);
 			}
 
-			const rect = rects[i];
-			this.rectBoxes[i].setBounds(rect.min_x, rect.min_y, rect.max_x, rect.max_y);
+			this.rectBoxes[i].setRect(rects[i]);
 		}
 	}
 
@@ -217,7 +235,7 @@ export class CanvasRenderer extends MouseBound {
 	getRectAtPoint(point: Three.Vector2Like) {
 		for (let i=0; i<this.rectBoxes.length; i++) {
 			const rect = this.rectBoxes[i];
-			if (!rect.bounds.containsPoint(point as Three.Vector2)) continue;
+			if (!rect.aabb.containsPoint(point as Three.Vector2)) continue;
 			return i;
 		}
 		return -1;

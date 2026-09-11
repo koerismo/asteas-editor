@@ -1,4 +1,5 @@
 import * as Three from 'three';
+import { AABB, RectEntry } from '../file.svelte.js';
 
 const handleUrl = './viewport/handle.png';
 const handleGeometry = new Three.PlaneGeometry(1, 1);
@@ -35,31 +36,40 @@ const V_YNEG = new Three.Vector3(1, -1, 1);
 
 export type RectMode = typeof RectMode[keyof typeof RectMode];
 export const RectMode = {
+	Invalid: -1,
 	None: 0,
 	Active: 1,
 	Dragging: 2,
 } as const;
 
 export class SelectionRect extends Three.Object3D {
-	bounds!: Three.Box2;
-	mode!: RectMode;
+	mode: RectMode = RectMode.Invalid;
+	rect: RectEntry;
+	aabb: AABB = new AABB();
 
-	protected pixelSize: number = 0.0;
+	protected pixelSize: number;
 	protected handleMeshes = new Three.InstancedMesh(handleGeometry, handleMaterial, 4);
 	protected borderMeshes = new Three.InstancedMesh(rectGeometry, borderMaterial, 4);
 	protected centerMesh = new Three.Mesh(rectGeometry, centerMaterial);
 
-	constructor(bounds: Three.Box2) {
+	constructor(rect: RectEntry, pixelSize: number) {
 		super();
 		this.frustumCulled = false;
+		this.pixelSize = pixelSize;
+
+		this.rect = rect;
+		this.aabb.copy(rect);
 
 		this.add(this.handleMeshes);
 		this.add(this.borderMeshes);
 		this.add(this.centerMesh);
-
-		this.bounds = bounds;
-		this.updateMesh();
 		this.setMode(RectMode.None);
+	}
+
+	setRect(rect: RectEntry) {
+		this.rect = rect;
+		this.aabb.set(rect.min_x, rect.min_y, rect.max_x, rect.max_y);
+		this.updateMesh();
 	}
 
 	setMode(mode: RectMode) {
@@ -76,44 +86,33 @@ export class SelectionRect extends Three.Object3D {
 		if (this.borderMeshes.visible) this._setupEdges();
 		this._setupCenter();
 	}
-
-	setBoundsRaw(bounds: Three.Box2) {
-		this.bounds = bounds;
+	
+	visualSetTranslation(x: number, y: number) {
+		this.aabb.copy(this.rect);
+		this.aabb.translate(x, y);
 		this.updateMesh();
 	}
 
-	setBounds(x1: number, y1: number, x2: number, y2: number) {
-		this.bounds.min.set(x1, y1);
-		this.bounds.max.set(x2, y2);
+	visualSetCorner(corner: number, pos: Three.Vector2Like) {
+		corner & 1
+			? this.aabb.max_x = pos.x
+			: this.aabb.min_x = pos.x;
+		corner & 2
+			? this.aabb.max_y = pos.y
+			: this.aabb.min_y = pos.y;
 		this.updateMesh();
 	}
 
-	translate(delta: Three.Vector2Like) {
-		this.bounds.translate(delta as Three.Vector2);
-		this.updateMesh();
+	visualSync() {
+		this.aabb.copy(this.rect);
 	}
-
-	setCorner(corner: number, pos: Three.Vector2Like) {
-		const vx = corner & 1 ? this.bounds.max : this.bounds.min;
-		const vy = corner & 2 ? this.bounds.max : this.bounds.min;
-		vx.x = pos.x;
-		vy.y = pos.y;
-		this.updateMesh();
-	}
-
-	// getRectDistance(pt: Three.Vector2Like, corner: number) {
-	// 	const cx = corner & 1 ? this.bounds.max.x : this.bounds.min.x;
-	// 	const cy = corner & 2 ? this.bounds.max.y : this.bounds.min.y;
-	// 	const r = this.pixelSize * HANDLE_SIZE * 0.5;
-	// 	return Math.max(Math.abs(pt.x - cx), Math.abs(pt.y - cy));
-	// }
 
 	getPointCorner(pt: Three.Vector2Like): number {
-		const bottom = pt.y > (this.bounds.max.y + this.bounds.min.y) * 0.5;
-		const right = pt.x > (this.bounds.max.x + this.bounds.min.x) * 0.5;
+		const bottom = pt.y > this.aabb.center_y;
+		const right = pt.x > this.aabb.center_x;
 		
-		const cx = right ? this.bounds.max.x : this.bounds.min.x;
-		const cy = bottom ? this.bounds.max.y : this.bounds.min.y;
+		const cx = right ? this.aabb.max_x : this.aabb.min_x;
+		const cy = bottom ? this.aabb.max_y : this.aabb.min_y;
 		const r = this.pixelSize * HANDLE_SIZE * 0.5;
 
 		if (Math.abs(pt.x - cx) > r || Math.abs(pt.y - cy) > r) return -1;
@@ -130,28 +129,27 @@ export class SelectionRect extends Three.Object3D {
 
 	_setupHandles() {
 		const mat4 = this._resizeMesh_mat4;
-		const min = this.bounds.min;
-		const max = this.bounds.max;
+		const { min_x, min_y, max_x, max_y } = this.aabb;
 
 		const S = HANDLE_SIZE * this.pixelSize;
 
-		mat4.makeTranslation(min.x, min.y, 0);
+		mat4.makeTranslation(min_x, min_y, 0);
 		mat4.scale(V_YNEG);
 		mat4.elements[0] *= S;
 		mat4.elements[5] *= S;
 		this.handleMeshes.setMatrixAt(0, mat4);
 		
 		mat4.scale(V_XNEG);
-		mat4.setPosition(max.x, min.y, 0);
+		mat4.setPosition(max_x, min_y, 0);
 		this.handleMeshes.setMatrixAt(1, mat4);
 		
 		mat4.scale(V_YNEG);
 		mat4.scale(V_XNEG);
-		mat4.setPosition(min.x, max.y, 0);
+		mat4.setPosition(min_x, max_y, 0);
 		this.handleMeshes.setMatrixAt(2, mat4);
 		
 		mat4.scale(V_XNEG);
-		mat4.setPosition(max.x, max.y, 0);
+		mat4.setPosition(max_x, max_y, 0);
 		this.handleMeshes.setMatrixAt(3, mat4);
 
 		this.handleMeshes.instanceMatrix.needsUpdate = true;
@@ -159,8 +157,9 @@ export class SelectionRect extends Three.Object3D {
 
 	_setupEdges() {
 		const mat4 = this._resizeMesh_mat4;
-		const min = this.bounds.min;
-		const max = this.bounds.max;
+		const ab = this.aabb;
+		const w = this.aabb.width;
+		const h = this.aabb.height;
 
 		const withBounds = (x: number, y: number, w: number, h: number) => {
 			mat4.set(
@@ -174,28 +173,25 @@ export class SelectionRect extends Three.Object3D {
 		const S1 = this.pixelSize;
 		const S2 = S1 * 2;
 
-		withBounds(min.x - S1, min.y, max.x - min.x + S2, -S1);
+		withBounds(ab.min_x - S1, ab.min_y, w + S2, -S1);
 		this.borderMeshes.setMatrixAt(0, mat4);
 		
-		withBounds(min.x - S1, max.y, max.x - min.x + S2, S1);
+		withBounds(ab.min_x - S1, ab.max_y, w + S2, S1);
 		this.borderMeshes.setMatrixAt(1, mat4);
 		
-		withBounds(min.x, min.y, -S1, max.y - min.y);
+		withBounds(ab.min_x, ab.min_y, -S1, h);
 		this.borderMeshes.setMatrixAt(2, mat4);
 		
-		withBounds(max.x, min.y, S1, max.y - min.y);
+		withBounds(ab.max_x, ab.min_y, S1, h);
 		this.borderMeshes.setMatrixAt(3, mat4);
 
 		this.borderMeshes.instanceMatrix.needsUpdate = true;
 	}
 
-	_setupCenter_vec2 = new Three.Vector2();
-
 	_setupCenter() {
-		this.centerMesh.position.x = this.bounds.min.x;
-		this.centerMesh.position.y = this.bounds.min.y;
-		this.bounds.getSize(this._setupCenter_vec2);
-		this.centerMesh.scale.x = this._setupCenter_vec2.x;
-		this.centerMesh.scale.y = this._setupCenter_vec2.y;
+		this.centerMesh.position.x = this.aabb.min_x;
+		this.centerMesh.position.y = this.aabb.min_y;
+		this.centerMesh.scale.x = this.aabb.width;
+		this.centerMesh.scale.y = this.aabb.height;
 	}
 }

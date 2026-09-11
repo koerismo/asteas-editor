@@ -15,15 +15,20 @@ export const Button = {
 
 export abstract class MouseBound extends Disposable {
 	_mouseWithin = false;
+	_mouseDragged = false;
 	_mouseButton: number = 0;
 	_mousePos = { x: 0, y: 0 };
 	_mousePosNorm = { x: 0, y: 0 };
+	_mouseDownPos = { x: 0, y: 0 };
 
 	constructor(element: HTMLElement) {
 		super();
 		this.disposables.push(Binder(element)
 			.add('mousedown', event => {
 				this._mouseButton = event.buttons;
+				this._mouseDragged = false;
+				this._mouseDownPos.x = event.offsetX;
+				this._mouseDownPos.y = event.offsetY;
 				this.onMouseDown(event);
 			})
 			.add('mouseup', event => {
@@ -41,6 +46,7 @@ export abstract class MouseBound extends Disposable {
 				if (this._mouseButton === Button.Middle) {
 					this.onPan(event.movementX, event.movementY);
 				} else if (this._mouseButton === Button.Left) {
+					this._mouseDragged = true;
 					this.onDrag(event.movementX, event.movementY);
 				}
 
