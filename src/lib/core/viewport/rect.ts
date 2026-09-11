@@ -54,7 +54,9 @@ export class SelectionRect extends Three.Object3D {
 
 	constructor(rect: RectEntry, pixelSize: number) {
 		super();
-		this.frustumCulled = false;
+		// this.frustumCulled = false;
+		this.handleMeshes.frustumCulled = false;
+		this.borderMeshes.frustumCulled = false;
 		this.pixelSize = pixelSize;
 
 		this.rect = rect;

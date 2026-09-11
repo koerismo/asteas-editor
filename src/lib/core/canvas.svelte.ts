@@ -16,6 +16,10 @@ import { GridObject } from './viewport/grid.js';
 const commonQuad = new Three.PlaneGeometry();
 commonQuad.translate(0.5, 0.5, 0);
 
+function snap(v: number, inc: number) {
+	return Math.round(v / inc) * inc;
+}
+
 export class CanvasRenderer extends MouseBound {
 	_mousePosWorld = new Three.Vector2();
 
@@ -32,10 +36,15 @@ export class CanvasRenderer extends MouseBound {
 
 	needsCameraUpdate: boolean = true;
 	pixelSize: number = 1.0;
-	zoom: number = 1.0;
+	zoom: number = 1 / 512;
 
 	heldRectId: number = -1;
 	heldRectCorner: number = -1;
+
+	getActiveRect(): SelectionRect | undefined {
+		if (this.heldRectId !== -1)
+		return this.rectBoxes[this.heldRectId];
+	}
 
 	constructor(public canvas: HTMLCanvasElement) {
 		super(canvas);
@@ -84,7 +93,11 @@ export class CanvasRenderer extends MouseBound {
 			parentEl.clientHeight * devicePixelRatio,
 			false
 		);
-		this.updateCamera();
+		this.needsCameraUpdate = true;
+	}
+
+	getGridSnap() {
+
 	}
 
 	updateCamera() {
@@ -95,6 +108,7 @@ export class CanvasRenderer extends MouseBound {
 		this.camera.bottom = -area;
 		this.camera.left = -ratio * area;
 		this.camera.right = ratio * area;
+		this.grid.setGridPower(Math.max(Math.log2(area) - 4, 1));
 
 		for (let i = 0; i < this.rectBoxes.length; i++) {
 			this.rectBoxes[i].setPixelSize(this.pixelSize);
@@ -114,7 +128,7 @@ export class CanvasRenderer extends MouseBound {
 		this.zoom = clamp(
 			Math.pow(Math.E, Math.log(this.zoom) - deltaY * 0.001),
 			1 / 4096,
-			1 / 32,
+			1 / 16,
 		);
 
 		const farMovement = 1 / oldZoom - 1 / this.zoom;
@@ -131,17 +145,19 @@ export class CanvasRenderer extends MouseBound {
 		this.grid.setMousePos(this._mousePosWorld);
 
 		if (this._mouseButton === Button.Left && this.heldRectId !== -1) {
+			const gridSnap = this.grid.getIncrement();
+			const activeRect = this.getActiveRect()!;
 			if (this.heldRectCorner === -1) {
-				this.rectBoxes[this.heldRectId]
+				activeRect
 					.visualSetTranslation(
-						Math.round((event.offsetX - this._mouseDownPos.x) * this.pixelSize * 2),
-						Math.round((event.offsetY - this._mouseDownPos.y) * this.pixelSize * -2),
+						snap((event.offsetX - this._mouseDownPos.x) * this.pixelSize *  2, gridSnap),
+						snap((event.offsetY - this._mouseDownPos.y) * this.pixelSize * -2, gridSnap),
 					);
 			} else {
-				this.rectBoxes[this.heldRectId]
+				activeRect
 					.visualSetCorner(this.heldRectCorner, {
-						x: Math.round(this._mousePosWorld.x),
-						y: Math.round(this._mousePosWorld.y),
+						x: snap(this._mousePosWorld.x, gridSnap),
+						y: snap(this._mousePosWorld.y, gridSnap),
 					});
 			}
 			return;
@@ -155,6 +171,12 @@ export class CanvasRenderer extends MouseBound {
 			case 3: { cursor = 'ne-resize'; break }
 		}
 
+		if (!cursor) {
+			if (this.getActiveRect()?.aabb.containsPoint(this._mousePosWorld)) {
+				cursor = 'move';
+			}
+		}
+
 		this.setCursor(cursor);
 	}
 
@@ -166,7 +188,7 @@ export class CanvasRenderer extends MouseBound {
 			console.log('New corner selection', this.heldRectCorner);
 		}
 
-		if (this.heldRectCorner === -1) {
+		if (this.heldRectCorner === -1 && !(this.getActiveRect()?.aabb.containsPoint(this._mousePosWorld))) {
 			this.heldRectId = this.getRectAtPoint(this._mousePosWorld);
 			this.state.active = this.heldRectId;
 			console.log('New rect selection:', this.heldRectId);

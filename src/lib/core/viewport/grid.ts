@@ -21,6 +21,8 @@ export class GridObject extends Three.Mesh<
 	Three.PlaneGeometry,
 	Three.ShaderMaterial
 > {
+	gridPower = 0.0;
+
 	constructor() {
 		super(
 			new Three.PlaneGeometry(2, 2),
@@ -40,11 +42,19 @@ export class GridObject extends Three.Mesh<
 	): void {
 		// this.material.uniforms.vInvViewMatrix.value.copy(camera.modelViewMatrix).invert();
 		this.material.uniforms.uInvProjectionMatrix.value = camera.projectionMatrixInverse;
-		this.material.uniforms.uGridPower.value = Math.log2(camera.top) - 4;
 		renderer.getSize(this.material.uniforms.uPixelSize.value);
+	}
+	
+	setGridPower(v: number) {
+		this.gridPower = v;
+		this.material.uniforms.uGridPower.value = v;
 	}
 
 	setMousePos(v: Three.Vector2Like) {
 		this.material.uniforms.uMousePos.value.copy(v);
+	}
+
+	getIncrement() {
+		return 2 ** Math.round(this.gridPower - 1);
 	}
 }
