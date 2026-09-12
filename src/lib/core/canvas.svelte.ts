@@ -1,11 +1,12 @@
 import * as Three from 'three';
 
 // General utility
-import type { RectEntry } from './file.svelte.js';
+import { RectEntry } from './file.svelte.js';
+import { hs } from './viewport/preview.js';
 
 // Viewport-specific
 import { clamp } from 'three/src/math/MathUtils.js';
-import { RectMode, SelectionRect } from './viewport/rect.js';
+import { RectMode, SelectionRect } from './viewport/selection_rect.js';
 import { Button, MouseBound } from './viewport/mouse.js';
 import { getEditorCtx, type EditorState } from './context.svelte.js';
 
@@ -44,7 +45,9 @@ export class CanvasRenderer extends MouseBound {
 	image: Three.Texture | undefined;
 	imagePlane = new Three.Mesh(
 		commonQuad,
-		new Three.MeshBasicMaterial()
+		new Three.MeshBasicMaterial({
+			side: Three.BackSide
+		})
 	);
 
 	constructor(public canvas: HTMLCanvasElement) {
@@ -54,7 +57,8 @@ export class CanvasRenderer extends MouseBound {
 
 		this.renderer = new Three.WebGLRenderer({ canvas, antialias: true, depth: false });
 		this.camera = new Three.OrthographicCamera();
-		this.camera.position.z = 10;
+		this.camera.position.z = 64;
+		this.camera.near = 1;
 
 		this.alive = true;
 		this.scene.background = new Three.Color(0x111111);
@@ -102,8 +106,8 @@ export class CanvasRenderer extends MouseBound {
 		const ratio = this.canvas.width / this.canvas.height;
 		const area = 1 / this.zoom;
 
-		this.camera.top = area;
-		this.camera.bottom = -area;
+		this.camera.top = -area;
+		this.camera.bottom = area;
 		this.camera.left = -ratio * area;
 		this.camera.right = ratio * area;
 		this.grid.setGridPower(Math.max(Math.log2(area) - 4, 1));
@@ -118,14 +122,14 @@ export class CanvasRenderer extends MouseBound {
 
 	onPan(x: number, y: number) {
 		this.camera.position.x -= x * this.pixelSize * devicePixelRatio;
-		this.camera.position.y += y * this.pixelSize * devicePixelRatio;
+		this.camera.position.y -= y * this.pixelSize * devicePixelRatio;
 	}
 
 	onZoom(deltaY: number): void {
 		const oldZoom = this.zoom;
 		this.zoom = clamp(
 			Math.pow(Math.E, Math.log(this.zoom) - deltaY * 0.001),
-			1 / 4096,
+			1 / 8192,
 			1 / 16,
 		);
 
@@ -134,7 +138,7 @@ export class CanvasRenderer extends MouseBound {
 		const mY = this._mousePosNorm.y * 2 - 1;
 
 		this.camera.position.x += mX * farMovement * this.canvas.width / this.canvas.height;
-		this.camera.position.y -= mY * farMovement;
+		this.camera.position.y += mY * farMovement;
 		this.needsCameraUpdate = true;
 	}
 
@@ -149,8 +153,8 @@ export class CanvasRenderer extends MouseBound {
 			if (this.heldRectCorner === -1) {
 				activeRect
 					.visualSetTranslation(
-						snap((event.offsetX - this._mouseDownPos.x) * this.pixelSize *  2, gridSnap),
-						snap((event.offsetY - this._mouseDownPos.y) * this.pixelSize * -2, gridSnap),
+						snap((event.offsetX - this._mouseDownPos.x) * this.pixelSize * 2, gridSnap),
+						snap((event.offsetY - this._mouseDownPos.y) * this.pixelSize * 2, gridSnap),
 					);
 			} else {
 				activeRect
@@ -164,10 +168,10 @@ export class CanvasRenderer extends MouseBound {
 
 		let cursor = '';
 		switch (this.getCornerAtPoint(this._mousePosWorld)) {
-			case 0: { cursor = 'sw-resize'; break }
-			case 1: { cursor = 'se-resize'; break }
-			case 2: { cursor = 'nw-resize'; break }
-			case 3: { cursor = 'ne-resize'; break }
+			case 0: { cursor = 'nw-resize'; break }
+			case 1: { cursor = 'ne-resize'; break }
+			case 2: { cursor = 'sw-resize'; break }
+			case 3: { cursor = 'se-resize'; break }
 		}
 
 		if (!cursor) {
@@ -316,6 +320,9 @@ export class CanvasRenderer extends MouseBound {
 
     render() {
 		if (!this.alive) return;
+
+		hs.mesh.rotation.y += Math.PI * 0.002;
+		hs.mesh.rotation.x += Math.PI * 0.003;
 		
 		if (this.needsCameraUpdate) {
 			this.needsCameraUpdate = false;

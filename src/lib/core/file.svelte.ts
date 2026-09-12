@@ -1,5 +1,7 @@
-import type { HotspotRect, VHotspotResource } from "vtf-js/resources";
+import type { HotspotRect, VHotspotResource } from 'vtf-js/resources';
 import { createContext } from 'svelte';
+
+import { AABB, AABB_Methods } from './aabb.js';
 import { UndoRedo } from './undo.svelte.js';
 
 export const [getFile, setFile] = createContext<RectFile>();
@@ -151,81 +153,6 @@ export class RectFile {
 	}
 }
 
-export interface Vec2Like {
-	x: number;
-	y: number;
-}
-
-class AABB_Methods {
-	declare min_x: number;
-	declare min_y: number;
-	declare max_x: number;
-	declare max_y: number;
-
-	get center_x() {
-		return (this.min_x + this.max_x) * 0.5;
-	}
-
-	get center_y() {
-		return (this.min_y + this.max_y) * 0.5;
-	}
-
-	getSize(v: Vec2Like = {} as Vec2Like): Vec2Like {
-		v.x = this.width;
-		v.y = this.height;
-		return v;
-	}
-
-	containsPoint(v: Vec2Like): boolean {
-		return (
-			v.x >= this.min_x && v.x <= this.max_x &&
-			v.y >= this.min_y && v.y <= this.max_y
-		);
-	}
-
-	set(x1: number, y1: number, x2: number, y2: number) {
-		this.min_x = x1;
-		this.min_y = y1;
-		this.max_x = x2;
-		this.max_y = y2;
-		return this;
-	}
-
-	equals(v: AABB) {
-		return (
-			v.min_x === this.min_x && v.min_y === this.min_y &&
-			v.max_x === this.max_x && v.max_y === this.max_y
-		);
-	}
-
-	translate(x: number, y: number) {
-		this.min_x += x;
-		this.max_x += x;
-		this.min_y += y;
-		this.max_y += y;
-		return this;
-	}
-
-	copy(b: { min_x: number; max_x: number; min_y: number; max_y: number; }) {
-		this.set(b.min_x, b.min_y, b.max_x, b.max_y);
-		return this;
-	}
-
-	get width() {
-		return this.max_x - this.min_x;
-	}
-
-	get height() {
-		return this.max_y - this.min_y;
-	}
-}
-
-export class AABB extends AABB_Methods {
-	min_x = 0;
-	min_y = 0;
-	max_x = 0;
-	max_y = 0;
-}
 
 export class RectEntry extends AABB_Methods {
 	flags: number = $state(0);

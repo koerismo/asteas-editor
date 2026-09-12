@@ -1,5 +1,6 @@
 import * as Three from 'three';
-import { AABB, RectEntry } from '../file.svelte.js';
+import { AABB } from '$lib/core/aabb.js';
+import { RectEntry } from '$lib/core/file.svelte.js';
 
 const handleUrl = './viewport/handle.png';
 const handleGeometry = new Three.PlaneGeometry(1, 1);
@@ -21,12 +22,14 @@ const centerMaterial = new Three.MeshBasicMaterial({
 	color: 0x615FFF,
 	opacity: 0.1,
 	transparent: true,
+	side: Three.BackSide,
 });
 
 const centerActiveMaterial = new Three.MeshBasicMaterial({
 	color: 0x615FFF,
 	opacity: 0.3,
 	transparent: true,
+	side: Three.BackSide,
 });
 
 const HANDLE_SIZE = 32;
