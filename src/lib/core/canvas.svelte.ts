@@ -47,11 +47,6 @@ export class CanvasRenderer extends MouseBound {
 		new Three.MeshBasicMaterial()
 	);
 
-	getActiveRect(): SelectionRect | undefined {
-		if (this.heldRectId !== -1)
-		return this.rectBoxes[this.heldRectId];
-	}
-
 	constructor(public canvas: HTMLCanvasElement) {
 		super(canvas);
 
@@ -150,6 +145,7 @@ export class CanvasRenderer extends MouseBound {
 		if (this._mouseButton === Button.Left && this.heldRectId !== -1) {
 			const gridSnap = this.grid.getIncrement();
 			const activeRect = this.getActiveRect()!;
+
 			if (this.heldRectCorner === -1) {
 				activeRect
 					.visualSetTranslation(
@@ -174,8 +170,6 @@ export class CanvasRenderer extends MouseBound {
 			case 3: { cursor = 'ne-resize'; break }
 		}
 
-		if (this.canBegin)
-
 		if (!cursor) {
 			if (this.getActiveRect()?.aabb.containsPoint(this._mousePosWorld)) {
 				cursor = 'move';
@@ -197,7 +191,6 @@ export class CanvasRenderer extends MouseBound {
 			this.heldRectId = this.getRectAtPoint(this._mousePosWorld);
 			this.state.active = this.heldRectId;
 		}
-
 
 		if (this.heldRectId !== -1 && this.heldRectCorner === -1 && mouseInActiveRect && event.shiftKey) {
 			this.state.file.copyRect(this.heldRectId);
@@ -285,6 +278,11 @@ export class CanvasRenderer extends MouseBound {
 		this.updateRectModes();
 	}
 
+	getActiveRect(): SelectionRect | undefined {
+		if (this.heldRectId !== -1)
+			return this.rectBoxes[this.heldRectId];
+	}
+
 	updateRectModes() {
 		for (let i = 0; i < this.rectBoxes.length; i++) {
 			const r = this.rectBoxes[i];
@@ -298,7 +296,6 @@ export class CanvasRenderer extends MouseBound {
 
 	async setImage(url: string = 'test.vtf') {
 		const v = await new VTFLoader().load(url);
-		console.log(v);
 		this.setTexture(v);
 	}
 

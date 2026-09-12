@@ -9,7 +9,7 @@ const gridMaterial = new Three.ShaderMaterial({
 		uPixelSize: { value: new Three.Vector2(1.0, 1.0) },
 		uGridPower: { value: 1.0 },
 		uMousePos: { value: new Three.Vector2() },
-		opacity: { value: 1.0 },
+		opacity: { value: 0.3 },
 	},
 	vertexShader: GridVert,
 	fragmentShader: GridFrag,
@@ -42,7 +42,12 @@ export class GridObject extends Three.Mesh<
 		group: Three.Group,
 	): void {
 		this.material.uniforms.uInvProjectionMatrix.value = camera.projectionMatrixInverse;
-		renderer.getSize(this.material.uniforms.uPixelSize.value);
+		renderer.getSize(
+			this.material.uniforms.uPixelSize.value
+		);
+		this.material.uniforms.uPixelSize.value.x /= devicePixelRatio;
+		this.material.uniforms.uPixelSize.value.y /= devicePixelRatio;
+
 	}
 	
 	setGridPower(v: number) {
@@ -55,6 +60,6 @@ export class GridObject extends Three.Mesh<
 	}
 
 	getIncrement() {
-		return 2 ** Math.round(this.gridPower - 1);
+		return 2 ** Math.round(this.gridPower - 1.2);
 	}
 }
