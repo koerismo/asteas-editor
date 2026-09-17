@@ -64,7 +64,9 @@
 		shiftKey = event.shiftKey;
 
 		if (event.key === 'Delete' || event.key === 'Backspace') {
+			context.commitActions();
 			context.rectsRemove(Array.from(context.selection));
+			context.commitActions();
 			return;
 		}
 
@@ -74,7 +76,9 @@
 		}
 		
 		if (event.key === 'Escape') {
+			context.commitActions();
 			context.selectionClear();
+			context.commitActions();
 			return;
 		}
 	}
@@ -88,12 +92,13 @@
 	}
 
 	export function toggleAllSelected() {
+		context.commitActions();
 		if (context.selection.size) {
 			context.selectionClear();
-			return;
+		} else {
+			context.selectionSetAll();
 		}
-	
-		context.selectionSetAll();
+		context.commitActions();
 	}
 
 	function isIdSelected(rectId: number) {
@@ -101,11 +106,13 @@
 	}
 
 	function setFlags(rectId: number, flags: number, mask: number) {
+		context.commitActions();
 		if (shiftKey && context.selection.has(rectId)) {
 			context.setRectFlags(Array.from(context.selection.values()), flags, mask);
 		} else {
 			context.setRectFlags([rectId], flags, mask);
 		}
+		context.commitActions();
 	}
 
 	function addRect() {
@@ -114,6 +121,7 @@
 				new HotspotRect(0x0, 0, 0, 100, 100)
 			)
 		]);
+		context.commitActions();
 	}
 </script>
 

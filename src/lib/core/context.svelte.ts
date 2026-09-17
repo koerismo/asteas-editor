@@ -162,21 +162,27 @@ export class EditorState {
 			oldFlags[i] = this.#rects[indices[i]].flags;
 		}
 
-		const redo = () => {
-			for (let i=0; i<indices.length; i++) {
-				const rect = this.#rects[indices[i]];
-				rect.flags ^= (rect.flags & mask);
-				rect.flags |= (flags & mask);
+		this.#history.add({
+			type: 'set_rect_flags',
+			fastMerge: true,
+			run: true,
+			redo: () => {
+				for (let i=0; i<indices.length; i++) {
+					const rect = this.#rects[indices[i]];
+					rect.flags ^= (rect.flags & mask);
+					rect.flags |= (flags & mask);
+				}
+				this.#rectSubscriber.update();
+			},
+	
+			undo: () => {
+				for (let i=0; i<indices.length; i++) {
+					this.#rects[indices[i]].flags = oldFlags[i];
+				}
+				this.#rectSubscriber.update();
 			}
-			this.#rectSubscriber.update();
-		};
-
-		const undo = () => {
-			for (let i=0; i<indices.length; i++) {
-				this.#rects[indices[i]].flags = oldFlags[i];
-			}
-			this.#rectSubscriber.update();
-		}
+		});
+		
 	}
 
 	setRects(rects: RectEntry[]) {
@@ -217,9 +223,6 @@ export class EditorState {
 			indicesOut[i] = idx;
 			next[idx++] = add[i];
 		}
-
-		console.log('new indices:', indicesOut);
-		console.log('new array:', next);
 
 		this.#history.add({
 			type: 'set_rects',

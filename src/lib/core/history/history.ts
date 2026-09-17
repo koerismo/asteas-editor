@@ -16,7 +16,7 @@ export class HistoryActionGroup<T> {
 		const prev = this.items.length && this.items[this.items.length - 1];
 		if (action.fastMerge && prev && prev.fastMerge && prev.type === action.type) {
 			prev.redo = action.redo;
-			console.info('Merging with quick method!');
+			// console.info('Merging with quick method!');
 		} else {
 			this.items.push(Object.assign({}, action));
 			console.warn('Merging with slow method!');
