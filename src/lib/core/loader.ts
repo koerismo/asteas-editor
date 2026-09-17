@@ -12,7 +12,7 @@ export class EditorInitializer {
 		const res = await fetch(url);
 		if (!res.ok) return console.error(res.status, res.statusText);
 		const file = new File([await res.blob()], url);
-		return this.loadFile(file);
+		return await this.loadFile(file);
 	}
 
 	async loadFile(file: File) {

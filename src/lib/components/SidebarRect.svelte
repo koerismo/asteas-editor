@@ -42,7 +42,7 @@
 	{...args}
 >
 	<div class="rect-info">
-		<code>#{index} ({rect.uuid})</code>
+		<code>#{index}</code>
 		<code>{rect.min_x},{rect.min_y} - {rect.width}x{rect.height}</code>
 	</div>
 	<div class="rect-props">

@@ -173,7 +173,7 @@ export class CanvasRenderer extends MouseBound {
 	onZoom(deltaY: number): void {
 		const oldZoom = this.zoom;
 		this.zoom = clamp(
-			Math.pow(Math.E, Math.log(this.zoom) - deltaY * 0.001),
+			Math.pow(Math.E, Math.log(this.zoom) - deltaY * 0.0018),
 			1 / 8192,
 			1 / 16,
 		);

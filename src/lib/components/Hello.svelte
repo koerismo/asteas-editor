@@ -20,10 +20,11 @@
 	import FileGrating from '$lib/assets/examples/grating.vtf?url';
 </script>
 
-{#snippet makeExample(img: string, url: string, title: string, author: string)}
+{#snippet makeExample(thumb: string, url: string, title: string, author: string)}
 	<HelloExample
-		{img}
-		onclick={() => loader.loadUrl(url)}
+		{thumb}
+		{url}
+		{loader}
 		{title}
 		{author}></HelloExample>
 {/snippet}
@@ -34,7 +35,7 @@
 			<img src={Icon} alt="Asteas Icon" />
 			Asteas Atlas Editor
 		</h1>
-		<b>Beta {APP_VERSION}</b>
+		<b>ALPHA {APP_VERSION}</b>
 	</div>
 	<hr>
 	<div class="content">

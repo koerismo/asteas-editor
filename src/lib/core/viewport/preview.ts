@@ -1,6 +1,6 @@
 import * as Three from 'three';
 import { Mat3x2, Rect, RectFitResult, RectFitter, Vec2 } from './hotspot.js';
-import type { RectEntry } from '../file.svelte.js';
+import type { RectEntry } from '../file.js';
 import { AABB } from '../aabb.js';
 
 export class ModelHotspotter {
