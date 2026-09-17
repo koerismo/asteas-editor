@@ -1,19 +1,20 @@
 import * as Three from 'three';
+import type { VImageEither } from 'vtf-js';
+import { clamp } from 'three/src/math/MathUtils.js';
 
 // General utility
-import { RectEntry } from './file.js';
+import { RectEntry } from '../file.js';
+import { AABB, type Vec2Like } from '../aabb.js';
+import { getEditorCtx, type EditorState } from '../context.svelte.js';
+
 // import { hs } from './viewport/preview.js';
 
 // Viewport-specific
-import { clamp } from 'three/src/math/MathUtils.js';
-import { RectMode, SelectionRect, VisualRect } from './viewport/selection_rect.js';
-import { Button, MouseBound } from './viewport/mouse.js';
-import { getEditorCtx, type EditorState } from './context.svelte.js';
+import { RectMode, SelectionRect, VisualRect } from './selection_rect.js';
+import { Button, MouseBound } from './mouse.js';
 
-import { GridObject } from './viewport/grid.js';
-import { VTFLoader } from './viewport/vtexture.js';
-import { AABB, type Vec2Like } from './aabb.js';
-import type { VImageEither } from 'vtf-js';
+import { GridObject } from './grid.js';
+import { VTFLoader } from './vtexture.js';
 
 const kCommonQuad = new Three.PlaneGeometry();
 kCommonQuad.translate(0.5, 0.5, 0);
@@ -77,10 +78,10 @@ export class CanvasRenderer extends MouseBound {
 		})
 	);
 
-	constructor(public canvas: HTMLCanvasElement) {
+	constructor(public canvas: HTMLCanvasElement, state: EditorState) {
 		super(canvas);
 
-		this.state = getEditorCtx();
+		this.state = state;
 
 		this.renderer = new Three.WebGLRenderer({ canvas, antialias: true, depth: false });
 		this.camera = new Three.OrthographicCamera();
@@ -91,14 +92,14 @@ export class CanvasRenderer extends MouseBound {
 		this.scene.background = new Three.Color(0x111111);
 
 		this.init();
-		this.resize();
+		this.onResizeEnd();
 
 		// Relies on pixelSize, so we want to get the sizing first.
 		this.selectionRect = new SelectionRect(new AABB(), this.pixelSize);
 		this.selectionRect.setMode(RectMode.Handles);
 		this.scene.add(this.selectionRect);
 		
-		const observer = new ResizeObserver(this.resize.bind(this));
+		const observer = new ResizeObserver(this.onResize.bind(this));
 		observer.observe(this.canvas);
 
 		// Begin render loop.
@@ -136,7 +137,15 @@ export class CanvasRenderer extends MouseBound {
 		this.setImage();
 	}
 
-	resize() {
+	_resizeEndTimeout: number | undefined;
+
+	onResize() {
+		clearTimeout(this._resizeEndTimeout);
+		this._resizeEndTimeout = setTimeout(() => this.onResizeEnd(), 10);
+	}
+
+	onResizeEnd() {
+		this._resizeEndTimeout = undefined;
 		const parentEl = this.canvas.parentElement as HTMLDivElement;
 		this.renderer.setSize(
 			parentEl.clientWidth * devicePixelRatio,

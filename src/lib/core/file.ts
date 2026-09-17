@@ -29,11 +29,6 @@ export class RectFile {
 
 export class RectEntry extends AABB implements AABBLike {
 	flags: number = 0;
-	// flags: number = $state.raw(0);
-	// min_x: number = $state.raw(0);
-	// min_y: number = $state.raw(0);
-	// max_x: number = $state.raw(0);
-	// max_y: number = $state.raw(0);
 
 	static g_rectCount = 0;
 	uuid = (RectEntry.g_rectCount++);

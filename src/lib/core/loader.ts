@@ -1,4 +1,4 @@
-import type { EditorState } from './context.svelte';
+import type { EditorState } from './context.svelte.js';
 import { VImageData, Vtf } from 'vtf-js';
 import { RectFile } from './file.js';
 import { VHeaderTags } from 'vtf-js/resources';

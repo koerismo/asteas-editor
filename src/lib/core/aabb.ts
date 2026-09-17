@@ -1,5 +1,3 @@
-import type { HotspotRect } from 'vtf-js/resources';
-
 export interface Vec2Like {
 	x: number;
 	y: number;
@@ -21,9 +19,6 @@ export abstract class AABB_Methods implements AABBLike {
 	declare min_y: number;
 	declare max_x: number;
 	declare max_y: number;
-
-	// static g_aabbCount = 0;
-	// aabb_uuid = (AABB_Methods.g_aabbCount++);
 
 	get center_x() {
 		return (this.min_x + this.max_x) * 0.5;
