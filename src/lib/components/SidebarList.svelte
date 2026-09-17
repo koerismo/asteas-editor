@@ -65,7 +65,7 @@
 
 		if (event.key === 'Delete' || event.key === 'Backspace') {
 			context.commitActions();
-			context.rectsRemove(Array.from(context.selection));
+			context.rectsRemoveSelected();
 			context.commitActions();
 			return;
 		}

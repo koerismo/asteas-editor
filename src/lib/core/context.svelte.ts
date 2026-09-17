@@ -147,9 +147,6 @@ export class EditorState {
 			next[key] = new AABB().copy(entries[key]);
 		}
 		
-		console.log(prev);
-		console.log(next);
-		
 		this.#history.add({
 			type: 'set_rect_bounds',
 			fastMerge: false,
@@ -281,66 +278,6 @@ export class EditorState {
 	rectsRemoveSelected() {
 		this.rectsRemove(Array.from(this.selection));
 	}
-
-	// addRects(bboxes: AABBLike[]) {
-	// 	const rects = bboxes.map(v => new RectEntry(v));
-
-	// 	const redo = () => {
-	// 		const i0 = this.#rects.length;
-	// 		this.#rects.length += rects.length;
-	// 		for (let i=0, o=i0; i<rects.length; i++) {
-	// 			this.#rects[o] = rects[i];
-	// 		}
-	// 	}
-
-	// 	const undo = () => {
-	// 		this.#rects.length -= rects.length;
-	// 	}
-
-	// }
-
-	// getSelectSize() {
-	// 	return this.selection.size;
-	// }
-
-	// selectToggle(index: number) {
-	// 	this.#checkId(index);
-	// 	if (!this.selection.delete(index))
-	// 		this.selection.add(index);
-	// }
-
-	// selectAdds(indices: number[]) {
-	// 	for (let i=0; i<indices.length; i++) {
-	// 		const index = indices[i];
-	// 		this.#checkId(index);
-	// 		this.selection.add(index);
-	// 	}
-	// }
-
-	// selectRemove(index: number) {
-	// 	this.#checkId(index);
-	// 	this.selection.delete(index);
-	// }
-
-	// selectRemoves(indices: number[]) {
-	// 	for (let i=0; i<indices.length; i++) {
-	// 		const index = indices[i];
-	// 		this.#checkId(index);
-	// 		this.selection.delete(index);
-	// 	}
-	// }
-
-	// selectOnly(index: number) {
-	// 	this.#checkId(index);
-	// 	this.selection.clear();
-	// 	this.selection.add(index);
-	// }
-
-	// selectAll() {
-	// 	if (!this.file) return;
-	// 	for (let i=0; i<this.file.rects.length; i++)
-	// 		this.selection.add(i);
-	// }
 }
 
 export const [getEditorCtx, setEditorCtx] = createContext<EditorState>();
