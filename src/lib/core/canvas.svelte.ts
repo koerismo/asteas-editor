@@ -1,4 +1,16 @@
-import * as Three from 'three';
+import {
+	Vector2,
+	Mesh,
+	Scene,
+	MeshBasicMaterial,
+	Color,
+	OrthographicCamera,
+	PlaneGeometry,
+	WebGLRenderer,
+	BackSide,
+	type Texture,
+	type Vector2Like,
+} from 'three';
 
 // General utility
 import { RectEntry } from './file.js';
@@ -15,7 +27,7 @@ import { VTFLoader } from './viewport/vtexture.js';
 import { AABB, type Vec2Like } from './aabb.js';
 import type { VImageEither } from 'vtf-js';
 
-const kCommonQuad = new Three.PlaneGeometry();
+const kCommonQuad = new PlaneGeometry();
 kCommonQuad.translate(0.5, 0.5, 0);
 
 function snap(v: number, inc: number) {
@@ -31,16 +43,16 @@ const enum UserAction {
 }
 
 export class CanvasRenderer extends MouseBound {
-	_mousePosWorld = new Three.Vector2();
+	_mousePosWorld = new Vector2();
 
 	grid: GridObject = new GridObject();
 
 	state: EditorState;
 	alive: boolean = false;
 
-	renderer: Three.WebGLRenderer;
-	camera: Three.OrthographicCamera;
-	scene = new Three.Scene();
+	renderer: WebGLRenderer;
+	camera: OrthographicCamera;
+	scene = new Scene();
 
 	selected: number[] = [];
 	visualRects: VisualRect[] = [];
@@ -69,11 +81,11 @@ export class CanvasRenderer extends MouseBound {
 	mouseSelectedCorner: number = -1;
 	mouseSelectedWithin: boolean = false;
 
-	image: Three.Texture | undefined;
-	imagePlane = new Three.Mesh(
+	image: Texture | undefined;
+	imagePlane = new Mesh(
 		kCommonQuad,
-		new Three.MeshBasicMaterial({
-			side: Three.BackSide
+		new MeshBasicMaterial({
+			side: BackSide
 		})
 	);
 
@@ -82,13 +94,13 @@ export class CanvasRenderer extends MouseBound {
 
 		this.state = getEditorCtx();
 
-		this.renderer = new Three.WebGLRenderer({ canvas, antialias: true, depth: false });
-		this.camera = new Three.OrthographicCamera();
+		this.renderer = new WebGLRenderer({ canvas, antialias: true, depth: false });
+		this.camera = new OrthographicCamera();
 		this.camera.position.z = 64;
 		this.camera.near = 1;
 
 		this.alive = true;
-		this.scene.background = new Three.Color(0x111111);
+		this.scene.background = new Color(0x111111);
 
 		this.init();
 		this.resize();
@@ -126,11 +138,11 @@ export class CanvasRenderer extends MouseBound {
 		this.scene.add(this.imagePlane);
 		this.scene.add(this.grid);
 
-		// this.scene.add(new Three.AmbientLight(0xffffff, 1.0));
+		// this.scene.add(new AmbientLight(0xffffff, 1.0));
 		// this.scene.add(hs.mesh);
 
 		// hs.mesh.scale.set(32, 32, 32);
-		// hs.mesh.material.side = Three.BackSide;
+		// hs.mesh.material.side = BackSide;
 
 		this.imagePlane.position.z = -10;
 		this.setImage();
@@ -439,7 +451,7 @@ export class CanvasRenderer extends MouseBound {
 		}
 	}
 
-	worldToScreen(i: Three.Vector2Like, out: { x: number; y: number; }) {
+	worldToScreen(i: Vector2Like, out: { x: number; y: number; }) {
 		const m = this.camera.projectionMatrix.elements;
 		const v = this.camera.matrixWorldInverse.elements;
 		out.x = m[0] * i.x + m[4] * i.y + m[12] + v[12];
@@ -448,7 +460,7 @@ export class CanvasRenderer extends MouseBound {
 		out.y = out.y * -0.5 - 0.5;
 	}
 
-	screenToWorld(i: Three.Vector2Like, out: { x: number; y: number; }) {
+	screenToWorld(i: Vector2Like, out: { x: number; y: number; }) {
 		const m = this.camera.projectionMatrixInverse.elements;
 		const v = this.camera.matrixWorld.elements;
 		const x = i.x * 2 - 1;
@@ -457,10 +469,10 @@ export class CanvasRenderer extends MouseBound {
 		out.y = m[1] * x + m[5] * y + m[13] + v[13];
 	}
 
-	getRectAtPoint(point: Three.Vector2Like) {
+	getRectAtPoint(point: Vector2Like) {
 		for (let i=0; i<this.visualRects.length; i++) {
 			const rect = this.visualRects[i];
-			if (!rect.rect.containsPoint(point as Three.Vector2)) continue;
+			if (!rect.rect.containsPoint(point as Vector2)) continue;
 			return i;
 		}
 		return -1;
@@ -483,7 +495,7 @@ export class CanvasRenderer extends MouseBound {
 		this.setTexture(v);
 	}
 
-	setTexture(v?: Three.Texture) {
+	setTexture(v?: Texture) {
 		if (!v) {
 			this.image = undefined;
 			this.imagePlane.material.map = null;

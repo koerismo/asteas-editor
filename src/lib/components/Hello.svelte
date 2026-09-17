@@ -13,8 +13,8 @@
 		loader.loadFile(files[0]);
 	}
 
-	import ThumbExample from '$lib/assets/examples/thumb_example.jpg';
-	import ThumbGrating from '$lib/assets/examples/thumb_grating.jpg';
+	import ThumbExample from '$lib/assets/examples/thumb_example.jpg?url';
+	import ThumbGrating from '$lib/assets/examples/thumb_grating.jpg?url';
 
 	import FileExample from '$lib/assets/examples/example.vtf?url';
 	import FileGrating from '$lib/assets/examples/grating.vtf?url';

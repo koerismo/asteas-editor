@@ -1,16 +1,27 @@
-import * as Three from 'three';
+import {
+	PlaneGeometry,
+	MeshBasicMaterial,
+	TextureLoader,
+	DoubleSide,
+	Vector3,
+	Mesh,
+	InstancedMesh,
+	Matrix4,
+	Object3D,
+	type Vector2Like,
+} from 'three';
 import { AABB } from '$lib/core/aabb.js';
 import { RectEntry } from '$lib/core/file.js';
 import Handle from '$lib/assets/viewport/handle.png';
 
-const handleGeometry = new Three.PlaneGeometry(1, 1);
-const handleMaterial = new Three.MeshBasicMaterial({
-	map: await (new Three.TextureLoader().loadAsync(Handle)),
-	side: Three.DoubleSide,
+const handleGeometry = new PlaneGeometry(1, 1);
+const handleMaterial = new MeshBasicMaterial({
+	map: await (new TextureLoader().loadAsync(Handle)),
+	side: DoubleSide,
 	alphaTest: 0.5,
 });
 
-const rectGeometry = new Three.PlaneGeometry(1, 1);
+const rectGeometry = new PlaneGeometry(1, 1);
 rectGeometry.translate(0.5, 0.5, 0);
 
 const borderMaterial = makeMaterial(0x615FFF, 1.0);
@@ -19,12 +30,12 @@ const centerActiveMaterial = makeMaterial(0x615FFF, 0.3);
 const selectionBoxMaterial = makeMaterial(0xFFFFFF, 0.2);
 
 function makeMaterial(color: number, opacity: number) {
-	return new Three.MeshBasicMaterial({ color, opacity, transparent: opacity < 1.0, side: Three.DoubleSide });
+	return new MeshBasicMaterial({ color, opacity, transparent: opacity < 1.0, side: DoubleSide });
 }
 
 const HANDLE_SIZE = 32;
-const V_XNEG = new Three.Vector3(-1, 1, 1);
-const V_YNEG = new Three.Vector3(1, -1, 1);
+const V_XNEG = new Vector3(-1, 1, 1);
+const V_YNEG = new Vector3(1, -1, 1);
 
 export type RectMode = typeof RectMode[keyof typeof RectMode];
 export const RectMode = {
@@ -35,15 +46,15 @@ export const RectMode = {
 	Handles: 3,
 } as const;
 
-export class VisualRect extends Three.Object3D {
+export class VisualRect extends Object3D {
 	mode: RectMode = RectMode.Invalid;
 
 	rect: AABB;
 	visual_aabb: AABB;
 
 	protected pixelSize: number;
-	protected borderMeshes = new Three.InstancedMesh(rectGeometry, borderMaterial, 4);
-	protected centerMesh = new Three.Mesh(rectGeometry, centerMaterial);
+	protected borderMeshes = new InstancedMesh(rectGeometry, borderMaterial, 4);
+	protected centerMesh = new Mesh(rectGeometry, centerMaterial);
 
 	constructor(rect: RectEntry | AABB, pixelSize: number, initMode: boolean = true) {
 		super();
@@ -95,7 +106,7 @@ export class VisualRect extends Three.Object3D {
 		this.visual_aabb.translate(x, y);
 	}
 
-	visualSetCorner(corner: number, pos: Three.Vector2Like) {
+	visualSetCorner(corner: number, pos: Vector2Like) {
 		corner & 1
 			? this.visual_aabb.max_x = pos.x
 			: this.visual_aabb.min_x = pos.x;
@@ -114,7 +125,7 @@ export class VisualRect extends Three.Object3D {
 		this.visual_aabb.translate(tx, ty);
 	}
 
-	visualExpandToPoint(point: Three.Vector2Like) {
+	visualExpandToPoint(point: Vector2Like) {
 		this.visual_aabb.copy(this.rect);
 		this.visual_aabb.expandToPoint(point.x, point.y);
 	}
@@ -124,7 +135,7 @@ export class VisualRect extends Three.Object3D {
 		this.updateMesh();
 	}
 
-	getPointCorner(pt: Three.Vector2Like): number {
+	getPointCorner(pt: Vector2Like): number {
 		const bottom = pt.y > this.rect.center_y;
 		const right = pt.x > this.rect.center_x;
 		
@@ -142,7 +153,7 @@ export class VisualRect extends Three.Object3D {
 		this.updateMesh();
 	}
 
-	_resizeMesh_mat4 = new Three.Matrix4();
+	_resizeMesh_mat4 = new Matrix4();
 
 	_setupEdges() {
 		const mat4 = this._resizeMesh_mat4;
@@ -186,7 +197,7 @@ export class VisualRect extends Three.Object3D {
 }
 
 export class SelectionRect extends VisualRect {
-	protected handleMeshes = new Three.InstancedMesh(handleGeometry, handleMaterial, 4);
+	protected handleMeshes = new InstancedMesh(handleGeometry, handleMaterial, 4);
 
 	constructor(aabb: AABB, pixelSize: number) {
 		super(aabb, pixelSize, false);

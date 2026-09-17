@@ -1,21 +1,19 @@
 import {
-	RGBAFormat,
 	RGBA_S3TC_DXT3_Format,
 	RGBA_S3TC_DXT5_Format,
-	RGB_ETC1_Format,
 	RGB_S3TC_DXT1_Format,
-	RGB_BPTC_SIGNED_Format,
-	RGB_BPTC_UNSIGNED_Format,
+	// RGB_ETC1_Format,
+	// RGB_BPTC_SIGNED_Format,
+	// RGB_BPTC_UNSIGNED_Format,
 	CompressedTexture,
-	type CompressedPixelFormat,
 	DataTexture,
 	FileLoader,
 	Loader,
-	UnsignedByteType,
 	SRGBColorSpace,
 	NearestFilter,
 	LinearFilter,
-	Texture,
+	type Texture,
+	type CompressedPixelFormat,
 } from 'three';
 import Vtf, { VFormats, type VImageEither } from 'vtf-js';
 

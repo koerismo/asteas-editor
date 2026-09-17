@@ -1,10 +1,11 @@
 import { svelte } from '@sveltejs/vite-plugin-svelte';
 import { resolve } from 'node:path';
 import { defineConfig } from 'vite';
+// import { analyzer } from 'vite-bundle-analyzer';
 
 // https://vite.dev/config/
 export default defineConfig({
-	plugins: [svelte()],
+	plugins: [svelte(), /* analyzer() */],
 	base: '/asteas-editor/',
 	resolve: {
 		alias: {

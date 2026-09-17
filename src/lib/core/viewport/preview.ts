@@ -1,16 +1,20 @@
-import * as Three from 'three';
+import {
+	BufferGeometry,
+	Uint16BufferAttribute,
+	type BufferAttribute,
+} from 'three';
 import { Mat3x2, Rect, RectFitResult, RectFitter, Vec2 } from './hotspot.js';
-import type { RectEntry } from '../file.svelte.js';
+import type { RectEntry } from '../file.js';
 import { AABB } from '../aabb.js';
 
 export class ModelHotspotter {
-	geo: Three.BufferGeometry;
+	geo: BufferGeometry;
 	islands: AABB[] = [];
 
 	rects: Rect[] = [];
 	fitter = new RectFitter();
 
-	constructor(geo: Three.BufferGeometry) {
+	constructor(geo: BufferGeometry) {
 		this.geo = geo;
 		this._parseIslands();
 	}
@@ -53,7 +57,7 @@ export class ModelHotspotter {
 		}
 
 		// Write island data back to mesh
-		const islandAttribute = new Three.Uint16BufferAttribute(vertexIslands, 1);
+		const islandAttribute = new Uint16BufferAttribute(vertexIslands, 1);
 		this.geo.setAttribute('island', islandAttribute);
 
 		// Grab vertex UVs
@@ -102,7 +106,7 @@ export class ModelHotspotter {
 		uvAttribute.needsUpdate = true;
 	}
 
-	fit(targetUvAttribute: Three.BufferAttribute) {
+	fit(targetUvAttribute: BufferAttribute) {
 		const srcUvAttribute = this.geo.getAttribute('uv');
 		const srcUvs = srcUvAttribute.array;
 		const uvCount = srcUvAttribute.count;
@@ -145,9 +149,9 @@ export class ModelHotspotter {
 }
 
 // const group = await new FBXLoader().loadAsync(Cube1);
-// const mesh = group.children[0] as Three.Mesh;
+// const mesh = group.children[0] as Mesh;
 
 // const group = await new GLTFLoader().loadAsync(Cube1);
-// const mesh = group.scene.children[0] as Three.Mesh;
+// const mesh = group.scene.children[0] as Mesh;
 // export const hs = new ModelHotspotter(mesh.geometry);
 // console.log(hs.islands);

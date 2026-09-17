@@ -1,31 +1,45 @@
-import * as Three from 'three';
+import {
+	ShaderMaterial,
+	Matrix4,
+	Vector2,
+	PlaneGeometry,
+	DoubleSide,
+	Mesh,
+	type Scene,
+	type Camera,
+	type BufferGeometry,
+	type Material,
+	type Group,
+	type Vector2Like,
+	type WebGLRenderer
+} from 'three';
 import GridVert from './grid.vert?raw';
 import GridFrag from './grid.frag?raw';
 
 
-const gridMaterial = new Three.ShaderMaterial({
+const gridMaterial = new ShaderMaterial({
 	uniforms: {
-		uInvProjectionMatrix: { value: new Three.Matrix4() },
-		uPixelSize: { value: new Three.Vector2(1.0, 1.0) },
+		uInvProjectionMatrix: { value: new Matrix4() },
+		uPixelSize: { value: new Vector2(1.0, 1.0) },
 		uGridPower: { value: 1.0 },
-		uMousePos: { value: new Three.Vector2() },
+		uMousePos: { value: new Vector2() },
 		opacity: { value: 0.3 },
 	},
 	vertexShader: GridVert,
 	fragmentShader: GridFrag,
-	side: Three.DoubleSide,
+	side: DoubleSide,
 	transparent: true,
 });
 
-export class GridObject extends Three.Mesh<
-	Three.PlaneGeometry,
-	Three.ShaderMaterial
+export class GridObject extends Mesh<
+	PlaneGeometry,
+	ShaderMaterial
 > {
 	gridPower = 0.0;
 
 	constructor() {
 		super(
-			new Three.PlaneGeometry(2, 2),
+			new PlaneGeometry(2, 2),
 			gridMaterial
 		);
 
@@ -34,12 +48,12 @@ export class GridObject extends Three.Mesh<
 	}
 
 	onBeforeRender(
-		renderer: Three.WebGLRenderer,
-		scene: Three.Scene,
-		camera: Three.Camera,
-		geometry: Three.BufferGeometry,
-		material: Three.Material,
-		group: Three.Group,
+		renderer: WebGLRenderer,
+		scene: Scene,
+		camera: Camera,
+		geometry: BufferGeometry,
+		material: Material,
+		group: Group,
 	): void {
 		this.material.uniforms.uInvProjectionMatrix.value = camera.projectionMatrixInverse;
 		renderer.getSize(
@@ -55,7 +69,7 @@ export class GridObject extends Three.Mesh<
 		this.material.uniforms.uGridPower.value = v;
 	}
 
-	setMousePos(v: Three.Vector2Like) {
+	setMousePos(v: Vector2Like) {
 		this.material.uniforms.uMousePos.value.copy(v);
 	}
 
