@@ -43,6 +43,24 @@ export abstract class AABB_Methods implements AABBLike {
 		);
 	}
 
+	overlapsRect(rect: AABBLike): boolean {
+		return (
+			rect.min_x < this.max_x &&
+			rect.max_x > this.min_x &&
+			rect.min_y < this.max_y &&
+			rect.max_y > this.min_y
+		)
+		// const L = (rect.max_x > this.min_x) && (rect.max_x < this.max_x);
+		// const R = (rect.min_x < this.max_x) && (rect.min_x > this.min_x);
+		// const S = (rect.max_y > this.min_y) && (rect.max_y < this.max_y);
+		// const N = (rect.min_y < this.max_y) && (rect.min_y > this.min_y);
+
+		// return (
+		// 	(L || R) && (S || N)
+		// );
+	}
+
+
 	expandToPoint(x: number, y: number) {
 		if (x < this.min_x) this.min_x = x;
 		if (x > this.max_x) this.max_x = x;

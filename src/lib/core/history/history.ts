@@ -19,7 +19,7 @@ export class HistoryActionGroup<T> {
 			// console.info('Merging with quick method!');
 		} else {
 			this.items.push(Object.assign({}, action));
-			console.warn('Merging with slow method!');
+			// console.warn('Merging with slow method!');
 		}
 	}
 

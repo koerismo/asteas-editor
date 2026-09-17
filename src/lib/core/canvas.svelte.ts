@@ -21,6 +21,14 @@ function snap(v: number, inc: number) {
 	return Math.round(v / inc) * inc;
 }
 
+const enum UserAction {
+	None,
+	Rescaling,
+	Translating,
+	CopyTranslating,
+	Selecting,
+}
+
 export class CanvasRenderer extends MouseBound {
 	_mousePosWorld = new Three.Vector2();
 
@@ -37,8 +45,19 @@ export class CanvasRenderer extends MouseBound {
 	visualRects: VisualRect[] = [];
 	selectionRect: SelectionRect;
 
-	isRectCopying: boolean = false;
-	isRectTranslating: boolean = false;
+	currentAction = UserAction.None;
+
+	getHasCurrentAction() {
+		return this.currentAction !== UserAction.None;
+	}
+
+	getActionMutatesRects() {
+		return (
+			this.currentAction === UserAction.Rescaling ||
+			this.currentAction === UserAction.Translating ||
+			this.currentAction === UserAction.CopyTranslating
+		);
+	}
 
 	needsCameraUpdate: boolean = true;
 	pixelSize: number = 1.0;
@@ -46,7 +65,8 @@ export class CanvasRenderer extends MouseBound {
 
 	/** TODO: This desyncs for a short period of time when rects are added/deleted */
 	hasSelection() { return this.selected.length !== 0; }
-	selectedCorner: number = -1;
+	mouseSelectedCorner: number = -1;
+	mouseSelectedWithin: boolean = false;
 
 	image: Three.Texture | undefined;
 	imagePlane = new Three.Mesh(
@@ -218,25 +238,73 @@ export class CanvasRenderer extends MouseBound {
 		this.screenToWorld(this._mousePosNorm, this._mousePosWorld);
 		this.grid.setMousePos(this._mousePosWorld);
 
-		if (this._mouseButton === Button.Left && this.selected.length && this._mouseDragged) {
-			if (event.shiftKey && !this.isRectCopying) {
-				this.isRectCopying = true;
-				this.state.commitActions();
-				this.state.selectionClear();
-				const inds = this.state.rectsClone(this.selected);
-				this.state.selectionAdd(inds);
-			} else {
-				if (!this.isRectTranslating) {
-					this.isRectTranslating = true;
-					this.state.commitActions();
+		const withinSelectionBox = this.hasSelection() && this.mouseSelectedWithin;
+		const selectionBoxCorner = this.mouseSelectedCorner;
+
+		// Begin a new action on mouse click-drag
+		action: if (
+			this._mouseButton === Button.Left &&
+			this._mouseDragged &&
+			this.currentAction === UserAction.None
+		) {
+			this.state.commitActions();
+
+			// Resizing
+			if (selectionBoxCorner !== -1) {
+				this.currentAction = UserAction.Rescaling;
+			}
+
+			// Translating
+			else if (withinSelectionBox) {
+				if (event.shiftKey) {
+					this.currentAction = UserAction.CopyTranslating;
+					this.state.selectionClear();
+					const inds = this.state.rectsClone(this.selected);
+					this.state.selectionAdd(inds);
+					break action;
+				} else {
+					this.currentAction = UserAction.Translating;
+					this.updateVisual(event.offsetX, event.offsetY, this.mouseSelectedCorner);
+					break action;
 				}
-				this.updateVisual(event.offsetX, event.offsetY, this.selectedCorner);
+			}
+
+			// Selecting
+			else {
+				this.currentAction = UserAction.Selecting;
+				console.log('making selection');
+
+				this.selectionRect.aabb.set(
+					this._mousePosWorld.x,
+					this._mousePosWorld.y,
+					this._mousePosWorld.x,
+					this._mousePosWorld.y,
+				);
+				this.selectionRect.visible = true;
+				this.selectionRect.setMode(RectMode.Dragging);
+				this.setCursor('select');
+				break action;
 			}
 		}
 
+		switch (this.currentAction) {
+			case UserAction.Rescaling:
+			case UserAction.Translating:
+			case UserAction.CopyTranslating:
+				this.updateVisual(event.offsetX, event.offsetY, this.mouseSelectedCorner);
+				break;
+			
+			case UserAction.Selecting:
+				this.selectionRect.visualExpandToPoint(this._mousePosWorld);
+				this.selectionRect.updateMesh();
+				break;
+		}
+
+		console.log('action', this.currentAction);
+
 		let cursor = '';
 
-		if (this.hasSelection()) {
+		if (!this.currentAction && this.hasSelection()) {
 			switch (this.selectionRect.getPointCorner(this._mousePosWorld)) {
 				case 0: { cursor = 'nw-resize'; break }
 				case 1: { cursor = 'ne-resize'; break }
@@ -258,19 +326,38 @@ export class CanvasRenderer extends MouseBound {
 		if (this._mouseButton !== Button.Left) return;
 
 		if (this.hasSelection()) {
-			this.selectedCorner = this.selectionRect.getPointCorner(this._mousePosWorld);
+			this.mouseSelectedWithin = this.selectionRect.aabb.containsPoint(this._mousePosWorld);
+			this.mouseSelectedCorner = this.selectionRect.getPointCorner(this._mousePosWorld);
 		}
 
 		this.updateRectModes();
 	}
 
 	onMouseUp(event: MouseEvent): void {
-		if (this.isRectCopying || this.isRectTranslating) {
+		if (this.getActionMutatesRects()) {
 			this.applyVisual();
 		}
 
-		if (!this._mouseDragged) {
-			if (this.selectedCorner === -1) {
+		if (this.currentAction === UserAction.Selecting) {
+			const selection = new Set<number>();
+			for (let i=0; i<this.visualRects.length; i++) {
+				const rect = this.visualRects[i];
+				if (this.selectionRect.visual_aabb.overlapsRect(rect.aabb)) {
+					selection.add(i);
+				}
+			}
+			
+			if (event.shiftKey) {
+				this.state.selectionAdd(selection)
+			} else {
+				this.state.setSelection(selection);
+			}
+
+			this.selectionRect.setMode(RectMode.Handles);
+		}
+
+		if (!this.currentAction) {
+			if (this.mouseSelectedCorner === -1) {
 				for (let i=0; i<this.visualRects.length; i++) {
 					const rect = this.visualRects[i];
 					if (!rect.aabb.containsPoint(this._mousePosWorld)) continue;
@@ -284,9 +371,8 @@ export class CanvasRenderer extends MouseBound {
 			}
 		}
 
-		this.isRectCopying = false;
-		this.isRectTranslating = false;
-		this.selectedCorner = -1;
+		this.currentAction = UserAction.None;
+		this.mouseSelectedCorner = -1;
 	}
 
 	setCursor(cursor?: string) {

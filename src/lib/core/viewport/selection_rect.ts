@@ -13,24 +13,14 @@ const handleMaterial = new Three.MeshBasicMaterial({
 const rectGeometry = new Three.PlaneGeometry(1, 1);
 rectGeometry.translate(0.5, 0.5, 0);
 
-const borderMaterial = new Three.MeshBasicMaterial({
-	color: 0x615FFF,
-	side: Three.DoubleSide,
-});
+const borderMaterial = makeMaterial(0x615FFF, 1.0);
+const centerMaterial = makeMaterial(0x615FFF, 0.1);
+const centerActiveMaterial = makeMaterial(0x615FFF, 0.3);
+const selectionBoxMaterial = makeMaterial(0xFFFFFF, 0.2);
 
-const centerMaterial = new Three.MeshBasicMaterial({
-	color: 0x615FFF,
-	opacity: 0.1,
-	transparent: true,
-	side: Three.BackSide,
-});
-
-const centerActiveMaterial = new Three.MeshBasicMaterial({
-	color: 0x615FFF,
-	opacity: 0.3,
-	transparent: true,
-	side: Three.BackSide,
-});
+function makeMaterial(color: number, opacity: number) {
+	return new Three.MeshBasicMaterial({ color, opacity, transparent: opacity < 1.0, side: Three.DoubleSide });
+}
 
 const HANDLE_SIZE = 32;
 const V_XNEG = new Three.Vector3(-1, 1, 1);
@@ -117,6 +107,11 @@ export class VisualRect extends Three.Object3D {
 		this.visual_aabb.translate(tx, ty);
 	}
 
+	visualExpandToPoint(point: Three.Vector2Like) {
+		this.visual_aabb.copy(this.aabb);
+		this.visual_aabb.expandToPoint(point.x, point.y);
+	}
+
 	visualSync() {
 		this.visual_aabb.copy(this.aabb);
 		this.updateMesh();
@@ -188,6 +183,7 @@ export class SelectionRect extends VisualRect {
 
 	constructor(aabb: AABB, pixelSize: number) {
 		super(aabb, pixelSize, false);
+		this.centerMesh.material = selectionBoxMaterial;
 		this.handleMeshes.frustumCulled = false;
 		this.handleMeshes.renderOrder = 10;
 		this.add(this.handleMeshes);
@@ -198,8 +194,7 @@ export class SelectionRect extends VisualRect {
 		if (this.mode === mode) return;
 		this.borderMeshes.visible = false;
 		this.centerMesh.visible = mode === RectMode.Dragging;
-		this.centerMesh.material = mode === RectMode.Default ? centerMaterial : centerActiveMaterial;
-		this.handleMeshes.visible = (mode !== RectMode.Default);
+		this.handleMeshes.visible = (mode !== RectMode.Default && mode !== RectMode.Dragging);
 		this.updateMesh();
 	}
 
