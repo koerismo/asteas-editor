@@ -164,11 +164,12 @@ export class CanvasRenderer extends MouseBound {
 	}
 
 	updateVisual(offsetX: number, offsetY: number, corner: number) {
-		const gridSnap = this.grid.getIncrement();
+		const gridSnap = 1;
+		const gridSnapUser = this.grid.getIncrement();
 
 		if (corner === -1) {
-			const x = snap((offsetX - this._mouseDownPos.x) * this.pixelSize * 2, gridSnap);
-			const y = snap((offsetY - this._mouseDownPos.y) * this.pixelSize * 2, gridSnap);
+			const x = snap((offsetX - this._mouseDownPos.x) * this.pixelSize * 2, gridSnapUser);
+			const y = snap((offsetY - this._mouseDownPos.y) * this.pixelSize * 2, gridSnapUser);
 			this.selectionRect.visualSetTranslation(x, y);
 			this.selectionRect.updateMesh();
 
@@ -179,8 +180,8 @@ export class CanvasRenderer extends MouseBound {
 			}
 		}
 		else {
-			const x = snap(this._mousePosWorld.x, gridSnap);
-			const y = snap(this._mousePosWorld.y, gridSnap);
+			const x = snap(this._mousePosWorld.x, gridSnapUser);
+			const y = snap(this._mousePosWorld.y, gridSnapUser);
 			const v: Vec2Like = { x, y };
 			this.selectionRect.visualSetCorner(corner, v);
 			this.selectionRect.updateMesh();
