@@ -18,11 +18,6 @@
 
 	import FileExample from '$lib/assets/examples/example.vtf?url';
 	import FileGrating from '$lib/assets/examples/grating.vtf?url';
-
-	function loadExample(url: string, title: string) {
-		return () => loader.loadUrl(url);
-	}
-
 </script>
 
 {#snippet makeExample(img: string, url: string, title: string, author: string)}
@@ -37,7 +32,7 @@
 	<div class="header">
 		<h1>
 			<img src={Icon} alt="Asteas Icon" />
-			Asteas Editor
+			Asteas Atlas Editor
 		</h1>
 		<b>Beta {APP_VERSION}</b>
 	</div>
@@ -94,6 +89,7 @@
 	}
 
 	article {
+		padding: 1em;
 		margin: auto;
 		display: grid;
 		gap: 1rem;
