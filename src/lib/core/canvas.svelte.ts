@@ -1,7 +1,7 @@
 import * as Three from 'three';
 
 // General utility
-import { RectEntry } from './file.svelte.js';
+import { RectEntry } from './file.js';
 // import { hs } from './viewport/preview.js';
 
 // Viewport-specific
@@ -210,7 +210,7 @@ export class CanvasRenderer extends MouseBound {
 			this.selectionRect.visualSetCorner(corner, v);
 			this.selectionRect.updateMesh();
 			
-			const ab1 = this.selectionRect.aabb;
+			const ab1 = this.selectionRect.rect;
 			const ab2 = this.selectionRect.visual_aabb;
 
 			const scale_x = ab2.width / ab1.width;
@@ -276,7 +276,7 @@ export class CanvasRenderer extends MouseBound {
 			// Selecting
 			else {
 				this.currentAction = UserAction.Selecting;
-				this.selectionRect.aabb.set(
+				this.selectionRect.rect.set(
 					this._mousePosWorld.x,
 					this._mousePosWorld.y,
 					this._mousePosWorld.x,
@@ -314,7 +314,7 @@ export class CanvasRenderer extends MouseBound {
 			}
 	
 			if (!cursor) {
-				if (this.selectionRect.aabb.containsPoint(this._mousePosWorld)) {
+				if (this.selectionRect.rect.containsPoint(this._mousePosWorld)) {
 					cursor = 'move';
 				}
 			}
@@ -327,7 +327,7 @@ export class CanvasRenderer extends MouseBound {
 		if (this._mouseButton !== Button.Left) return;
 
 		if (this.hasSelection()) {
-			this.mouseSelectedWithin = this.selectionRect.aabb.containsPoint(this._mousePosWorld);
+			this.mouseSelectedWithin = this.selectionRect.rect.containsPoint(this._mousePosWorld);
 			this.mouseSelectedCorner = this.selectionRect.getPointCorner(this._mousePosWorld);
 		}
 
@@ -343,7 +343,7 @@ export class CanvasRenderer extends MouseBound {
 			const selection = new Set<number>();
 			for (let i=0; i<this.visualRects.length; i++) {
 				const rect = this.visualRects[i];
-				if (this.selectionRect.visual_aabb.overlapsRect(rect.aabb)) {
+				if (this.selectionRect.visual_aabb.overlapsRect(rect.rect)) {
 					selection.add(i);
 				}
 			}
@@ -362,7 +362,7 @@ export class CanvasRenderer extends MouseBound {
 				let selectIdx = -1;
 				for (let i=0; i<this.visualRects.length; i++) {
 					const rect = this.visualRects[i];
-					if (!rect.aabb.containsPoint(this._mousePosWorld)) continue;
+					if (!rect.rect.containsPoint(this._mousePosWorld)) continue;
 					selectIdx = i;
 					break;
 				}
@@ -409,13 +409,13 @@ export class CanvasRenderer extends MouseBound {
 		}
 
 		this.visualRects.length = rects.length;
-
 		for (let i = 0; i < rects.length; i++) {
 			if (i >= oldLength) {
 				this.visualRects[i] = new VisualRect(rects[i], this.pixelSize);
 				this.scene.add(this.visualRects[i]);
+			} else {
+				this.visualRects[i].setRect(rects[i]);
 			}
-			this.visualRects[i].setBounds(rects[i]);
 		}
 
 		this.rebuildSelectionRect();
@@ -423,16 +423,16 @@ export class CanvasRenderer extends MouseBound {
 
 	rebuildSelectionRect() {
 		this.selectionRect.visible = false;
-		this.selectionRect.aabb.set(Infinity, Infinity, -Infinity, -Infinity);
+		this.selectionRect.rect.set(Infinity, Infinity, -Infinity, -Infinity);
 		
 		if (this.hasSelection()) {
 			for (let i=0; i<this.selected.length; i++) {
 				const rect = this.visualRects[this.selected[i]];
 				if (rect)
-					this.selectionRect.aabb.expandToRect(rect.aabb);
+					this.selectionRect.rect.expandToRect(rect.rect);
 			}
 
-			if (this.selectionRect.aabb.isValid()) {
+			if (this.selectionRect.rect.isValid()) {
 				this.selectionRect.visible = true;
 				this.selectionRect.visualSync();
 			}
@@ -460,7 +460,7 @@ export class CanvasRenderer extends MouseBound {
 	getRectAtPoint(point: Three.Vector2Like) {
 		for (let i=0; i<this.visualRects.length; i++) {
 			const rect = this.visualRects[i];
-			if (!rect.aabb.containsPoint(point as Three.Vector2)) continue;
+			if (!rect.rect.containsPoint(point as Three.Vector2)) continue;
 			return i;
 		}
 		return -1;

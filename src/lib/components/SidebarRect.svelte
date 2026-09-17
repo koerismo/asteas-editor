@@ -1,7 +1,7 @@
 <script lang="ts">
 	import PickerFlags from './pickers/PickerFlags.svelte';
 	import { HotSpotRectFlags } from 'vtf-js/resources';
-	import { RectEntry } from '$lib/core/file.svelte.js';
+	import { RectEntry } from '$lib/core/file.js';
 	import Checkbox from './buttons/Checkbox.svelte';
 
 	import IconRotate from "@lucide/svelte/icons/rotate-cw";

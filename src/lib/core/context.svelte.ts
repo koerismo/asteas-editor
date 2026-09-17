@@ -2,7 +2,7 @@ import { createContext } from 'svelte';
 import type { VImageEither } from 'vtf-js';
 import { on } from 'svelte/events';
 
-import { RectEntry, RectFile } from './file.svelte';
+import { RectEntry, RectFile } from './file.js';
 import { AABB } from './aabb.js';
 
 import { makeSubscriber } from  './history/reactive.js';
@@ -221,7 +221,7 @@ export class EditorState {
 
 	editRects(add: RectEntry[], remove: number[]): number[] {
 		const prev = this.#rects;
-		const next = new Array(this.#rects.length + add.length - remove.length);
+		const next = new Array<RectEntry>(this.#rects.length + add.length - remove.length);
 
 		// Deselect rects to be removed
 		this.selectionRemove(remove);
@@ -230,6 +230,7 @@ export class EditorState {
 		for (let i=0; i<this.#rects.length; i++) {
 			if (remove.includes(i)) continue;
 			next[idx] = this.#rects[i];
+			if (idx >= next.length) throw 'oob on remove!!';
 			idx++;
 		}
 
@@ -237,11 +238,12 @@ export class EditorState {
 		for (let i=0; i<add.length; i++) {
 			next[idx] = add[i];
 			indicesOut[i] = idx;
+			if (idx >= next.length) throw 'oob on add!!';
 			idx++;
 		}
 
 		this.#history.add({
-			type: 'set_rects',
+			type: 'edit_rects',
 			fastMerge: true,
 			run: true,
 

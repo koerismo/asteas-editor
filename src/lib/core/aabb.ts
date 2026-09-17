@@ -22,6 +22,9 @@ export abstract class AABB_Methods implements AABBLike {
 	declare max_x: number;
 	declare max_y: number;
 
+	// static g_aabbCount = 0;
+	// aabb_uuid = (AABB_Methods.g_aabbCount++);
+
 	get center_x() {
 		return (this.min_x + this.max_x) * 0.5;
 	}
@@ -49,17 +52,8 @@ export abstract class AABB_Methods implements AABBLike {
 			rect.max_x > this.min_x &&
 			rect.min_y < this.max_y &&
 			rect.max_y > this.min_y
-		)
-		// const L = (rect.max_x > this.min_x) && (rect.max_x < this.max_x);
-		// const R = (rect.min_x < this.max_x) && (rect.min_x > this.min_x);
-		// const S = (rect.max_y > this.min_y) && (rect.max_y < this.max_y);
-		// const N = (rect.min_y < this.max_y) && (rect.min_y > this.min_y);
-
-		// return (
-		// 	(L || R) && (S || N)
-		// );
+		);
 	}
-
 
 	expandToPoint(x: number, y: number) {
 		if (x < this.min_x) this.min_x = x;

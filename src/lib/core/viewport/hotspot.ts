@@ -1,3 +1,6 @@
+// This code was ported from koerismo/Hammer-Hotspots
+// and is licensed under GPLv3.0+
+
 function Ref<T>(t?: T): Ref<T> {
 	return { v: t! };
 }

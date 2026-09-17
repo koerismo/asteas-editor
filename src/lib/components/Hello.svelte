@@ -28,7 +28,7 @@
 {#snippet makeExample(img: string, url: string, title: string, author: string)}
 	<HelloExample
 		{img}
-		onclick={() => loader.loadUrl(url, title)}
+		onclick={() => loader.loadUrl(url)}
 		{title}
 		{author}></HelloExample>
 {/snippet}

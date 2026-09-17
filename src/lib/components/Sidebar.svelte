@@ -2,7 +2,7 @@
 	import { HotspotRect } from 'vtf-js/resources';
 	import { onMount } from 'svelte';
 
-	import { RectFile } from '$lib/core/file.svelte.js';
+	import { RectFile } from '$lib/core/file.js';
 	import { getEditorCtx } from '$lib/core/context.svelte.js';
 
 	import SidebarList from './SidebarList.svelte';

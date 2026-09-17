@@ -1,6 +1,6 @@
 import * as Three from 'three';
 import { AABB } from '$lib/core/aabb.js';
-import { RectEntry } from '$lib/core/file.svelte.js';
+import { RectEntry } from '$lib/core/file.js';
 import Handle from '$lib/assets/viewport/handle.png';
 
 const handleGeometry = new Three.PlaneGeometry(1, 1);
@@ -38,20 +38,20 @@ export const RectMode = {
 export class VisualRect extends Three.Object3D {
 	mode: RectMode = RectMode.Invalid;
 
-	aabb: AABB;
+	rect: AABB;
 	visual_aabb: AABB;
 
 	protected pixelSize: number;
 	protected borderMeshes = new Three.InstancedMesh(rectGeometry, borderMaterial, 4);
 	protected centerMesh = new Three.Mesh(rectGeometry, centerMaterial);
 
-	constructor(aabb: AABB, pixelSize: number, initMode: boolean = true) {
+	constructor(rect: RectEntry | AABB, pixelSize: number, initMode: boolean = true) {
 		super();
 		this.borderMeshes.frustumCulled = false;
 		this.pixelSize = pixelSize;
 
-		this.aabb = aabb;
-		this.visual_aabb = new AABB().copy(aabb);
+		this.rect = rect;
+		this.visual_aabb = new AABB().copy(rect);
 
 		this.borderMeshes.renderOrder = 10;
 		this.centerMesh.renderOrder = 10;
@@ -63,10 +63,17 @@ export class VisualRect extends Three.Object3D {
 			this.setMode(RectMode.Default);
 	}
 
-	setBounds(bounds: AABB) {
-		this.aabb.copy(bounds);
+	setRect(rect: RectEntry) {
+		this.rect = rect;
 		this.visualSync();
-		this.updateMesh();
+	}
+
+	copyBounds(bounds: AABB) {
+		if (import.meta.env.DEV && bounds instanceof RectEntry) {
+			throw 'FOOTGUN WARNING: Use setRect instead for rects!';
+		}
+		this.rect.copy(bounds);
+		this.visualSync();
 	}
 
 	setMode(mode: RectMode) {
@@ -84,7 +91,7 @@ export class VisualRect extends Three.Object3D {
 	}
 	
 	visualSetTranslation(x: number, y: number) {
-		this.visual_aabb.copy(this.aabb);
+		this.visual_aabb.copy(this.rect);
 		this.visual_aabb.translate(x, y);
 	}
 
@@ -102,27 +109,27 @@ export class VisualRect extends Three.Object3D {
 	}
 
 	visualSetScaleTranslation(sx: number, sy: number, tx: number, ty: number) {
-		this.visual_aabb.copy(this.aabb);
+		this.visual_aabb.copy(this.rect);
 		this.visual_aabb.scale(sx, sy);
 		this.visual_aabb.translate(tx, ty);
 	}
 
 	visualExpandToPoint(point: Three.Vector2Like) {
-		this.visual_aabb.copy(this.aabb);
+		this.visual_aabb.copy(this.rect);
 		this.visual_aabb.expandToPoint(point.x, point.y);
 	}
 
 	visualSync() {
-		this.visual_aabb.copy(this.aabb);
+		this.visual_aabb.copy(this.rect);
 		this.updateMesh();
 	}
 
 	getPointCorner(pt: Three.Vector2Like): number {
-		const bottom = pt.y > this.aabb.center_y;
-		const right = pt.x > this.aabb.center_x;
+		const bottom = pt.y > this.rect.center_y;
+		const right = pt.x > this.rect.center_x;
 		
-		const cx = right ? this.aabb.max_x : this.aabb.min_x;
-		const cy = bottom ? this.aabb.max_y : this.aabb.min_y;
+		const cx = right ? this.rect.max_x : this.rect.min_x;
+		const cy = bottom ? this.rect.max_y : this.rect.min_y;
 		const r = this.pixelSize * HANDLE_SIZE * 0.5;
 
 		if (Math.abs(pt.x - cx) > r || Math.abs(pt.y - cy) > r) return -1;

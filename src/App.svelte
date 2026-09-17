@@ -4,14 +4,15 @@
 	// import heroImg from './assets/hero.png'
 	// import Counter from './lib/TopBar.svelte'
 
+	
 	import Canvas from '$lib/components/Canvas.svelte';
 	import Header from '$lib/components/Header.svelte';
 	import Hello from '$lib/components/Hello.svelte';
 	import Sidebar from '$lib/components/Sidebar.svelte';
 	import { EditorState, setEditorCtx } from '$lib/core/context.svelte';
 	
-	import { RectFile } from '$lib/core/file.svelte';
-	import { HotspotRect } from 'vtf-js/resources';
+	// import { HotspotRect } from 'vtf-js/resources';
+	// import { RectFile } from '$lib/core/file.js';
 
 	const context = new EditorState();
 	setEditorCtx(context);
