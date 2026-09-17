@@ -13,7 +13,25 @@
 		loader.loadFile(files[0]);
 	}
 
+	import ThumbExample from '$lib/assets/examples/thumb_example.jpg';
+	import ThumbGrating from '$lib/assets/examples/thumb_grating.jpg';
+
+	import FileExample from '$lib/assets/examples/example.vtf?url';
+	import FileGrating from '$lib/assets/examples/grating.vtf?url';
+
+	function loadExample(url: string, title: string) {
+		return () => loader.loadUrl(url);
+	}
+
 </script>
+
+{#snippet makeExample(img: string, url: string, title: string, author: string)}
+	<HelloExample
+		{img}
+		onclick={() => loader.loadUrl(url, title)}
+		{title}
+		{author}></HelloExample>
+{/snippet}
 
 <article>
 	<div class="header">
@@ -30,8 +48,8 @@
 	</div>
 	<div class="content">
 		<h3>Examples</h3>
-		<HelloExample img="" title="Example" author="leukbaars"></HelloExample>
-		<HelloExample img="" title="Grating" author="koerismo"></HelloExample>
+		{@render makeExample(ThumbExample, FileExample, 'Example', 'leukbaars')}
+		{@render makeExample(ThumbGrating, FileGrating, 'Grating', 'koerismo')}
 	</div>
 </article>
 

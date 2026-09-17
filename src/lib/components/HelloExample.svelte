@@ -1,17 +1,23 @@
 <script lang="ts">
-	let { img, title, author }: { img: string, title: string, author: string } = $props();
+	let { img, onclick, title, author }: { img: string, onclick(): void, title: string, author: string } = $props();
 </script>
 
-<div class="example">
+<button class="example" {onclick}>
 	<img src={img} alt={title} />
 	<div class="content">
 		<h3>{title}</h3>
 		<p>by {author}</p>
 	</div>
-</div>
+</button>
 
 <style>
-	div.example {
+	button.example {
+		appearance: none;
+		padding: 0;
+		margin: 0;
+		text-align: left;
+		font-size: 1em;
+
 		display: flex;
 		gap: 0.4em;
 		line-height: 1;
@@ -35,14 +41,12 @@
 			padding: 0.5em;
 			display: flex;
 			flex-direction: column;	
-			gap: 0.2em;
+			gap: 0.3em;
 		}
 	
 		img {
 			width: 30%;
 			aspect-ratio: 1 / 1;
-			
-			padding: 0.5em;
 			border: none;
 			background-color: var(--bg-2);
 		}

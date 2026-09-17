@@ -8,6 +8,13 @@ export class EditorInitializer {
 		public context: EditorState
 	) {}
 
+	async loadUrl(url: string) {
+		const res = await fetch(url);
+		if (!res.ok) return console.error(res.status, res.statusText);
+		const file = new File([await res.blob()], url);
+		return this.loadFile(file);
+	}
+
 	async loadFile(file: File) {
 		if (file.name.endsWith('.vtf'))
 			await this.loadVtf(file);
