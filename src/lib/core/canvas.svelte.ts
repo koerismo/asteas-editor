@@ -359,15 +359,22 @@ export class CanvasRenderer extends MouseBound {
 
 		if (!this.currentAction) {
 			if (this.mouseSelectedCorner === -1) {
+				let selectIdx = -1;
 				for (let i=0; i<this.visualRects.length; i++) {
 					const rect = this.visualRects[i];
 					if (!rect.aabb.containsPoint(this._mousePosWorld)) continue;
-					if (event.shiftKey) {
-						this.state.selectionToggle(i);
-					} else {
-						this.state.setSelection([i]);
-					}
+					selectIdx = i;
 					break;
+				}
+				
+				if (selectIdx !== -1) {
+					if (event.shiftKey) {
+						this.state.selectionToggle(selectIdx);
+					} else {
+						this.state.setSelection([selectIdx]);
+					}
+				} else {
+					this.state.selectionClear();
 				}
 			}
 		}
