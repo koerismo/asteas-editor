@@ -46,6 +46,7 @@
 		position: relative;
 
 		div.loader {
+			background-color: #111;
 			position: absolute;
 			left: 0;
 			top: 0;

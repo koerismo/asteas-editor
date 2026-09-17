@@ -141,7 +141,8 @@ export class CanvasRenderer extends MouseBound {
 
 	onResize() {
 		clearTimeout(this._resizeEndTimeout);
-		this._resizeEndTimeout = setTimeout(() => this.onResizeEnd(), 10);
+		this.needsCameraUpdate = true;
+		this._resizeEndTimeout = setTimeout(() => this.onResizeEnd(), 100);
 	}
 
 	onResizeEnd() {
@@ -156,7 +157,7 @@ export class CanvasRenderer extends MouseBound {
 	}
 
 	updateCamera() {
-		const ratio = this.canvas.width / this.canvas.height;
+		const ratio = this.canvas.clientWidth / this.canvas.clientHeight;
 		const area = 1 / this.zoom;
 
 		this.camera.top = -area;
