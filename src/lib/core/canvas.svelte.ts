@@ -13,6 +13,7 @@ import { getEditorCtx, type EditorState } from './context.svelte.js';
 import { GridObject } from './viewport/grid.js';
 import { VTFLoader } from './viewport/vtexture.js';
 import { AABB, type Vec2Like } from './aabb.js';
+import type { VImageEither } from 'vtf-js';
 
 const kCommonQuad = new Three.PlaneGeometry();
 kCommonQuad.translate(0.5, 0.5, 0);
@@ -113,6 +114,9 @@ export class CanvasRenderer extends MouseBound {
 				$effect(() => {
 					console.log('Setting selection...')
 					this.setSelection(this.state.selection);
+				});
+				$effect(() => {
+					this.setImage(this.state.image);
 				});
 			})
 		);
@@ -466,12 +470,23 @@ export class CanvasRenderer extends MouseBound {
 		}
 	}
 
-	async setImage(url: string = 'test.vtf') {
-		const v = await new VTFLoader().load(url);
+	async setImage(image?: VImageEither) {
+		if (!image) return this.setTexture();
+		const v = await new VTFLoader().parseImage(image);
 		this.setTexture(v);
 	}
 
-	setTexture(v: Three.Texture) {
+	setTexture(v?: Three.Texture) {
+		if (!v) {
+			this.image = undefined;
+			this.imagePlane.material.map = null;
+			this.imagePlane.visible = false;
+			return;
+		}
+		else {
+			this.imagePlane.visible = true;
+		}
+
 		this.image = v;
 		this.imagePlane.material.map = v;
 		this.imagePlane.material.needsUpdate = true;

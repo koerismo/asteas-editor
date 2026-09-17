@@ -38,7 +38,7 @@ export function makeReactive<T>(initial: T): { set(v: T): void, get(): T } {
 
 	return {
 		get() {
-			if ($effect.tracking()) sub();
+			if (effect_tracking()) sub();
 			return value;
 		},
 		set(v: T) {

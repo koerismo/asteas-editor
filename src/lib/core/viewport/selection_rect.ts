@@ -1,11 +1,11 @@
 import * as Three from 'three';
 import { AABB } from '$lib/core/aabb.js';
 import { RectEntry } from '$lib/core/file.svelte.js';
+import Handle from '$lib/assets/viewport/handle.png';
 
-const handleUrl = './viewport/handle.png';
 const handleGeometry = new Three.PlaneGeometry(1, 1);
 const handleMaterial = new Three.MeshBasicMaterial({
-	map: await (new Three.TextureLoader().loadAsync(handleUrl)),
+	map: await (new Three.TextureLoader().loadAsync(Handle)),
 	side: Three.DoubleSide,
 	alphaTest: 0.5,
 });

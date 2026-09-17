@@ -17,7 +17,7 @@ import {
 	LinearFilter,
 	Texture,
 } from 'three';
-import Vtf, { VFormats } from 'vtf-js';
+import Vtf, { VFormats, type VImageEither } from 'vtf-js';
 
 const formatMap: Partial<Record<VFormats, { format: CompressedPixelFormat, size: number }>> = {
 	[VFormats.DXT1]: { format: RGB_S3TC_DXT1_Format, size: 8 },
@@ -34,11 +34,8 @@ export class VTFLoader extends Loader<DataTexture | CompressedTexture> {
 		texture.needsUpdate = true;
 		return texture;
 	}
-	
-	async parse(buffer: ArrayBuffer) {
-		const vtf = await Vtf.decode(buffer, { noClone: true, onDemand: true });
-		const image = vtf.body.getRawImage(0, 0, 0, 0);
 
+	async parseImage(image: VImageEither) {
 		if (image.isEncoded && image.format in formatMap) {
 			const compressedFormat = formatMap[image.format]!;
 			const texture = new CompressedTexture([{
@@ -53,6 +50,12 @@ export class VTFLoader extends Loader<DataTexture | CompressedTexture> {
 			const texture = new DataTexture(imageRawU8.data, imageRawU8.width, imageRawU8.height);
 			return this.setFlags(texture);
 		}
+	}
+
+	async parse(buffer: ArrayBuffer) {
+		const vtf = await Vtf.decode(buffer, { noClone: true, onDemand: true });
+		const image = vtf.body.getRawImage(0, 0, 0, 0);
+		return this.parseImage(image);
 	}
 
 	async load(url: string) {

@@ -6,6 +6,7 @@
 
 	import Canvas from '$lib/components/Canvas.svelte';
 	import Header from '$lib/components/Header.svelte';
+	import Hello from '$lib/components/Hello.svelte';
 	import Sidebar from '$lib/components/Sidebar.svelte';
 	import { EditorState, setEditorCtx } from '$lib/core/context.svelte';
 	
@@ -15,12 +16,12 @@
 	const context = new EditorState();
 	setEditorCtx(context);
 
-	context.setFile(RectFile.fromRects([
-		new HotspotRect(0x10, 10, 10, 20, 20),
-		new HotspotRect(0x01, 10, 10, 40, 40),
-		new HotspotRect(0x02, 10, 20, 20, 80),
-		new HotspotRect(0x06, 10, 20, 80, 80),
-	]));
+	// context.setFile(RectFile.fromRects([
+	// 	new HotspotRect(0x10, 10, 10, 20, 20),
+	// 	new HotspotRect(0x01, 10, 10, 40, 40),
+	// 	new HotspotRect(0x02, 10, 20, 20, 80),
+	// 	new HotspotRect(0x06, 10, 20, 80, 80),
+	// ]));
 
 </script>
 
@@ -31,9 +32,13 @@
 <!-- main body -->
 <main>
 	<Header></Header>
+	{#if context.active}
 	<div>
 		<Canvas></Canvas>
 	</div>
+	{:else}
+		<Hello></Hello>
+	{/if}
 </main>
 </div>
 

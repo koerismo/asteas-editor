@@ -1,11 +1,12 @@
 import { createContext } from 'svelte';
+import type { VImageEither } from 'vtf-js';
+import { on } from 'svelte/events';
+
 import { RectEntry, RectFile } from './file.svelte';
 import { AABB } from './aabb.js';
 
-import { History } from './history/history.js';
 import { makeSubscriber } from  './history/reactive.js';
-import type { HotspotRect } from 'vtf-js/resources';
-import { on } from 'svelte/events';
+import { History } from './history/history.js';
 
 function makeId(type: string, id: number) {
 	return type + '#' + id;
@@ -20,6 +21,7 @@ export class EditorState {
 	#rectSubscriber = makeSubscriber();
 
 	public active = $state(false);
+	public image: VImageEither | undefined = $state();
 
 	get selection(): ReadonlySet<number> {
 		this.#selectSubscriber.use();
@@ -32,9 +34,9 @@ export class EditorState {
 	}
 
 	setFile(file?: RectFile) {
-		this.#rects = file ? file.rects : [];
 		this.#selection.clear();
 		this.#history.clear();
+		this.#rects = file ? file.rects : [];
 
 		this.#selectSubscriber.update();
 		this.#rectSubscriber.update();
@@ -145,6 +147,9 @@ export class EditorState {
 			next[key] = new AABB().copy(entries[key]);
 		}
 		
+		console.log(prev);
+		console.log(next);
+		
 		this.#history.add({
 			type: 'set_rect_bounds',
 			fastMerge: false,
@@ -174,7 +179,7 @@ export class EditorState {
 
 		this.#history.add({
 			type: 'set_rect_flags',
-			fastMerge: true,
+			fastMerge: false,
 			run: true,
 			redo: () => {
 				for (let i=0; i<indices.length; i++) {
@@ -196,7 +201,9 @@ export class EditorState {
 	}
 
 	setRects(rects: RectEntry[]) {
+		const next = rects;
 		const prev = this.#rects;
+
 		this.selectionClear();
 
 		this.#history.add({
@@ -205,7 +212,7 @@ export class EditorState {
 			run: true,
 
 			redo: ( ) => {
-				this.#rects = rects;
+				this.#rects = next;
 				this.#rectSubscriber.update();
 			},
 			undo: () => {
@@ -225,13 +232,15 @@ export class EditorState {
 		let idx = 0;
 		for (let i=0; i<this.#rects.length; i++) {
 			if (remove.includes(i)) continue;
-			next[idx++] = this.#rects[i];
+			next[idx] = this.#rects[i];
+			idx++;
 		}
 
 		const indicesOut = new Array<number>(add.length);
 		for (let i=0; i<add.length; i++) {
+			next[idx] = add[i];
 			indicesOut[i] = idx;
-			next[idx++] = add[i];
+			idx++;
 		}
 
 		this.#history.add({

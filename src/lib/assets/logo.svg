@@ -1,10 +1,10 @@
 <?xml version="1.0" encoding="UTF-8" standalone="no"?>
 <!DOCTYPE svg PUBLIC "-//W3C//DTD SVG 1.1//EN" "http://www.w3.org/Graphics/SVG/1.1/DTD/svg11.dtd">
-<svg width="100%" height="100%" viewBox="0 0 40 40" version="1.1" xmlns="http://www.w3.org/2000/svg" xmlns:xlink="http://www.w3.org/1999/xlink" xml:space="preserve" xmlns:serif="http://www.serif.com/" style="fill-rule:evenodd;clip-rule:evenodd;stroke-linejoin:round;stroke-miterlimit:2;">
-    <g transform="matrix(1,0,0,1,-11.0698,0)">
-        <g id="Active" transform="matrix(0.15625,0,0,0.15625,11.0698,0)">
+<svg width="100%" height="100%" viewBox="0 0 330 330" version="1.1" xmlns="http://www.w3.org/2000/svg" xmlns:xlink="http://www.w3.org/1999/xlink" xml:space="preserve" xmlns:serif="http://www.serif.com/" style="fill-rule:evenodd;clip-rule:evenodd;stroke-linejoin:round;stroke-miterlimit:2;">
+    <g transform="matrix(1,0,0,1,-112,-36)">
+        <g id="Active" transform="matrix(1.28906,0,0,1.28906,112,36)">
             <rect x="0" y="0" width="256" height="256" style="fill:none;"/>
-            <g transform="matrix(25.6,0,0,25.6,2.2769e-10,2.29447e-10)">
+            <g transform="matrix(31.0303,0,0,31.0303,-27.1515,-27.1515)">
                 <rect x="1" y="1" width="8" height="8" style="fill:none;"/>
                 <clipPath id="_clip1">
                     <rect x="1" y="1" width="8" height="8"/>

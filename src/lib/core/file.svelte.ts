@@ -6,13 +6,13 @@ export class RectFile {
 	public rects: Readonly<RectEntry>[] = [];
 
 	static fromResource(res: VHotspotResource) {
-		const file = new RectFile(res.version, []);
+		const file = new RectFile(res.version);
 		file.setRectsFrom(res.rects);
 		return file;
 	}
 
 	static fromRects(rects: HotspotRect[]) {
-		const file = new RectFile(1, []);
+		const file = new RectFile(1);
 		file.setRectsFrom(rects);
 		return file;
 	}
@@ -27,13 +27,12 @@ export class RectFile {
 	}
 }
 
-
 export class RectEntry extends AABB_Methods implements AABBLike {
-	flags: number = $state(0);
-	min_x: number = $state(0);
-	min_y: number = $state(0);
-	max_x: number = $state(0);
-	max_y: number = $state(0);
+	flags: number = $state.raw(0);
+	min_x: number = $state.raw(0);
+	min_y: number = $state.raw(0);
+	max_x: number = $state.raw(0);
+	max_y: number = $state.raw(0);
 
 	static g_rectCount = 0;
 	uuid = (RectEntry.g_rectCount++);
