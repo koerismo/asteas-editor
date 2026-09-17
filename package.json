@@ -16,12 +16,14 @@
 		"@tsconfig/svelte": "^5.0.8",
 		"@types/node": "^24.13.3",
 		"@types/three": "^0.185.4",
+		"fast-vdf": "^3.1.1",
 		"sass-embedded": "^1.104.0",
 		"svelte": "^5.57.0",
 		"svelte-check": "^4.7.6",
 		"three": "^0.185.1",
 		"typescript": "~6.0.3",
 		"vite": "^8.2.2",
+		"vite-bundle-analyzer": "^1.3.9",
 		"vtf-js": "^1.2.1"
 	}
 }

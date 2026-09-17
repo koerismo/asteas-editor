@@ -23,6 +23,9 @@ importers:
       '@types/three':
         specifier: ^0.185.4
         version: 0.185.4
+      fast-vdf:
+        specifier: ^3.1.1
+        version: 3.1.1
       sass-embedded:
         specifier: ^1.104.0
         version: 1.104.0
@@ -344,6 +347,9 @@ packages:
     peerDependenciesMeta:
       '@typescript-eslint/types':
         optional: true
+
+  fast-vdf@3.1.1:
+    resolution: {integrity: sha512-vFZjCybY/NKCDCOsjHRdnFslPa8BmqMJfWBI9GrEXG0fwJERabvn71Ena153OxBa5xMRMoMUoIT/lvcpw2kMng==}
 
   fdir@6.5.0:
     resolution: {integrity: sha512-tIbYtZbucOs0BRGqPJkshJUYdL+SDH7dVM8gjy+ERp3WAUjLEFJE+02kanyHtwjWOnwrKYBiwAmM0p4kLJAnXg==}
@@ -948,6 +954,8 @@ snapshots:
     dependencies:
       '@jridgewell/sourcemap-codec': 1.6.0
 
+  fast-vdf@3.1.1: {}
+
   fdir@6.5.0(picomatch@4.0.7):
     optionalDependencies:
       picomatch: 4.0.7
@@ -1244,6 +1252,8 @@ snapshots:
   undici-types@7.18.2: {}
 
   varint@6.0.0: {}
+
+  vite-bundle-analyzer@1.3.9: {}
 
   vite@8.2.2(@types/node@24.13.3)(sass-embedded@1.104.0)(sass@1.104.0):
     dependencies:
