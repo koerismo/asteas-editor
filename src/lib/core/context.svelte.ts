@@ -1,5 +1,5 @@
 import { createContext } from 'svelte';
-import { RectEntry } from './file.svelte';
+import { RectEntry, RectFile } from './file.svelte';
 import { AABB } from './aabb.js';
 
 import { History } from './history/history.js';
@@ -19,7 +19,7 @@ export class EditorState {
 	#selectSubscriber = makeSubscriber();
 	#rectSubscriber = makeSubscriber();
 
-	public active = true;
+	public active = $state(false);
 
 	get selection(): ReadonlySet<number> {
 		this.#selectSubscriber.use();
@@ -29,6 +29,16 @@ export class EditorState {
 	get rects(): RectEntry[] {
 		this.#rectSubscriber.use();
 		return this.#rects;
+	}
+
+	setFile(file?: RectFile) {
+		this.#rects = file ? file.rects : [];
+		this.#selection.clear();
+		this.#history.clear();
+
+		this.#selectSubscriber.update();
+		this.#rectSubscriber.update();
+		this.active = !!file;
 	}
 
 	commitActions() {

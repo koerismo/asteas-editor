@@ -272,14 +272,13 @@ export class CanvasRenderer extends MouseBound {
 			// Selecting
 			else {
 				this.currentAction = UserAction.Selecting;
-				console.log('making selection');
-
 				this.selectionRect.aabb.set(
 					this._mousePosWorld.x,
 					this._mousePosWorld.y,
 					this._mousePosWorld.x,
 					this._mousePosWorld.y,
 				);
+
 				this.selectionRect.visible = true;
 				this.selectionRect.setMode(RectMode.Dragging);
 				this.setCursor('select');
@@ -299,8 +298,6 @@ export class CanvasRenderer extends MouseBound {
 				this.selectionRect.updateMesh();
 				break;
 		}
-
-		console.log('action', this.currentAction);
 
 		let cursor = '';
 
@@ -346,7 +343,7 @@ export class CanvasRenderer extends MouseBound {
 					selection.add(i);
 				}
 			}
-			
+
 			if (event.shiftKey) {
 				this.state.selectionAdd(selection)
 			} else {
