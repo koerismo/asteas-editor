@@ -1,7 +1,7 @@
 <script lang="ts">
 	import { SvelteSet } from 'svelte/reactivity';
 	import { HotspotRect } from 'vtf-js/resources';
-	import { RectFile } from '$lib/core/file.svelte.js';
+	import { RectEntry, RectFile } from '$lib/core/file.svelte.js';
 	import { getEditorCtx  } from '$lib/core/context.svelte.js';
 
 	import SidebarRect from './SidebarRect.svelte';
@@ -15,7 +15,6 @@
 	let { collapsed }: { collapsed: boolean } = $props();
 	
 	const context = getEditorCtx();
-	let file = $derived(context.file);
 
 	const HoverSelect = {
 		None: 0,
@@ -35,15 +34,8 @@
 
 	function onMouseDownRect(rectId: number) {
 		if (!shiftKey) {
-			context.selectId(rectId);
-			context.setActive(rectId);
+			context.setSelection([rectId]);
 			hoverSelect = HoverSelect.Select;
-			return;
-		}
-
-		if (context.active !== rectId) {
-			context.selectAdd(rectId);
-			context.setActive(rectId);
 			return;
 		}
 
@@ -58,11 +50,9 @@
 		if (!hoverSelect)
 			return;
 		if (hoverSelect === HoverSelect.Select) {
-			context.selectAdd(id);
+			context.selectionAdd([id]);
 		} else {
-			context.selectRemove(id);
-			if (context.active === id)
-				context.setActive();
+			context.selectionRemove([id]);
 		}
 	}
 
@@ -74,7 +64,7 @@
 		shiftKey = event.shiftKey;
 
 		if (event.key === 'Delete' || event.key === 'Backspace') {
-			removeSelected();
+			context.rectsRemove(Array.from(context.selection));
 			return;
 		}
 
@@ -84,7 +74,7 @@
 		}
 		
 		if (event.key === 'Escape') {
-			context.clearSelection();
+			context.selectionClear();
 			return;
 		}
 	}
@@ -98,18 +88,12 @@
 	}
 
 	export function toggleAllSelected() {
-		if (context.getSelectSize()) {
-			context.clearSelection();
+		if (context.selection.size) {
+			context.selectionClear();
 			return;
 		}
 	
-		context.selectAll();
-	}
-
-	export function removeSelected() {
-		if (!context.getSelectSize()) return;
-		context.file!.removeRects(Array.from(context.selection.values()));
-		context.clearSelection();
+		context.selectionSetAll();
 	}
 
 	function isIdSelected(rectId: number) {
@@ -118,26 +102,29 @@
 
 	function setFlags(rectId: number, flags: number, mask: number) {
 		if (shiftKey && context.selection.has(rectId)) {
-			file.setRectFlags(Array.from(context.selection.values()), flags, mask);
+			context.setRectFlags(Array.from(context.selection.values()), flags, mask);
 		} else {
-			file.setRectFlags([rectId], flags, mask);
+			context.setRectFlags([rectId], flags, mask);
 		}
 	}
 
 	function addRect() {
-		file.addRect(new HotspotRect(0x0, 0, 0, 100, 100));
+		context.rectsAdd([
+			new RectEntry(
+				new HotspotRect(0x0, 0, 0, 100, 100)
+			)
+		]);
 	}
-
 </script>
 
 <div class:collapsed={collapsed}>
-	{#each file.rects as _rect, i (_rect.uuid)}
+	{#each context.rects as _rect, i (_rect.uuid)}
 		<div transition:scale={{ duration: 100, easing: cubicOut, start: 0.8 }}>
 			<SidebarRect
-				rect={file.rects[i]}
+				rect={context.rects[i]}
 				index={i}
 				selected={context.selection.has(i)}
-				active={i === context.active}
+				active={false}
 				setFlags={(v, m) => setFlags(i, v, m)}
 				onmousedown={() => onMouseDownRect(i)}
 				onmouseenter={() => onMouseEnterRect(i)}

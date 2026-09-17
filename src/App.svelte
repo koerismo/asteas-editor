@@ -15,12 +15,14 @@
 	const context = new EditorState();
 	setEditorCtx(context);
 
-	context.file = RectFile.fromRects([
+	context.setRects(RectFile.fromRects([
 		new HotspotRect(0x10, 10, 10, 20, 20),
 		new HotspotRect(0x01, 10, 10, 40, 40),
 		new HotspotRect(0x02, 10, 20, 20, 80),
 		new HotspotRect(0x06, 10, 20, 80, 80),
-	]);
+	]).rects);
+
+	context.clearHistory();
 
 </script>
 

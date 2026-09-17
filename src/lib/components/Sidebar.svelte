@@ -20,10 +20,9 @@
 
 	let collapsed = $state(false);
 	let rectList = $state<SidebarList>();
-	let file = $derived(context.file!);
 
 	$effect(() => {
-		return file.history.mount();
+		return context.mount();
 	});
 
 </script>
@@ -33,22 +32,22 @@
 		<div>
 			<Button
 				variant="icon"
-				disabled={!file?.history.sCanUndo}
-				onclick={() => file.history.undo()}
+				disabled={!context.canUndo()}
+				onclick={() => context.undo()}
 				title="Undo"
 				><IconUndo></IconUndo></Button
 			>
 			<Button
 				variant="icon"
-				disabled={!file?.history.sCanRedo}
-				onclick={() => file.history.redo()}
+				disabled={!context.canRedo()}
+				onclick={() => context.redo()}
 				title="Redo"
 				><IconRedo></IconRedo></Button
 			>
 			<Button
 				variant="icon"
-				disabled={!context.getSelectSize()}
-				onclick={() => context.deleteSelected()}
+				disabled={!context.selection.size}
+				onclick={() => context.rectsRemoveSelected()}
 				title="Delete selected"
 				><TrashCan></TrashCan></Button
 			>
@@ -80,7 +79,7 @@
 		</div>
 	</section>
 	<section>
-		{#if file}
+		{#if context.active}
 			<SidebarList {collapsed} bind:this={rectList}></SidebarList>
 		{/if}
 	</section>

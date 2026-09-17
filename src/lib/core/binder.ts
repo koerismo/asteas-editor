@@ -6,7 +6,7 @@ interface BinderFn {
 	): this;
 }
 
-export default function Binder(element: EventTarget) {
+export default function Binder(element: EventTarget): BinderFn {
 	const boundList: [string, (...args: any[]) => void][] = [];
 
 	const unbindFn = function () {
@@ -23,7 +23,9 @@ export default function Binder(element: EventTarget) {
 	return unbindFn;
 }
 
-export function bound<T extends keyof HTMLElementEventMap>(element: EventTarget, on: T, call: (event: HTMLElementEventMap[T]) => void): () => void {
-	element.addEventListener(on, call as EventListener);
-	return () => element.removeEventListener(on, call as EventListener);
-}
+export { on as bound } from 'svelte/events';
+
+// export function bound<T extends keyof HTMLElementEventMap>(element: EventTarget, on: T, call: (event: HTMLElementEventMap[T]) => void): () => void {
+// 	element.addEventListener(on, call as EventListener);
+// 	return () => element.removeEventListener(on, call as EventListener);
+// }

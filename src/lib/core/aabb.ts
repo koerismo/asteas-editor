@@ -5,7 +5,18 @@ export interface Vec2Like {
 	y: number;
 }
 
-export abstract class AABB_Methods {
+export interface AABBLike {
+	min_x: number;
+	min_y: number;
+	max_x: number;
+	max_y: number;
+}
+
+export interface RectLike extends AABBLike {
+	flags: number;
+}
+
+export abstract class AABB_Methods implements AABBLike {
 	declare min_x: number;
 	declare min_y: number;
 	declare max_x: number;
@@ -40,12 +51,28 @@ export abstract class AABB_Methods {
 		return this;
 	}
 
+	expandToRect(r: AABB) {
+		if (r.min_x < this.min_x) this.min_x = r.min_x;
+		if (r.max_x > this.max_x) this.max_x = r.max_x;
+		if (r.min_y < this.min_y) this.min_y = r.min_y;
+		if (r.max_y > this.max_y) this.max_y = r.max_y;
+		return this;
+	}
+
 	set(x1: number, y1: number, x2: number, y2: number) {
 		this.min_x = x1;
 		this.min_y = y1;
 		this.max_x = x2;
 		this.max_y = y2;
 		return this;
+	}
+
+	isValid() {
+		return (
+			isFinite(this.min_x) &&
+			isFinite(this.min_y) &&
+			isFinite(this.max_x) &&
+			isFinite(this.max_y));
 	}
 
 	equals(v: AABB) {
@@ -55,12 +82,28 @@ export abstract class AABB_Methods {
 		);
 	}
 
+	scale(x: number, y: number) {
+		this.min_x *= x;
+		this.max_x *= x;
+		this.min_y *= y;
+		this.max_y *= y;
+		return this;
+	}
+
 	translate(x: number, y: number) {
 		this.min_x += x;
 		this.max_x += x;
 		this.min_y += y;
 		this.max_y += y;
 		return this;
+	}
+
+	snap(snap: number) {
+		const s = (v: number) => Math.round(v / snap) * snap;
+		this.min_x = s(this.min_x);
+		this.min_y = s(this.min_y);
+		this.max_x = s(this.max_x);
+		this.max_y = s(this.max_y);
 	}
 
 	copy(b: { min_x: number; max_x: number; min_y: number; max_y: number; }) {
@@ -82,7 +125,7 @@ export abstract class AABB_Methods {
 	}
 }
 
-export class AABB extends AABB_Methods {
+export class AABB extends AABB_Methods implements AABBLike {
 	min_x = 0;
 	min_y = 0;
 	max_x = 0;

@@ -13,6 +13,8 @@ export const Button = {
 // Pan: (Scroll + Shift) OR (Mouse + MMB)
 // Drag: (Mouse + LMB)
 
+const kDragThresh2 = (1.0 * devicePixelRatio) ** 2;
+
 export abstract class MouseBound extends Disposable {
 	_mouseWithin = false;
 	_mouseDragged = false;
@@ -41,12 +43,16 @@ export abstract class MouseBound extends Disposable {
 				this._mousePos.y = event.offsetY;
 				this._mousePosNorm.x = event.offsetX / element.offsetWidth;
 				this._mousePosNorm.y = event.offsetY / element.offsetHeight;
+				
+				if (!this._mouseDragged && this._getMouseDragDistance2() > kDragThresh2) {
+					this._mouseDragged = true;
+				}
+
 				this.onMouseMove(event);
 
 				if (this._mouseButton === Button.Middle) {
 					this.onPan(event.movementX, event.movementY);
 				} else if (this._mouseButton === Button.Left) {
-					this._mouseDragged = true;
 					this.onDrag(event.movementX, event.movementY);
 				}
 
@@ -64,6 +70,12 @@ export abstract class MouseBound extends Disposable {
 				this.onWheel(event);
 			})
 		);
+	}
+
+	_getMouseDragDistance2() {
+		const x = (this._mousePos.x - this._mouseDownPos.x);
+		const y = (this._mousePos.y - this._mouseDownPos.y);
+		return x * x + y * y;
 	}
 
 	onWheel(event: WheelEvent): void {}

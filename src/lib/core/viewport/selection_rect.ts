@@ -39,79 +39,87 @@ const V_YNEG = new Three.Vector3(1, -1, 1);
 export type RectMode = typeof RectMode[keyof typeof RectMode];
 export const RectMode = {
 	Invalid: -1,
-	None: 0,
-	Active: 1,
+	Default: 0,
+	Selected: 1,
 	Dragging: 2,
+	Handles: 3,
 } as const;
 
-export class SelectionRect extends Three.Object3D {
+export class VisualRect extends Three.Object3D {
 	mode: RectMode = RectMode.Invalid;
-	rect: RectEntry;
-	aabb: AABB = new AABB();
+
+	aabb: AABB;
+	visual_aabb: AABB;
 
 	protected pixelSize: number;
-	protected handleMeshes = new Three.InstancedMesh(handleGeometry, handleMaterial, 4);
 	protected borderMeshes = new Three.InstancedMesh(rectGeometry, borderMaterial, 4);
 	protected centerMesh = new Three.Mesh(rectGeometry, centerMaterial);
 
-	constructor(rect: RectEntry, pixelSize: number) {
+	constructor(aabb: AABB, pixelSize: number, initMode: boolean = true) {
 		super();
-		// this.frustumCulled = false;
-		this.handleMeshes.frustumCulled = false;
 		this.borderMeshes.frustumCulled = false;
 		this.pixelSize = pixelSize;
 
-		this.rect = rect;
-		this.aabb.copy(rect);
-		this.handleMeshes.renderOrder = 10;
+		this.aabb = aabb;
+		this.visual_aabb = new AABB().copy(aabb);
+
 		this.borderMeshes.renderOrder = 10;
 		this.centerMesh.renderOrder = 10;
 
-		this.add(this.handleMeshes);
 		this.add(this.borderMeshes);
 		this.add(this.centerMesh);
-		this.setMode(RectMode.None);
+
+		if (initMode)
+			this.setMode(RectMode.Default);
 	}
 
-	setRect(rect: RectEntry) {
-		this.rect = rect;
-		this.aabb.set(rect.min_x, rect.min_y, rect.max_x, rect.max_y);
+	setBounds(bounds: AABB) {
+		this.aabb.copy(bounds);
+		this.visualSync();
 		this.updateMesh();
 	}
 
 	setMode(mode: RectMode) {
 		if (this.mode === mode) return;
-		this.handleMeshes.visible = (mode !== RectMode.None);
 		this.borderMeshes.visible = (mode !== RectMode.Dragging);
-		this.centerMesh.material = mode === RectMode.None ? centerMaterial : centerActiveMaterial;
+		this.centerMesh.material = mode === RectMode.Default ? centerMaterial : centerActiveMaterial;
 		this.updateMesh();
 	}
 	
-	updateMesh() {
-		if (!this.visible) return;
-		if (this.handleMeshes.visible) this._setupHandles();
+	updateMesh(): boolean {
+		if (!this.visible) return false;
 		if (this.borderMeshes.visible) this._setupEdges();
 		this._setupCenter();
+		return true;
 	}
 	
 	visualSetTranslation(x: number, y: number) {
-		this.aabb.copy(this.rect);
-		this.aabb.translate(x, y);
-		this.updateMesh();
+		this.visual_aabb.copy(this.aabb);
+		this.visual_aabb.translate(x, y);
 	}
 
 	visualSetCorner(corner: number, pos: Three.Vector2Like) {
 		corner & 1
-			? this.aabb.max_x = pos.x
-			: this.aabb.min_x = pos.x;
+			? this.visual_aabb.max_x = pos.x
+			: this.visual_aabb.min_x = pos.x;
 		corner & 2
-			? this.aabb.max_y = pos.y
-			: this.aabb.min_y = pos.y;
-		this.updateMesh();
+			? this.visual_aabb.max_y = pos.y
+			: this.visual_aabb.min_y = pos.y;
+	}
+
+	visualSetBounds(bounds: AABB) {
+		this.visual_aabb.copy(bounds);
+	}
+
+	visualSetScaleTranslation(sx: number, sy: number, tx: number, ty: number) {
+		this.visual_aabb.copy(this.aabb);
+		this.visual_aabb.scale(sx, sy);
+		this.visual_aabb.translate(tx, ty);
 	}
 
 	visualSync() {
-		this.aabb.copy(this.rect);
+		this.visual_aabb.copy(this.aabb);
+		this.updateMesh();
 	}
 
 	getPointCorner(pt: Three.Vector2Like): number {
@@ -134,39 +142,11 @@ export class SelectionRect extends Three.Object3D {
 
 	_resizeMesh_mat4 = new Three.Matrix4();
 
-	_setupHandles() {
-		const mat4 = this._resizeMesh_mat4;
-		const { min_x, min_y, max_x, max_y } = this.aabb;
-
-		const S = HANDLE_SIZE * this.pixelSize;
-
-		mat4.makeTranslation(min_x, min_y, 0);
-		mat4.scale(V_YNEG);
-		mat4.elements[0] *= S;
-		mat4.elements[5] *= S;
-		this.handleMeshes.setMatrixAt(0, mat4);
-		
-		mat4.scale(V_XNEG);
-		mat4.setPosition(max_x, min_y, 0);
-		this.handleMeshes.setMatrixAt(1, mat4);
-		
-		mat4.scale(V_YNEG);
-		mat4.scale(V_XNEG);
-		mat4.setPosition(min_x, max_y, 0);
-		this.handleMeshes.setMatrixAt(2, mat4);
-		
-		mat4.scale(V_XNEG);
-		mat4.setPosition(max_x, max_y, 0);
-		this.handleMeshes.setMatrixAt(3, mat4);
-
-		this.handleMeshes.instanceMatrix.needsUpdate = true;
-	}
-
 	_setupEdges() {
 		const mat4 = this._resizeMesh_mat4;
-		const ab = this.aabb;
-		const w = this.aabb.width;
-		const h = this.aabb.height;
+		const ab = this.visual_aabb;
+		const w = this.visual_aabb.width;
+		const h = this.visual_aabb.height;
 
 		const withBounds = (x: number, y: number, w: number, h: number) => {
 			mat4.set(
@@ -196,9 +176,65 @@ export class SelectionRect extends Three.Object3D {
 	}
 
 	_setupCenter() {
-		this.centerMesh.position.x = this.aabb.min_x;
-		this.centerMesh.position.y = this.aabb.min_y;
-		this.centerMesh.scale.x = this.aabb.width;
-		this.centerMesh.scale.y = this.aabb.height;
+		this.centerMesh.position.x = this.visual_aabb.min_x;
+		this.centerMesh.position.y = this.visual_aabb.min_y;
+		this.centerMesh.scale.x = this.visual_aabb.width;
+		this.centerMesh.scale.y = this.visual_aabb.height;
 	}
+}
+
+export class SelectionRect extends VisualRect {
+	protected handleMeshes = new Three.InstancedMesh(handleGeometry, handleMaterial, 4);
+
+	constructor(aabb: AABB, pixelSize: number) {
+		super(aabb, pixelSize, false);
+		this.handleMeshes.frustumCulled = false;
+		this.handleMeshes.renderOrder = 10;
+		this.add(this.handleMeshes);
+		this.setMode(RectMode.Default);
+	}
+
+	setMode(mode: RectMode) {
+		if (this.mode === mode) return;
+		this.borderMeshes.visible = false;
+		this.centerMesh.visible = mode === RectMode.Dragging;
+		this.centerMesh.material = mode === RectMode.Default ? centerMaterial : centerActiveMaterial;
+		this.handleMeshes.visible = (mode !== RectMode.Default);
+		this.updateMesh();
+	}
+
+	updateMesh(): boolean {
+		if (!super.updateMesh()) return false;
+		this._setupHandles();
+		return true;
+	}
+
+	_setupHandles() {
+		const mat4 = this._resizeMesh_mat4;
+		const { min_x, min_y, max_x, max_y } = this.visual_aabb;
+
+		const S = HANDLE_SIZE * this.pixelSize;
+
+		mat4.makeTranslation(min_x, min_y, 0);
+		mat4.scale(V_YNEG);
+		mat4.elements[0] *= S;
+		mat4.elements[5] *= S;
+		this.handleMeshes.setMatrixAt(0, mat4);
+
+		mat4.scale(V_XNEG);
+		mat4.setPosition(max_x, min_y, 0);
+		this.handleMeshes.setMatrixAt(1, mat4);
+
+		mat4.scale(V_YNEG);
+		mat4.scale(V_XNEG);
+		mat4.setPosition(min_x, max_y, 0);
+		this.handleMeshes.setMatrixAt(2, mat4);
+
+		mat4.scale(V_XNEG);
+		mat4.setPosition(max_x, max_y, 0);
+		this.handleMeshes.setMatrixAt(3, mat4);
+
+		this.handleMeshes.instanceMatrix.needsUpdate = true;
+	}
+	
 }
