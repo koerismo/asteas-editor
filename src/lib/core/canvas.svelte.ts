@@ -373,7 +373,7 @@ export class CanvasRenderer extends MouseBound {
 					} else {
 						this.state.setSelection([selectIdx]);
 					}
-				} else {
+				} else if (!event.shiftKey) {
 					this.state.selectionClear();
 				}
 			}
