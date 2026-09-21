@@ -6,7 +6,7 @@ import 'vtf-js/addons/squish';
 import type { EditorState } from './context.svelte.js';
 import { HotspotTextFormat } from './text_format.js';
 import { RectFile } from './file.js';
-import { downloadZip, makeZip } from 'client-zip';
+import { downloadZip } from 'client-zip';
 
 /**
  * `abc.def` -> `def`

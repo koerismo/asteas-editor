@@ -45,10 +45,10 @@ export class VisualRect extends Three.Object3D {
 	protected borderMeshes = new Three.InstancedMesh(rectGeometry, borderMaterial, 4);
 	protected centerMesh = new Three.Mesh(rectGeometry, centerMaterial);
 
-	constructor(rect: RectEntry | AABB, initMode: boolean = true) {
+	constructor(rect: RectEntry | AABB, pixelSize: number = 0.0, initMode: boolean = true) {
 		super();
 		this.borderMeshes.frustumCulled = false;
-		this.pixelSize = 0.0;
+		this.pixelSize = pixelSize;
 
 		this.rect = rect;
 		this.visual_aabb = new AABB().copy(rect);
@@ -190,7 +190,7 @@ export class SelectionRect extends VisualRect {
 	protected handleMeshes = new Three.InstancedMesh(handleGeometry, handleMaterial, 4);
 
 	constructor(aabb: AABB) {
-		super(aabb, false);
+		super(aabb, 0.0, false);
 		this.centerMesh.material = selectionBoxMaterial;
 		this.handleMeshes.frustumCulled = false;
 		this.handleMeshes.renderOrder = 10;

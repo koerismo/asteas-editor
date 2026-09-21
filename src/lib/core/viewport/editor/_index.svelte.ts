@@ -103,11 +103,11 @@ export class EditorViewport extends Viewport<Three.OrthographicCamera> {
 		this.disposables.push(
 			$effect.root(() => {
 				$effect(() => {
-					console.log('Building rects...');
+					// console.log('Building rects...');
 					this.rebuildRects(this.state.rects ?? []);
 				});
 				$effect(() => {
-					console.log('Setting selection...')
+					// console.log('Setting selection...')
 					this.setSelection(this.state.selection);
 				});
 				$effect(() => {
@@ -142,6 +142,12 @@ export class EditorViewport extends Viewport<Three.OrthographicCamera> {
 
 		this.pixelSize = area / this.canvas.height * devicePixelRatio;
 		this.camera.updateProjectionMatrix();
+	}
+
+	centerCamera() {
+		this.camera.position.x = this.image ? this.image.width / 2 : 0;
+		this.camera.position.y = this.image ? this.image.height / 2 : 0;
+		this.zoom = 1.5 / (this.image?.width ?? 512);
 	}
 
 	onPan(x: number, y: number) {
@@ -390,7 +396,7 @@ export class EditorViewport extends Viewport<Three.OrthographicCamera> {
 		this.visualRects.length = rects.length;
 		for (let i = 0; i < rects.length; i++) {
 			if (i >= oldLength) {
-				this.visualRects[i] = new VisualRect(rects[i]);
+				this.visualRects[i] = new VisualRect(rects[i], this.pixelSize);
 				this.scene.add(this.visualRects[i]);
 			} else {
 				this.visualRects[i].setRect(rects[i]);
@@ -460,6 +466,7 @@ export class EditorViewport extends Viewport<Three.OrthographicCamera> {
 		if (!image) return this.setTexture();
 		const v = await new VTextureLoader().parseImage(image);
 		this.setTexture(v);
+		this.centerCamera();
 	}
 
 	setTexture(v?: Three.Texture) {

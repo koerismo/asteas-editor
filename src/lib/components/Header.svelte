@@ -5,7 +5,7 @@
 </script>
 
 <header>
-	<Picker options={['Edit', 'Paint', 'Remove']} index={0}></Picker>
+	<!-- <Picker options={['Edit', 'Paint', 'Remove']} index={0}></Picker> -->
 	<div style="flex-grow: 1;"></div>
 	<!-- <MenuItem text="Load">
 		<b>Load Options</b>

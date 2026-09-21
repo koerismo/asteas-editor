@@ -157,12 +157,11 @@ export class ModelHotspotter {
 				// 	rotation -= 1;
 
 				this.fitter.GetFinalTransform(this.size, this.rects[rectIdx], output.tiling, 0, rotation, mat3x2);
-				console.log([...mat3x2.values]);
 			} else {
 				mat3x2.values.set([1, 0, 0, 1, 0, 0]);
 			}
 		}
-		
+
 		for (let i=0, idx=0; i<uvCount; i++, idx+=2) {
 			const islandIdx = vertexIslands[i];
 			const vec = new Vec2(srcUvs[idx], srcUvs[idx + 1]);
