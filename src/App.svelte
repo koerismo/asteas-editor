@@ -5,11 +5,14 @@
 	// import Counter from './lib/TopBar.svelte'
 
 	
-	import Canvas from '$lib/components/Canvas.svelte';
+	import Editor from '$lib/components/CanvasEditor.svelte';
+	// import Preview from '$lib/components/CanvasPreview.svelte';
+	
 	import Header from '$lib/components/Header.svelte';
-	import Hello from '$lib/components/Hello.svelte';
+	import Hello from '$lib/components/intro/Hello.svelte';
 	import Sidebar from '$lib/components/Sidebar.svelte';
-	import { EditorState, setEditorCtx } from '$lib/core/context.svelte';
+
+	import { EditorState, setEditorCtx } from '$lib/core/context.svelte.js';
 	
 	// import { HotspotRect } from 'vtf-js/resources';
 	// import { RectFile } from '$lib/core/file.js';
@@ -35,7 +38,8 @@
 	<Header></Header>
 	{#if context.active}
 	<div>
-		<Canvas></Canvas>
+		<Editor></Editor>
+		<!-- <Preview></Preview> -->
 	</div>
 	{:else}
 		<Hello></Hello>
@@ -65,5 +69,11 @@
 		width: 100%;
 		height: 100%;
 		overflow: hidden;
+		gap: 1px;
+		background-color: var(--border);
+
+		/* :global(:last-child) {
+			width: 40%;
+		} */
 	}
 </style>

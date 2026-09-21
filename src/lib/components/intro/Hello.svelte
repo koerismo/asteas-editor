@@ -1,16 +1,16 @@
 <script lang="ts">
-	import Upload from "./buttons/Upload.svelte";
+	import Upload from "../buttons/Upload.svelte";
 	import HelloExample from "./HelloExample.svelte";
 	import Icon from '$lib/assets/logo-white.svg';
-	import { getEditorCtx } from "$lib/core/context.svelte";
-	import { EditorInitializer } from "$lib/core/loader";
+	import { getEditorCtx } from "$lib/core/context.svelte.js";
+	import { EditorIO } from "$lib/core/disk_io";
 	
 	const context = getEditorCtx();
-	const loader = new EditorInitializer(context);
 
-	function onFile(files: FileList) {
+	
+	function onFiles(files: FileList) {
 		if (!files.length) return;
-		loader.loadFile(files[0]);
+		context.io.loadFiles(files, true);
 	}
 
 	import ThumbExample from '$lib/assets/examples/thumb_example.jpg';
@@ -24,7 +24,7 @@
 	<HelloExample
 		{thumb}
 		{url}
-		{loader}
+		{context}
 		{title}
 		{author}></HelloExample>
 {/snippet}
@@ -40,7 +40,7 @@
 	<hr>
 	<div class="content">
 		<h3>Import</h3>
-		<Upload {onFile}></Upload>
+		<Upload {onFiles}></Upload>
 	</div>
 	<div class="content">
 		<h3>Examples</h3>
@@ -77,12 +77,7 @@
 	}
 
 	hr {
-		height: 1px;
-		width: 100%;
 		grid-column: 1 / 3;
-
-		border: none;
-		border-bottom: 1px solid var(--border-3);
 	}
 
 	img {

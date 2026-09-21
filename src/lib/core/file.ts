@@ -1,4 +1,4 @@
-import type { HotspotRect, VHotspotResource } from 'vtf-js/resources';
+import { HotspotRect, VHotspotResource } from 'vtf-js/resources';
 import { AABB, type AABBLike } from './aabb.js';
 
 export class RectFile {
@@ -25,6 +25,15 @@ export class RectFile {
 	setRectsFrom(rects: (AABBLike | HotspotRect)[]) {
 		this.rects = rects.map(v => new RectEntry(v));
 	}
+
+	toResource(): VHotspotResource {
+		return new VHotspotResource(
+			0,
+			1,
+			0,
+			this.rects.map(v => v.toHotspotRect())
+		);
+	}
 }
 
 export class RectEntry extends AABB implements AABBLike {
@@ -39,5 +48,15 @@ export class RectEntry extends AABB implements AABBLike {
 			this.copy(rect);
 			this.flags = 'flags' in rect ? rect.flags : 0;
 		}
+	}
+
+	toHotspotRect() {
+		return new HotspotRect(
+			this.flags,
+			this.min_x,
+			this.min_y,
+			this.max_x,
+			this.max_y
+		);
 	}
 }

@@ -45,10 +45,10 @@ export class VisualRect extends Three.Object3D {
 	protected borderMeshes = new Three.InstancedMesh(rectGeometry, borderMaterial, 4);
 	protected centerMesh = new Three.Mesh(rectGeometry, centerMaterial);
 
-	constructor(rect: RectEntry | AABB, pixelSize: number, initMode: boolean = true) {
+	constructor(rect: RectEntry | AABB, initMode: boolean = true) {
 		super();
 		this.borderMeshes.frustumCulled = false;
-		this.pixelSize = pixelSize;
+		this.pixelSize = 0.0;
 
 		this.rect = rect;
 		this.visual_aabb = new AABB().copy(rect);
@@ -96,12 +96,13 @@ export class VisualRect extends Three.Object3D {
 	}
 
 	visualSetCorner(corner: number, pos: Three.Vector2Like) {
+		const bb = this.visual_aabb;
 		corner & 1
-			? this.visual_aabb.max_x = pos.x
-			: this.visual_aabb.min_x = pos.x;
+			? bb.max_x = Math.max(pos.x, bb.min_x + 1)
+			: bb.min_x = Math.min(pos.x, bb.max_x - 1);
 		corner & 2
-			? this.visual_aabb.max_y = pos.y
-			: this.visual_aabb.min_y = pos.y;
+			? bb.max_y = Math.max(pos.y, bb.min_y + 1)
+			: bb.min_y = Math.min(pos.y, bb.max_y - 1);
 	}
 
 	visualSetBounds(bounds: AABB) {
@@ -188,8 +189,8 @@ export class VisualRect extends Three.Object3D {
 export class SelectionRect extends VisualRect {
 	protected handleMeshes = new Three.InstancedMesh(handleGeometry, handleMaterial, 4);
 
-	constructor(aabb: AABB, pixelSize: number) {
-		super(aabb, pixelSize, false);
+	constructor(aabb: AABB) {
+		super(aabb, false);
 		this.centerMesh.material = selectionBoxMaterial;
 		this.handleMeshes.frustumCulled = false;
 		this.handleMeshes.renderOrder = 10;

@@ -1,5 +1,5 @@
 import { createContext } from 'svelte';
-import type { VImageEither } from 'vtf-js';
+import type { VImageEither, Vtf } from 'vtf-js';
 import { on } from 'svelte/events';
 
 import { RectEntry, RectFile } from './file.js';
@@ -7,6 +7,7 @@ import { AABB } from './aabb.js';
 
 import { makeSubscriber } from  './history/reactive.js';
 import { History } from './history/history.js';
+import { EditorIO } from './disk_io.js';
 
 function makeId(type: string, id: number) {
 	return type + '#' + id;
@@ -20,8 +21,13 @@ export class EditorState {
 	#selectSubscriber = makeSubscriber();
 	#rectSubscriber = makeSubscriber();
 
-	public active = $state(false);
-	public image: VImageEither | undefined = $state();
+	public readonly io = new EditorIO(this);
+
+	public active: boolean = $state.raw(false);
+	public filename: string = $state.raw()!;
+
+	public image: VImageEither | undefined = $state.raw();
+	public vtf: Vtf | undefined = $state.raw();
 
 	get selection(): ReadonlySet<number> {
 		this.#selectSubscriber.use();
@@ -33,22 +39,44 @@ export class EditorState {
 		return this.#rects;
 	}
 
-	setFile(file?: RectFile) {
+	clearRectFile() {
 		this.#selection.clear();
 		this.#history.clear();
-		this.#rects = file ? file.rects : [];
+		
+		this.#rects = [];
+		this.filename = undefined!;
+		this.active = false;
+		
+		this.#selectSubscriber.update();
+		this.#rectSubscriber.update();
+	}
+
+	clearImage() {
+		this.image = undefined!;
+		this.vtf = undefined!;
+	}
+
+	setRectFile(
+			name: string,
+			rects: RectFile,
+		) {
+		this.#selection.clear();
+		this.#history.clear();
+
+		this.#rects = rects.rects;
+		this.filename = name;
+		this.active = true;
 
 		this.#selectSubscriber.update();
 		this.#rectSubscriber.update();
-		this.active = !!file;
 	}
 
-	commitActions() {
-		this.#history.commit();
-	}
-
-	clearHistory() {
-		this.#history.clear();
+	setImage(
+			image: VImageEither,
+			vtf: Vtf | undefined,
+		) {
+		this.image = image;
+		this.vtf = vtf;
 	}
 
 	mount() {
@@ -61,6 +89,14 @@ export class EditorState {
 
 	redo() {
 		return this.#history.redo();
+	}
+
+	getWidth() {
+		return this.image?.width ?? 512;
+	}
+
+	getHeight() {
+		return this.image?.height ?? 512;
 	}
 
 	canUndo() { return this.#history.canUndo(); }
@@ -84,7 +120,15 @@ export class EditorState {
 		}
 	}
 
-	setSelection(indices: Iterable<number>) {
+	$commitActions() {
+		this.#history.commit();
+	}
+
+	$clearHistory() {
+		this.#history.clear();
+	}
+
+	$setSelection(indices: Iterable<number>) {
 		const prev = this.#selection;
 		const next = new Set(indices);
 
@@ -110,33 +154,33 @@ export class EditorState {
 		});
 	}
 
-	selectionSetAll() {
-		this.setSelection(this.#rects.map((_, i) => i));
+	$selectionSetAll() {
+		this.$setSelection(this.#rects.map((_, i) => i));
 	}
 
-	selectionClear() {
-		this.setSelection([]);
+	$selectionClear() {
+		this.$setSelection([]);
 	}
 
-	selectionAdd(indices: Iterable<number>) {
+	$selectionAdd(indices: Iterable<number>) {
 		const selection = new Set(this.#selection);
 		for (const idx of indices) selection.add(idx);
-		this.setSelection(selection);
+		this.$setSelection(selection);
 	}
 
-	selectionRemove(indices: Iterable<number>) {
+	$selectionRemove(indices: Iterable<number>) {
 		const selection = new Set(this.#selection);
 		for (const idx of indices) selection.delete(idx);
-		this.setSelection(selection);
+		this.$setSelection(selection);
 	}
 
-	selectionToggle(index: number) {
+	$selectionToggle(index: number) {
 		const selection = new Set(this.#selection);
 		if (!selection.delete(index)) selection.add(index);
-		this.setSelection(selection);
+		this.$setSelection(selection);
 	}
 
-	setRectBounds(entries: Record<number, AABB>) {
+	$setRectBounds(entries: Record<number, AABB>) {
 		const prev: Record<number, AABB> = {};
 		for (const key in entries) {
 			prev[key] = new AABB().copy(this.#rects[+key]);
@@ -167,7 +211,7 @@ export class EditorState {
 		});
 	}
 
-	setRectFlags(indices: ArrayLike<number>, flags: number, mask: number) {
+	$setRectFlags(indices: ArrayLike<number>, flags: number, mask: number) {
 		const oldFlags = new Uint16Array(indices.length);
 
 		for (let i=0; i<indices.length; i++) {
@@ -197,11 +241,11 @@ export class EditorState {
 		
 	}
 
-	setRects(rects: RectEntry[]) {
+	$setRects(rects: RectEntry[]) {
 		const next = rects;
 		const prev = this.#rects;
 
-		this.selectionClear();
+		this.$selectionClear();
 
 		this.#history.add({
 			type: 'set_rects',
@@ -219,12 +263,12 @@ export class EditorState {
 		});
 	}
 
-	editRects(add: RectEntry[], remove: number[]): number[] {
+	$editRects(add: RectEntry[], remove: number[]): number[] {
 		const prev = this.#rects;
 		const next = new Array<RectEntry>(this.#rects.length + add.length - remove.length);
 
 		// Deselect rects to be removed
-		this.selectionRemove(remove);
+		this.$selectionRemove(remove);
 
 		let idx = 0;
 		for (let i=0; i<this.#rects.length; i++) {
@@ -260,25 +304,25 @@ export class EditorState {
 		return indicesOut;
 	}
 
-	rectsAdd(rects: RectEntry[]) {
-		return this.editRects(rects, []);
+	$rectsAdd(rects: RectEntry[]) {
+		return this.$editRects(rects, []);
 	}
 
-	rectsClone(rects: Iterable<number>): number[] {
+	$rectsClone(rects: Iterable<number>): number[] {
 		const next = Array.from(rects, v => {
 			this._validateId(v);
 			return new RectEntry(this.#rects[v])
 		});
 
-		return this.rectsAdd(next);
+		return this.$rectsAdd(next);
 	}
 
-	rectsRemove(indices: number[]) {
-		this.editRects([], indices);
+	$rectsRemove(indices: number[]) {
+		this.$editRects([], indices);
 	}
 
-	rectsRemoveSelected() {
-		this.rectsRemove(Array.from(this.selection));
+	$rectsRemoveSelected() {
+		this.$rectsRemove(Array.from(this.selection));
 	}
 }
 

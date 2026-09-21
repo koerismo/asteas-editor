@@ -35,7 +35,7 @@ export class HotspotTextFormat {
 			));
 		}
 
-		return new VHotspotResource(0x0, 1, 0x0, []);
+		return new VHotspotResource(0x0, 1, 0x0, rects);
 	}
 
 	static encode(res: VHotspotResource): string {

@@ -1,16 +1,16 @@
 <script lang="ts">
-	import type { EditorInitializer } from '$lib/core/loader';
+	import type { EditorState } from '$lib/core/context.svelte';
 
 	let {
 		thumb: img,
 		url,
-		loader,
+		context,
 		title,
 		author,
 	}: {
 		thumb: string;
 		url: string;
-		loader: EditorInitializer,
+		context: EditorState,
 		title: string;
 		author: string
 	} = $props();
@@ -20,7 +20,7 @@
 	let loading = $state(false);
 	async function onclick() {
 		loading = true;
-		await loader.loadUrl(url);
+		await context.io.loadExample(url);
 		loading = false;
 	}
 </script>

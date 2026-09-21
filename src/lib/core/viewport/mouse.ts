@@ -1,5 +1,4 @@
-import type { Vector2Like } from 'three';
-import Binder, { bound } from '../binder.js';
+import Binder from '../binder.js';
 import { Disposable } from './disposable.js';
 
 export const Button = {
@@ -15,45 +14,59 @@ export const Button = {
 
 const kDragThresh2 = (1.0 * devicePixelRatio) ** 2;
 
-export abstract class MouseBound extends Disposable {
-	_mouseWithin = false;
-	_mouseDragged = false;
-	_mouseButton: number = 0;
-	_mousePos = { x: 0, y: 0 };
-	_mousePosNorm = { x: 0, y: 0 };
-	_mouseDownPos = { x: 0, y: 0 };
+interface MouseComponentHost {
+	onWheel(event: WheelEvent): void;
+	onMouseMove(event: MouseEvent): void;
+	onMouseDown(event: MouseEvent): void;
+	onMouseUp(event: MouseEvent): void;
 
-	constructor(element: HTMLElement) {
+	onZoom(delta: number): void;
+	onDrag(deltaX: number, deltaY: number): void;
+	onPan(deltaX: number, deltaY: number): void;
+}
+
+export class MouseComponent extends Disposable {
+	public mouse_within = false;
+	public dragged = false;
+	public button: number = 0;
+	public mouse_pos = { x: 0, y: 0 };
+	public pos_nrm = { x: 0, y: 0 };
+	public pos_down = { x: 0, y: 0 };
+
+	constructor(
+		public host: Partial<MouseComponentHost>,
+		element: HTMLElement
+	) {
 		super();
 		this.disposables.push(Binder(element)
 			.add('mousedown', event => {
-				this._mouseButton = event.buttons;
-				this._mouseDragged = false;
-				this._mouseDownPos.x = event.offsetX;
-				this._mouseDownPos.y = event.offsetY;
-				this.onMouseDown(event);
+				this.button = event.buttons;
+				this.dragged = false;
+				this.pos_down.x = event.offsetX;
+				this.pos_down.y = event.offsetY;
+				this.host.onMouseDown?.(event);
 			})
 			.add('mouseup', event => {
-				this._mouseButton = 0;
-				this.onMouseUp(event);
+				this.button = 0;
+				this.host.onMouseUp?.(event);
 			})
 			.add('mousemove', event => {
-				this._mouseWithin = true;
-				this._mousePos.x = event.offsetX;
-				this._mousePos.y = event.offsetY;
-				this._mousePosNorm.x = event.offsetX / element.offsetWidth;
-				this._mousePosNorm.y = event.offsetY / element.offsetHeight;
+				this.mouse_within = true;
+				this.mouse_pos.x = event.offsetX;
+				this.mouse_pos.y = event.offsetY;
+				this.pos_nrm.x = event.offsetX / element.offsetWidth;
+				this.pos_nrm.y = event.offsetY / element.offsetHeight;
 				
-				if (!this._mouseDragged && this._getMouseDragDistance2() > kDragThresh2) {
-					this._mouseDragged = true;
+				if (!this.dragged && this.getMouseDragDistance2() > kDragThresh2) {
+					this.dragged = true;
 				}
 
-				this.onMouseMove(event);
+				this.host.onMouseMove?.(event);
 
-				if (this._mouseButton === Button.Middle) {
-					this.onPan(event.movementX, event.movementY);
-				} else if (this._mouseButton === Button.Left) {
-					this.onDrag(event.movementX, event.movementY);
+				if (this.button === Button.Middle) {
+					this.host.onPan?.(event.movementX, event.movementY);
+				} else if (this.button === Button.Left) {
+					this.host.onDrag?.(event.movementX, event.movementY);
 				}
 
 			})
@@ -61,29 +74,20 @@ export abstract class MouseBound extends Disposable {
 				event.preventDefault();
 			})
 			.add('wheel', event => {
-				if (this._mouseButton === Button.None && event.shiftKey) {
-					this.onPan(-event.deltaX, -event.deltaY);
+				if (this.button === Button.None && event.shiftKey) {
+					this.host.onPan?.(-event.deltaX, -event.deltaY);
 				} else {
-					this.onZoom(event.deltaY);
+					this.host.onZoom?.(event.deltaY);
 				}
 
-				this.onWheel(event);
+				this.host.onWheel?.(event);
 			})
 		);
 	}
 
-	_getMouseDragDistance2() {
-		const x = (this._mousePos.x - this._mouseDownPos.x);
-		const y = (this._mousePos.y - this._mouseDownPos.y);
+	getMouseDragDistance2() {
+		const x = (this.mouse_pos.x - this.pos_down.x);
+		const y = (this.mouse_pos.y - this.pos_down.y);
 		return x * x + y * y;
 	}
-
-	onWheel(event: WheelEvent): void {}
-	onMouseMove(event: MouseEvent): void {}
-	onMouseDown(event: MouseEvent): void {}
-	onMouseUp(event: MouseEvent): void {}
-
-	onZoom(delta: number): void {}
-	onDrag(deltaX: number, deltaY: number): void {}
-	onPan(deltaX: number, deltaY: number): void {}
 }

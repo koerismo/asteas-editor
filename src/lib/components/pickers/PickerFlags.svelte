@@ -1,8 +1,13 @@
 <script lang="ts">
 	import type { Component } from 'svelte';
 
+	type Option = (
+		readonly [Component | string, number] |
+		readonly [Component | string, number, string]
+	)
+
 	interface Props {
-		options: [Component | string, number, string | undefined][];
+		options: readonly Option[];
 		value: number;
 		oninput?(new_value: number): void;
 	}
@@ -24,7 +29,7 @@
 	{#each options as [optContent, v, desc], i (i)}
 		<button
 			role="checkbox"
-			aria-label={desc ?? 'Flag'}
+			title={desc ?? (typeof optContent === 'string' ? optContent : 'Flag')}
 			aria-checked={!!(value & v)}
 			onclick={e => onclick(e, v)}
 			onmousedown={e => e.stopPropagation()}

@@ -47,7 +47,7 @@
 			<Button
 				variant="icon"
 				disabled={!context.selection.size}
-				onclick={() => context.rectsRemoveSelected()}
+				onclick={() => context.$rectsRemoveSelected()}
 				title="Delete selected"
 				><TrashCan></TrashCan></Button
 			>

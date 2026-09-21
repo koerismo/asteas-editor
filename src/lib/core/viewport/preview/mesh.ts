@@ -1,29 +1,43 @@
 import * as Three from 'three';
-import { Mat3x2, Rect, RectFitResult, RectFitter, Vec2 } from './hotspot.js';
-import type { RectEntry } from '../file.js';
-import { AABB } from '../aabb.js';
+import { Mat3x2, Rect, RectFitResult, RectFitter, Vec2, WeightConfig } from './hotspot.js';
+import type { RectEntry } from '$lib/core/file.js';
+import { AABB } from '$lib/core/aabb.js';
+
+type Attr = Three.BufferAttribute | Three.InterleavedBufferAttribute;
+
+const kPreviewConfig = new WeightConfig();
 
 export class ModelHotspotter {
 	geo: Three.BufferGeometry;
 	islands: AABB[] = [];
 
 	rects: Rect[] = [];
-	fitter = new RectFitter();
+	fitter = new RectFitter(kPreviewConfig);
+
+	size = new Vec2(1, 1);
+
+	uvIslandName = 'island';
 
 	constructor(geo: Three.BufferGeometry) {
 		this.geo = geo;
-		this._parseIslands();
+		const uvs = geo.getAttribute('uv')!;
+		this._parseIslands(uvs);
 	}
 
 	setRects(rects: RectEntry[]) {
 		this.rects = rects.map(v => new Rect(v.flags, new Vec2(v.min_x, v.min_y), new Vec2(v.max_x, v.max_y)));
 	}
 
+	setSize(w: number, h: number) {
+		this.size.x = w;
+		this.size.y = h;
+	}
+
 	/**
 	 * Identifies each UV island and saves it.
 	 * This is fairly expensive, so don't run it often!!!
 	 */
-	_parseIslands() {
+	_parseIslands(uvAttribute: Attr) {
 		const faceCorners = this.geo.index!.array;
 		const vertexIslands = new Uint16Array(faceCorners.length).fill(0xffff);
 		
@@ -54,10 +68,10 @@ export class ModelHotspotter {
 
 		// Write island data back to mesh
 		const islandAttribute = new Three.Uint16BufferAttribute(vertexIslands, 1);
-		this.geo.setAttribute('island', islandAttribute);
+		this.geo.setAttribute(this.uvIslandName, islandAttribute);
 
 		// Grab vertex UVs
-		const uvAttribute = this.geo.getAttribute('uv')!;
+		// const uvAttribute = this.geo.getAttribute('uv')!;
 		const uvs = uvAttribute.array;
 
 		// Find bounds of each island
@@ -78,8 +92,13 @@ export class ModelHotspotter {
 		const islandTf = new Float32Array(islandBounds.length * 4);
 		for (let i=0, idx=0; i<islandBounds.length; i++) {
 			const island = islandBounds[i];
-			if (island.width == 0 || island.height == 0)
-				throw 'Bad UVs on island ' + i + '!';
+			if (island.width === 0 || island.height === 0) {
+				console.warn('Bad UVs on island ' + i + '!');
+				if (island.width === 0)
+					island.max_x += 0.00_001;
+				if (island.height === 0)
+					island.max_y += 0.00_001;
+			}
 
 			islandTf[idx++] = island.min_x;
 			islandTf[idx++] = island.min_y;
@@ -102,31 +121,43 @@ export class ModelHotspotter {
 		uvAttribute.needsUpdate = true;
 	}
 
-	fit(targetUvAttribute: Three.BufferAttribute) {
-		const srcUvAttribute = this.geo.getAttribute('uv');
+	fit(srcUvAttribute: Attr, targetUvAttribute: Attr) {
+		// const srcUvAttribute = this.geo.getAttribute('uv');
 		const srcUvs = srcUvAttribute.array;
 		const uvCount = srcUvAttribute.count;
 
 		const targetUvs = targetUvAttribute.array;
 
-		const islandAttribute = this.geo.getAttribute('island');
+		const islandAttribute = this.geo.getAttribute(this.uvIslandName);
 		const vertexIslands = islandAttribute.array;
 
-		if (targetUvs.length !== uvCount) {
+		if (targetUvAttribute.count !== uvCount) {
 			throw `Target mesh size does not match analyzed mesh! (${targetUvAttribute.count} !== ${uvCount})`;
 		}
 
-		const xFormBuffer = new Float32Array(this.islands.length * 6);
+		const xFormBuffer = new Float64Array(this.islands.length * 6);
 		const xForms = new Array<Mat3x2>(this.islands.length);
 
-		const surface = new Vec2(1.0, 1.0);
 		const output = new RectFitResult(-1, false);
+		const islandSize = new Vec2();
 
 		for (let i=0, idx=0; i<this.islands.length; i++, idx+=6) {
-			const rectIdx = this.fitter.FitRectToSurface(this.rects, surface, output);
+			this.islands[i].getSize(islandSize);
+			islandSize.x *= this.size.x * 10.0; 
+			islandSize.y *= this.size.y * 10.0;
+
+			const rectIdx = this.fitter.FitRectToSurface(this.rects, islandSize, output);
 			const mat3x2 = xForms[i] = new Mat3x2(xFormBuffer.subarray(idx, idx + 6));
 			if (rectIdx !== -1) {
-				this.fitter.GetFinalTransform(surface, this.rects[rectIdx], output.tiling, 0, output.rotated ? 1 : 0, mat3x2);
+
+				let rotation = 2;
+				// if (this.rects[rectIdx].CanRotate() && Math.random() > 0.5)
+				// 	rotation = 2;
+				// if (output.rotated)
+				// 	rotation -= 1;
+
+				this.fitter.GetFinalTransform(this.size, this.rects[rectIdx], output.tiling, 0, rotation, mat3x2);
+				console.log([...mat3x2.values]);
 			} else {
 				mat3x2.values.set([1, 0, 0, 1, 0, 0]);
 			}
@@ -143,11 +174,3 @@ export class ModelHotspotter {
 		targetUvAttribute.needsUpdate = true;
 	}
 }
-
-// const group = await new FBXLoader().loadAsync(Cube1);
-// const mesh = group.children[0] as Three.Mesh;
-
-// const group = await new GLTFLoader().loadAsync(Cube1);
-// const mesh = group.scene.children[0] as Three.Mesh;
-// export const hs = new ModelHotspotter(mesh.geometry);
-// console.log(hs.islands);

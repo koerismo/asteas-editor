@@ -1,14 +1,12 @@
 <script lang="ts">
 	import { onMount } from 'svelte';
-	import type { CanvasRenderer } from '$lib/core/viewport/canvas.svelte.js';
-	import { getEditorCtx } from '$lib/core/context.svelte';
+	import type { PreviewViewport } from '$lib/core/viewport/preview/_index.svelte.js';
+	import { getEditorCtx } from '$lib/core/context.svelte.js';
 	import LoadingIcon from '@lucide/svelte/icons/loader-circle';
 
 	let canvas: HTMLCanvasElement;
-	let renderer: CanvasRenderer;
-
+	let renderer: PreviewViewport;
 	let loading = $state(false);
-
 	const context = getEditorCtx();
 	
 	onMount(() => {
@@ -16,9 +14,9 @@
 
 		async function initCanvas() {
 			loading = true;
-			const { CanvasRenderer } = await import('$lib/core/viewport/canvas.svelte.js');
+			const { PreviewViewport } = await import('$lib/core/viewport/preview/_index.svelte.js');
 			if (cancel) return;
-			renderer = new CanvasRenderer(canvas, context);
+			renderer = new PreviewViewport(canvas, context);
 			loading = false;
 		}
 
@@ -37,7 +35,6 @@
 		<LoadingIcon></LoadingIcon>
 	</div>
 </div>
-
 
 <style>
 	div {

@@ -1,9 +1,9 @@
 <script lang="ts">
 	import type { HTMLInputAttributes } from 'svelte/elements';
-	let args: Omit<HTMLInputAttributes, 'type'> = $props();
+	let { checked = $bindable(), ...args }: Omit<HTMLInputAttributes, 'type'> = $props();
 </script>
 
-<input type="checkbox" {...args} />
+<input type="checkbox" bind:checked {...args} />
 
 <style lang="scss">
 	@use '$lib/css/components/button.scss' as btn;
@@ -21,7 +21,6 @@
 		padding: 0;
 		margin: 0;
 
-
 		&:checked {
 			@include btn.btn-fill-accent(true);
 			display: flex;
@@ -36,6 +35,10 @@
 				place-self: center;
 				text-align: center;
 			}
+		}
+
+		&:disabled, &:disabled:hover {
+			@include btn.btn-fill-arbitrary(var(--bg-3), var(--bg-3));
 		}
 	}
 </style>

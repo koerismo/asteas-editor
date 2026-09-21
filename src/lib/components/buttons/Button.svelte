@@ -1,10 +1,11 @@
 <script lang="ts">
 	import type { Snippet } from 'svelte';
 	import type { HTMLButtonAttributes } from 'svelte/elements';
-	let { children, variant='', ...args }: { children?: Snippet, variant?: '' | 'icon' } & HTMLButtonAttributes = $props();
+	let { children, variant='', element = $bindable(), ...args }: { children?: Snippet, variant?: '' | 'icon', element?: HTMLButtonElement } & HTMLButtonAttributes = $props();
+
 </script>
 
-<button {...args} data-variant={variant}>{@render children?.()}</button>
+<button bind:this={element} {...args} data-variant={variant}>{@render children?.()}</button>
 
 <style lang="scss">
 	@use '$lib/css/components/button.scss' as btn;

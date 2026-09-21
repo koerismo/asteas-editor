@@ -34,7 +34,7 @@
 
 	function onMouseDownRect(rectId: number) {
 		if (!shiftKey) {
-			context.setSelection([rectId]);
+			context.$setSelection([rectId]);
 			hoverSelect = HoverSelect.Select;
 			return;
 		}
@@ -50,9 +50,9 @@
 		if (!hoverSelect)
 			return;
 		if (hoverSelect === HoverSelect.Select) {
-			context.selectionAdd([id]);
+			context.$selectionAdd([id]);
 		} else {
-			context.selectionRemove([id]);
+			context.$selectionRemove([id]);
 		}
 	}
 
@@ -64,21 +64,24 @@
 		shiftKey = event.shiftKey;
 
 		if (event.key === 'Delete' || event.key === 'Backspace') {
-			context.commitActions();
-			context.rectsRemoveSelected();
-			context.commitActions();
+			event.preventDefault();
+			context.$commitActions();
+			context.$rectsRemoveSelected();
+			context.$commitActions();
 			return;
 		}
 
 		if (event.key === 'a' && event.metaKey) {
+			event.preventDefault();
 			toggleAllSelected();
 			return;
 		}
 		
 		if (event.key === 'Escape') {
-			context.commitActions();
-			context.selectionClear();
-			context.commitActions();
+			event.preventDefault();
+			context.$commitActions();
+			context.$selectionClear();
+			context.$commitActions();
 			return;
 		}
 	}
@@ -92,13 +95,13 @@
 	}
 
 	export function toggleAllSelected() {
-		context.commitActions();
+		context.$commitActions();
 		if (context.selection.size) {
-			context.selectionClear();
+			context.$selectionClear();
 		} else {
-			context.selectionSetAll();
+			context.$selectionSetAll();
 		}
-		context.commitActions();
+		context.$commitActions();
 	}
 
 	function isIdSelected(rectId: number) {
@@ -106,22 +109,22 @@
 	}
 
 	function setFlags(rectId: number, flags: number, mask: number) {
-		context.commitActions();
+		context.$commitActions();
 		if (shiftKey && context.selection.has(rectId)) {
-			context.setRectFlags(Array.from(context.selection.values()), flags, mask);
+			context.$setRectFlags(Array.from(context.selection.values()), flags, mask);
 		} else {
-			context.setRectFlags([rectId], flags, mask);
+			context.$setRectFlags([rectId], flags, mask);
 		}
-		context.commitActions();
+		context.$commitActions();
 	}
 
 	function addRect() {
-		context.rectsAdd([
+		context.$rectsAdd([
 			new RectEntry(
-				new HotspotRect(0x0, 0, 0, 100, 100)
+				new HotspotRect(0x0, 0, 0, context.getWidth(), context.getHeight())
 			)
 		]);
-		context.commitActions();
+		context.$commitActions();
 	}
 </script>
 

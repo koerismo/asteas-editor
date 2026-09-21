@@ -1,17 +1,38 @@
 <script lang="ts">
+	import type { Component } from "svelte";
+
+	// interface Props {
+	// 	options: string[];
+	// 	selected?: Record<number, boolean>;
+	// 	selectedCount?: number;
+	// 	value?: string;
+	// 	oninput?(): void;
+	// }
+
+	interface Option {
+		readonly name: Component | string;
+		readonly desc?: string;
+		value: boolean;
+	}
 
 	interface Props {
-		options: string[];
-		selected?: Record<number, boolean>;
-		value?: string;
+		options: Option[];
 		oninput?(): void;
 	}
 
-	let { options, selected = $bindable({}), oninput }: Props = $props();
+	let { options, oninput }: Props = $props();
 
 	function doClick(i: number) {
-		selected[i] = !selected[i];
+		const opt = options[i];
+		opt.value = !opt.value;
 		oninput?.();
+	}
+
+	export function getSelectedCount() {
+		let v = 0;
+		for (let i=0; i<options.length; i++)
+			v += +options[i].value;
+		return v;
 	}
 </script>
 
@@ -19,8 +40,9 @@
 	{#each options as option, i (i)}
 		<button
 			role="checkbox"
-			aria-checked={selected[i]}
-			onclick={() => doClick(i)}>{option}</button>
+			name={option.desc}
+			aria-checked={option.value}
+			onclick={() => doClick(i)}>{option.name}</button>
 	{/each}
 </div>
 

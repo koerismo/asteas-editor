@@ -2,16 +2,27 @@
 	import UploadIcon from '@lucide/svelte/icons/upload';
 	import type { HTMLInputAttributes } from 'svelte/elements';
 	const id = $props.id();
-	let { onFile, ...args }: HTMLInputAttributes & { onFile?(files: FileList): void } = $props();
+	let { onFiles, ...args }: HTMLInputAttributes & { onFiles?(files: FileList): void } = $props();
 	let input: HTMLInputElement;
 
 	function oninput() {
 		if (input.files != null)
-			onFile?.(input.files);
+			onFiles?.(input.files);
+	}
+
+	function ondragover(event: DragEvent) {
+		event.preventDefault();
+	}
+
+	function ondrop(event: DragEvent) {
+		event.preventDefault();
+		const files = event.dataTransfer?.files;
+		if (files != null)
+			onFiles?.(files);
 	}
 </script>
 
-<label for="upload-{id}">
+<label for="upload-{id}" {ondragover} {ondrop}>
 	<span>import</span>
 	<UploadIcon size="1.0em"></UploadIcon>
 </label>
