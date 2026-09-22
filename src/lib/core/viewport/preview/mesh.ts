@@ -89,7 +89,7 @@ export class ModelHotspotter {
 
 		// rescale islands to fill UV space
 
-		const islandTf = new Float32Array(islandBounds.length * 4);
+		const islandTf = new Float64Array(islandBounds.length * 4);
 		for (let i=0, idx=0; i<islandBounds.length; i++) {
 			const island = islandBounds[i];
 			if (island.width === 0 || island.height === 0) {
@@ -162,9 +162,11 @@ export class ModelHotspotter {
 			}
 		}
 
+		const vec = new Vec2();
+
 		for (let i=0, idx=0; i<uvCount; i++, idx+=2) {
 			const islandIdx = vertexIslands[i];
-			const vec = new Vec2(srcUvs[idx], srcUvs[idx + 1]);
+			vec.Set(srcUvs[idx], srcUvs[idx + 1]);
 			xForms[islandIdx].Multiply(vec, vec);
 			targetUvs[idx] = vec.x;
 			targetUvs[idx + 1] = vec.y;

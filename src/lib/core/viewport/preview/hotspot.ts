@@ -24,11 +24,10 @@ function f32swap<T extends FloatArray>(a: T, b: T) {
 }
 
 export class Vec2 {
-	public xy: number[] = [0, 0];
+	public xy: number[];
 
 	constructor(x: number = 0, y: number = 0) {
-		this.x = x;
-		this.y = y;
+		this.xy = [x, y];
 	}
 
 	get x(): number { return this.xy[0]; }
@@ -53,11 +52,19 @@ export class Vec2 {
 	Copy(v: Vec2) {
 		this.x = v.x;
 		this.y = v.y;
+		return this;
+	}
+
+	Set(x: number, y: number) {
+		this.xy[0] = x;
+		this.xy[1] = y;
+		return this;
 	}
 
 	Scale(s: number) {
 		this.xy[0] *= s;
 		this.xy[1] *= s;
+		return this;
 	}
 }
 
@@ -74,11 +81,12 @@ export class Mat3x2 {
 		this.y = v.subarray(2, 4);
 		this.z = v.subarray(4, 6);
 	}
-	
+
 	Multiply(input: Vec2, output: Vec2) {
-        output.x = input.x * this.x[0] + input.y * this.y[0] + this.z[0];
+        const x = input.x * this.x[0] + input.y * this.y[0] + this.z[0];
         output.y = input.x * this.x[1] + input.y * this.y[1] + this.z[1];
-    }
+		output.x = x;
+	}
 }
 
 // HotspotRectFlags_t
@@ -350,17 +358,6 @@ export class RectFitter {
 			if (rotation > 0)  { m.x[1] = -1; m.z[1] = 1; }
 			else               { m.y[0] = -1; m.z[0] = 1; }
 		}
-
-		// if (scale_x === 0 || scale_y === 0)
-		// 	throw 'whoops';
-
-		// if (m.x[0] === 0 && m.x[1] === 0)
-		// 	throw 'whoops x';
-
-		// if (m.y[0] === 0 && m.y[1] === 0)
-		// 	throw 'whoops y';
-
-
 
 		// Scale
 		m.x[0] *= scale_x;
