@@ -1,10 +1,4 @@
 <script lang="ts">
-	// import svelteLogo from './assets/svelte.svg'
-	// import viteLogo from './assets/vite.svg'
-	// import heroImg from './assets/hero.png'
-	// import Counter from './lib/TopBar.svelte'
-
-	
 	import Editor from '$lib/components/CanvasEditor.svelte';
 	// import Preview from '$lib/components/CanvasPreview.svelte';
 	

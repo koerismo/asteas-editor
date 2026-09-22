@@ -189,9 +189,11 @@ export class EditorIO {
 		data.setImage(image);
 
 		const vtf = new Vtf(data, { format });
-
+		
 		if (options.mipmaps) {
+			data.resize({ mips: -1 });
 			data.generateMips(VFilters.CatRom, true);
+
 			vtf.computeReflectivity();
 			vtf.computeThumb();
 		}

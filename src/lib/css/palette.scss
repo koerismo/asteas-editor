@@ -351,32 +351,29 @@ $color-white: #fff;
 	--surface-900: #{$color-zinc-900};
 	--surface-950: #{$color-zinc-950};
 
-	--accent: #{$color-indigo-500};
+	// --accent: #{$color-indigo-500};
 
-	--text-h: #{$color-zinc-900};
-	--text:   #{$color-zinc-800};
-	--text-2: #{$color-zinc-700};
-	--text-3: #{$color-zinc-600};
-	--text-4: #{$color-zinc-500};
+	// --text-h: #{$color-zinc-900};
+	// --text:   #{$color-zinc-800};
+	// --text-2: #{$color-zinc-700};
+	// --text-3: #{$color-zinc-600};
+	// --text-4: #{$color-zinc-500};
 
-	--bg:   #{$color-zinc-200};
-	--bg-2: #{$color-zinc-300};
-	--bg-3: #{$color-zinc-400};
-	--bg-4: #{$color-zinc-500};
+	// --bg:   #{$color-zinc-200};
+	// --bg-2: #{$color-zinc-300};
+	// --bg-3: #{$color-zinc-400};
+	// --bg-4: #{$color-zinc-500};
 
-	--border--2: var(--surface-200);
-	--border--1: var(--surface-300);
-	--border: var(--surface-400);
-	--border-2: var(--surface-500);
-	--border-3: var(--surface-600);
-	--border-4: var(--surface-700);
+	// --border: var(--surface-400);
+	// --border-2: var(--surface-500);
+	// --border-3: var(--surface-600);
 
 	--radius-sm: 2px;
 	--radius-md: 4px;
 	--radius-lg: 6px;
 }
 
-@media screen and (prefers-color-scheme: dark) {
+// @media screen and (prefers-color-scheme: dark) {
 :root {
 	--accent: #{$color-indigo-500};
 
@@ -394,9 +391,5 @@ $color-white: #fff;
 	--border: var(--surface-700);
 	--border-2: var(--surface-600);
 	--border-3: var(--surface-500);
-
-	--radius-sm: 2px;
-	--radius-md: 4px;
-	--radius-lg: 6px;
 }
-}
+// }

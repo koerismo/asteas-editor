@@ -150,11 +150,11 @@ export class ModelHotspotter {
 			const mat3x2 = xForms[i] = new Mat3x2(xFormBuffer.subarray(idx, idx + 6));
 			if (rectIdx !== -1) {
 
-				let rotation = 2;
-				// if (this.rects[rectIdx].CanRotate() && Math.random() > 0.5)
-				// 	rotation = 2;
-				// if (output.rotated)
-				// 	rotation -= 1;
+				let rotation = 0;
+				if (this.rects[rectIdx].CanRotate() && Math.random() > 0.5)
+					rotation = 2;
+				if (output.rotated)
+					rotation -= 1;
 
 				this.fitter.GetFinalTransform(this.size, this.rects[rectIdx], output.tiling, 0, rotation, mat3x2);
 			} else {
