@@ -29,6 +29,10 @@ export class EditorState {
 	public image: VImageEither | undefined = $state.raw();
 	public vtf: Vtf | undefined = $state.raw();
 
+	public viewportOptions = $state({
+		scale: 1.0,
+	});
+
 	get selection(): ReadonlySet<number> {
 		this.#selectSubscriber.use();
 		return this.#selection;
@@ -327,3 +331,5 @@ export class EditorState {
 }
 
 export const [getEditorCtx, setEditorCtx] = createContext<EditorState>();
+
+

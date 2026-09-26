@@ -3,10 +3,9 @@
 		options: string[];
 		index?: number;
 		value?: string;
-		oninput?(opt: string): void;
 	}
 
-	let { options, index = $bindable(-1), value, oninput }: Props = $props();
+	let { options, index = $bindable(-1), value }: Props = $props();
 
 	$effect(() => {
 		if (index < 0 || index >= options.length) return;

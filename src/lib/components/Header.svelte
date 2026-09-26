@@ -2,6 +2,7 @@
 	import Picker from "./pickers/Picker.svelte";
 	import MenuItem from "./menu/MenuItem.svelte";
 	import HeaderMenuSave from "./HeaderMenuSave.svelte";
+	import HeaderMenu3D from "./HeaderMenu3D.svelte";
 </script>
 
 <header>
@@ -15,6 +16,7 @@
 			<input type="file" />
 		</label>
 	</MenuItem> -->
+	<HeaderMenu3D></HeaderMenu3D>
 	<HeaderMenuSave></HeaderMenuSave>
 </header>
 

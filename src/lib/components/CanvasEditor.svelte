@@ -3,9 +3,12 @@
 	import type { EditorViewport } from '$lib/core/viewport/editor/_index.svelte.js';
 	import { getEditorCtx } from '$lib/core/context.svelte.js';
 	import LoadingIcon from '@lucide/svelte/icons/loader-circle';
+	// import ContextMenu from './menu/ContextMenu.svelte';
 
 	let canvas: HTMLCanvasElement;
 	let renderer: EditorViewport;
+	// let contextMenu: ContextMenu;
+
 	let loading = $state(false);
 	const context = getEditorCtx();
 	
@@ -34,6 +37,25 @@
 	<div class="loader" class:loading>
 		<LoadingIcon></LoadingIcon>
 	</div>
+	<!-- <ContextMenu bind:this={contextMenu}>
+		<h4>hi</h4>
+		<PickerFlags
+			oninput={onFlagsSet}
+			options={[
+				[IconRotate, HotSpotRectFlags.AllowRotation, 'Allow rotation'],
+				[IconFlip, HotSpotRectFlags.AllowReflection, 'Allow reflection'],
+			]}
+			value={rect.flags}
+		></PickerFlags>
+		<PickerFlags
+			oninput={onFlagsSet}
+			options={[
+				['x', HotSpotRectFlags.TileX, 'Tile horizontal'],
+				['y', HotSpotRectFlags.TileY, 'Tile vertical'],
+			]}
+			value={rect.flags}
+		></PickerFlags>
+	</ContextMenu> -->
 </div>
 
 <style>

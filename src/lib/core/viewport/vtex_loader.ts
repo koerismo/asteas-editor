@@ -25,7 +25,6 @@ export class VTextureLoader extends Loader<DataTexture | CompressedTexture> {
 	
 	setFlags(texture: Texture) {
 		texture.colorSpace = SRGBColorSpace;
-		texture.magFilter = NearestFilter;
 		texture.minFilter = LinearFilter;
 		texture.wrapS = RepeatWrapping;
 		texture.wrapT = RepeatWrapping;

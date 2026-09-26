@@ -1,6 +1,6 @@
 <script lang="ts">
 	import Editor from '$lib/components/CanvasEditor.svelte';
-	// import Preview from '$lib/components/CanvasPreview.svelte';
+	import Preview from '$lib/components/CanvasPreview.svelte';
 	
 	import Header from '$lib/components/Header.svelte';
 	import Hello from '$lib/components/intro/Hello.svelte';
@@ -33,7 +33,7 @@
 	{#if context.active}
 	<div>
 		<Editor></Editor>
-		<!-- <Preview></Preview> -->
+		<Preview></Preview>
 	</div>
 	{:else}
 		<Hello></Hello>

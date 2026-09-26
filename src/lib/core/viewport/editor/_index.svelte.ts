@@ -14,6 +14,7 @@ import { Button, MouseComponent } from '../mouse.js';
 import { GridObject } from './grid.js';
 import { VTextureLoader } from '../vtex_loader.js';
 import { Viewport } from '../renderer.js';
+// import type ContextMenu from '$lib/components/menu/ContextMenu.svelte';
 
 const kCommonQuad = new Three.PlaneGeometry();
 kCommonQuad.translate(0.5, 0.5, 0);
@@ -34,6 +35,7 @@ export class EditorViewport extends Viewport<Three.OrthographicCamera> {
 	mouse: MouseComponent;
 	mouseWorldPos = new Three.Vector2();
 	grid: GridObject = new GridObject();
+	// contextMenu: ContextMenu;
 
 	state: EditorState;
 	selected: number[] = [];
@@ -73,7 +75,8 @@ export class EditorViewport extends Viewport<Three.OrthographicCamera> {
 
 	constructor(
 			canvas: HTMLCanvasElement,
-			state: EditorState
+			state: EditorState,
+			// menu: ContextMenu,
 		) {
 		super(
 			canvas,
@@ -479,6 +482,8 @@ export class EditorViewport extends Viewport<Three.OrthographicCamera> {
 		else {
 			this.imagePlane.visible = true;
 		}
+
+		v.magFilter = Three.NearestFilter;
 
 		this.image = v;
 		this.imagePlane.material.map = v;

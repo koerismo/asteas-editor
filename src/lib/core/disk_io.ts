@@ -183,7 +183,7 @@ export class EditorIO {
 			format = hasAlpha ? VFormats.RGBA8888 : VFormats.RGB888;
 		}
 		
-
+		console.log(options, format);
 		const data = new VCollection(image.width, image.height);
 		data.resize();
 		data.setImage(image);

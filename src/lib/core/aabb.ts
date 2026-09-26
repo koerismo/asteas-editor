@@ -52,8 +52,8 @@ export abstract class AABB_Methods implements AABBLike {
 
 	expandToPoint(x: number, y: number) {
 		if (x < this.min_x) this.min_x = x;
-		if (x > this.max_x) this.max_x = x;
 		if (y < this.min_y) this.min_y = y;
+		if (x > this.max_x) this.max_x = x;
 		if (y > this.max_y) this.max_y = y;
 		return this;
 	}
@@ -71,6 +71,12 @@ export abstract class AABB_Methods implements AABBLike {
 		this.min_y = y1;
 		this.max_x = x2;
 		this.max_y = y2;
+		return this;
+	}
+
+	invalidate(): this {
+		this.min_x = this.min_y = Infinity;
+		this.max_x = this.max_y = -Infinity;
 		return this;
 	}
 

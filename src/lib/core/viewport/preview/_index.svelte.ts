@@ -9,12 +9,15 @@ import { ModelHotspotter } from './mesh.js';
 import { GLTFLoader } from 'three/addons/loaders/GLTFLoader.js';
 import Cube1 from '$lib/assets/meshes/cyl1.glb?url';
 import { VTextureLoader } from '../vtex_loader.js';
+import { on } from 'svelte/events';
+import { Button } from '../mouse.js';
 
 export class PreviewViewport extends Viewport<Three.PerspectiveCamera> {
 	zoom: number = 1.0;
 	hotspotter?: ModelHotspotter;
 	mesh?: Three.Mesh;
 	texture?: Three.Texture;
+	orbit: Three.Object3D;
 
 	constructor(
 			public canvas: HTMLCanvasElement,
@@ -27,11 +30,12 @@ export class PreviewViewport extends Viewport<Three.PerspectiveCamera> {
 			new Three.Scene(),
 		);
 
-		// this.camera.rotation.order
-		this.camera.position.z = 5;
-		this.camera.position.x = 3;
-		this.camera.position.y = 4;
-		this.camera.lookAt(0, 0, 0);
+		this.orbit = new Three.Object3D();
+		this.scene.add(this.orbit);
+		this.orbit.add(this.camera);
+
+		this.camera.position.set(0, 0, 5);
+		this.orbit.rotation.order = 'YXZ';
 
 		this.scene.background = new Three.Color(0x111111);
 
@@ -42,6 +46,10 @@ export class PreviewViewport extends Viewport<Three.PerspectiveCamera> {
 		this.disposables.push(
 			$effect.root(() => {
 				$effect(() => {
+					this.hotspotter?.setScale(state.viewportOptions.scale);
+					this.refit(this.state.rects ?? []);
+				});
+				$effect(() => {
 					this.refit(this.state.rects ?? []);
 				});
 				$effect(() => {
@@ -49,8 +57,21 @@ export class PreviewViewport extends Viewport<Three.PerspectiveCamera> {
 				});
 			})
 		);
+
+		this.disposables.push(on(this.canvas, 'mousemove', this.onMouseMove.bind(this)))
+		this.disposables.push(on(this.canvas, 'wheel', this.onWheel.bind(this)))
 	}
 
+	onMouseMove(event: MouseEvent) {
+		if (event.buttons !== Button.Left) return;
+		this.orbit.rotation.x -= event.movementY * 0.01;
+		this.orbit.rotation.y -= event.movementX * 0.01;
+	}
+	
+	onWheel(event: WheelEvent) {
+		this.camera.position.z += event.deltaY * 0.01;
+	}
+	
 	updateCamera() {
 		this.camera.aspect = this.canvas.clientWidth / this.canvas.clientHeight;
 		this.camera.updateProjectionMatrix();
@@ -78,8 +99,7 @@ export class PreviewViewport extends Viewport<Three.PerspectiveCamera> {
 		this.hotspotter.setRects(rects);
 		this.hotspotter.setSize(this.texture.width, this.texture.height)
 		this.hotspotter.fit(
-			this.mesh!.geometry.getAttribute('uv2')!,
-			this.mesh!.geometry.getAttribute('uv')!,
+			this.mesh!.geometry.getAttribute('uv')!
 		);
 	}
 
@@ -88,18 +108,20 @@ export class PreviewViewport extends Viewport<Three.PerspectiveCamera> {
 		// console.log(group);
 
 		this.mesh = group.scene.children[0] as Three.Mesh;
+
 		const mbm = this.mesh.material as Three.MeshStandardMaterial;
 		mbm.aoMap!.colorSpace = Three.SRGBColorSpace;
 		mbm.aoMapIntensity = 1.2;
 		// this.mesh.material.aoMap = this.mesh.material.map;
+
 		this.hotspotter = new ModelHotspotter(this.mesh.geometry);
 
 		this.scene.add(new Three.AmbientLight(0xffffff, 3.0));
 		this.scene.add(this.mesh);
 
 		const geo = this.mesh.geometry;
-		const uvSrc = geo.getAttribute('uv')!;
-		geo.setAttribute('uv2', uvSrc.clone());
+		// const uvSrc = geo.getAttribute('uv')!;
+		// geo.setAttribute('uv2', uvSrc.clone());
 		this.updateMaterial();
 
 		// this.mesh.scale.set(32, 32, 32);
