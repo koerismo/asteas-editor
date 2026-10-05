@@ -6,7 +6,7 @@
 	import { onMount } from 'svelte';
 	import { VImageData } from 'vtf-js';
 	import { bakeToHeight, type ImageDataLike } from '$lib/core/bake/height';
-	import { BakeMode } from '$lib/core/viewport/baker';
+	import { BakeMode, Baker } from '$lib/core/viewport/baker';
 
 	const context = getEditorCtx();
 	
@@ -22,54 +22,38 @@
 	const options = $state({
 		bump: {
 			on: { on: true },
-			height: { on: true },
-			normal: { on: true },
-			radius: 0.0,
+			mode: BakeMode.Height,
+			radius: 16.0,
 			bevel: 32.0,
+			expo: 0.4,
 		},
 	});
 
-	function getBakeMode() {
-		if (!options.bump.on) return BakeMode.None;
-		const nrm = options.bump.normal.on;
-		const height = options.bump.height.on;
-		if (nrm && height) return BakeMode.Combined;
-		if (nrm) return BakeMode.Normal;
-		if (height) return BakeMode.Height;
-		return BakeMode.None;
-	}
-
+	let baker: Baker;
 	let canvas: HTMLCanvasElement;
-	let ctx: CanvasRenderingContext2D;
-
-	const w = 1024;
-	const vimage = new VImageData(new Uint8Array(w * w * 4), w, w);
-
+	
 	onMount(() => {
-		ctx = canvas.getContext('2d')!;
+		baker = new Baker(canvas);
 	});
 
-	let _busy = false;
-	let _timeout: number | undefined;
 	$effect(() => {
-		const rects = context.rects;
-		const bevel = options.bump.bevel;
-		const radius = options.bump.radius;
+		baker?.setRects(context.rects);
+		baker?.render();
+	});
 
-		if (_busy) return;
-		clearTimeout(_timeout);
-		_timeout = setTimeout(async () => {
-			console.log('building...');
-			_busy = true;
-			const p1 = performance.now();
-			console.time('generated');
-			bakeToHeight(rects, bevel, radius, vimage);
-			console.timeEnd('generated');
-			// await bakeToHeightThreaded(rects, radius, vimage);
-			const image = new ImageData(new Uint8ClampedArray(vimage.data.buffer), vimage.width, vimage.height);
-			ctx.putImageData(image, 0, 0)
-			_busy = false;
-		}, 50);
+	$effect(() => {
+		if (context.image) {
+			// baker?.setSize(256, 256, 1);
+			const S = 1 / 1;
+			baker?.setSize(context.image.width * S, context.image.height * S, S);
+		} else {
+			baker?.setSize(0, 0, 1);
+		}
+	})
+
+	$effect(() => {
+		baker?.setOptions(options.bump);
+		baker?.render();
 	});
 </script>
 
@@ -86,14 +70,15 @@
 		<b>Bumpmap</b>
 		<label>
 			Mode
-			<Picker options={[
+			<Picker bind:index={options.bump.mode} options={[
+				'none',
 				'height', 'normal', 'combined'
 			]}></Picker>
 		</label>
 	</div>
 
 </MenuItem>
-<canvas bind:this={canvas} width={w} height={w}></canvas>
+<canvas bind:this={canvas}></canvas>
 
 <style>
 	canvas {
