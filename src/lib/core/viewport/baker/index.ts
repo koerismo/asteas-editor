@@ -15,6 +15,7 @@ export interface BakerOptions {
 	radius?: number;
 	bevel?: number;
 	expo?: number;
+	intensity?: number;
 }
 
 const rectGeometry = new Three.PlaneGeometry(1, 1);
@@ -30,6 +31,7 @@ function makeBakeMaterial(mode: BakeMode) {
 			uBevel: { value: 0.0 },
 			uRadius: { value: 0.0 },
 			uExpo: { value: 1.0 },
+			uIntensity: { value: 1.0 },
 		},
 		defines: {
 			'BAKE_MODE': mode,
@@ -93,6 +95,7 @@ export class Baker {
 		this.mesh.material.uniforms.uRadius.value = this.options.radius ?? 0;
 		this.mesh.material.uniforms.uBevel.value = this.options.bevel ?? 0;
 		this.mesh.material.uniforms.uExpo.value = this.options.expo ?? 1;
+		this.mesh.material.uniforms.uIntensity.value = this.options.intensity ?? this.getDefaultIntensity();
 		this.mesh.material.uniformsNeedUpdate = true;
 	}
 
@@ -110,11 +113,17 @@ export class Baker {
 				break;
 		}
 	}
+	
+	getDefaultIntensity() {
+		const expo = this.options.expo ?? 1.0;
+		return 1 / expo;
+	}
 
 	setOptions(options: Omit<BakerOptions, 'mode'>) {
 		this.options.radius = options.radius;
 		this.options.bevel = options.bevel;
 		this.options.expo = options.expo;
+		this.options.intensity = options.intensity;
 		this.#updateOptions();
 	}
 

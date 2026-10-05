@@ -22,6 +22,7 @@
 		Deselect: 2
 	};
 
+	let self: HTMLDivElement;
 	let shiftKey = false;
 	let hoverSelect = HoverSelect.None;
 
@@ -61,6 +62,9 @@
 	}
 
 	function onKeyDown(event: KeyboardEvent) {
+		if (event.target !== document.body && !self.contains(event.target as Node))
+			return;
+
 		shiftKey = event.shiftKey;
 
 		if (event.key === 'Delete' || event.key === 'Backspace') {
@@ -128,7 +132,7 @@
 	}
 </script>
 
-<div class:collapsed={collapsed}>
+<div class:collapsed={collapsed} bind:this={self}>
 	{#each context.rects as _rect, i (_rect.uuid)}
 		<div transition:scale={{ duration: 100, easing: cubicOut, start: 0.8 }}>
 			<SidebarRect
