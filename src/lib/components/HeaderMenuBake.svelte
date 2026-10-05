@@ -4,9 +4,9 @@
 	import Picker from './pickers/Picker.svelte';
 	import PickerMultiple from './pickers/PickerMultiple.svelte';
 	import { onMount } from 'svelte';
-	import { VImageData } from 'vtf-js';
-	import { bakeToHeight, type ImageDataLike } from '$lib/core/bake/height';
 	import { BakeMode, Baker } from '$lib/core/viewport/baker';
+	import Button from './buttons/Button.svelte';
+	import Numeric from './inputs/Numeric.svelte';
 
 	const context = getEditorCtx();
 	
@@ -20,65 +20,104 @@
 	}
 
 	const options = $state({
-		bump: {
-			on: { on: true },
-			mode: BakeMode.Height,
+		common: {
+			scale: 1,
 			radius: 16.0,
 			bevel: 32.0,
-			expo: 0.4,
+			expo: 0.5,
+		},
+		height: {
+			on: true,
+		},
+		normals: {
+			on: true,
+			dx: false,
 		},
 	});
 
-	let baker: Baker;
-	let canvas: HTMLCanvasElement;
-	
+	let heightBaker: Baker;
+	let normalBaker: Baker;
+	let heightCanvas: HTMLCanvasElement;
+	let normalCanvas: HTMLCanvasElement;
+
+	const scaleGetSet = {
+		get value() {
+			return 2 + Math.log2(options.common.scale);
+		},
+		set value(v: number) {
+			options.common.scale = 2 ** (v - 2);
+		}
+	}
+
 	onMount(() => {
-		baker = new Baker(canvas);
+		heightBaker = new Baker(heightCanvas, BakeMode.Height);
+		normalBaker = new Baker(normalCanvas, BakeMode.Normal);
 	});
 
 	$effect(() => {
-		baker?.setRects(context.rects);
-		baker?.render();
+		heightBaker?.setRects(context.rects);
+		normalBaker?.setRects(context.rects);
 	});
 
 	$effect(() => {
 		if (context.image) {
-			// baker?.setSize(256, 256, 1);
-			const S = 1 / 1;
-			baker?.setSize(context.image.width * S, context.image.height * S, S);
+			const S = options.common.scale;
+			heightBaker?.setSize(context.image.width * S, context.image.height * S, S);
+			normalBaker?.setSize(context.image.width * S, context.image.height * S, S);
 		} else {
-			baker?.setSize(0, 0, 1);
+			heightBaker?.setSize(0, 0, 1);
+			normalBaker?.setSize(0, 0, 1);
 		}
-	})
+	});
 
 	$effect(() => {
-		baker?.setOptions(options.bump);
-		baker?.render();
+		heightBaker?.setOptions(options.common);
+		normalBaker?.setOptions(options.common);
 	});
+
+	function bake() {
+		if (options.height.on) heightBaker.render();
+		if (options.normals.on) normalBaker.render();
+	}
 </script>
 
 <MenuItem text="Bake" width={'18em'}>
-	<b>Save</b>
+	<b>Bake</b>
 	<PickerMultiple
 		options={[
-			opt('bumpmap', options.bump.on)
+			opt('height', options.height),
+			opt('normals', options.normals),
 		]}
 	></PickerMultiple>
 
-	{@const disabled = !context.image}
-	<div class="group" hidden={!options.bump.on} class:disabled>
-		<b>Bumpmap</b>
+	<Button onclick={bake}>Bake</Button>
+
+	<div class="group" hidden={!options.height.on && !options.normals.on}>
+		<b>Options</b>
 		<label>
-			Mode
-			<Picker bind:index={options.bump.mode} options={[
-				'none',
-				'height', 'normal', 'combined'
-			]}></Picker>
+			<span>Scale</span>
+			<Picker bind:index={scaleGetSet.value} options={['.25x', '.5x', '1x', '2x', '4x']}></Picker>
+		</label>
+		<label>
+			<span>Radius</span>
+			<Numeric bind:value={options.common.radius} min="0" max="256" step="8"></Numeric>
+		</label>
+		<label>
+			<span>Bevel</span>
+			<Numeric bind:value={options.common.bevel} min="0" max="256" step="8"></Numeric>
+		</label>
+		<label>
+			<span>Exponent</span>
+			<Numeric bind:value={options.common.expo} min="0.01" max="2" step="0.01"></Numeric>
 		</label>
 	</div>
 
+	<div class="group">
+		<b>Preview</b>
+		<canvas bind:this={heightCanvas}></canvas>
+		<canvas bind:this={normalCanvas}></canvas>
+	</div>
 </MenuItem>
-<canvas bind:this={canvas}></canvas>
 
 <style>
 	canvas {

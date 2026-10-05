@@ -1,7 +1,5 @@
 varying vec2 vUv;
 varying vec2 vSize;
-
-varying float vBevel;
 varying float vRadius;
 
 uniform float uBevel;
@@ -15,8 +13,6 @@ void main() {
 
 	vUv = uv;
 	vSize = vec2(instanceMatrix[0].x, instanceMatrix[1].y);
-
-	vBevel = uBevel;
 	vRadius = min(uRadius, min(vSize.x, vSize.y) * 0.5);;
 
 	vec4 modelViewPosition = modelViewMatrix * mvPosition;

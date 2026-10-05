@@ -1,18 +1,12 @@
 <script lang="ts">
 	import MenuItem from './menu/MenuItem.svelte';
 	import Button from './buttons/Button.svelte';
-	import PickerFlags from './pickers/PickerFlags.svelte';
 	import { getEditorCtx } from '$lib/core/context.svelte.js';
 	import Checkbox from './buttons/Checkbox.svelte';
-	import Picker from './pickers/Picker.svelte';
 	import type { SaveOptions } from '$lib/core/disk_io';
 	import PickerMultiple from './pickers/PickerMultiple.svelte';
 
 	const context = getEditorCtx();
-
-	function display(value: unknown) {
-		return value ? '' : 'none';
-	}
 
 	function getStatusMsg(): string | undefined {
 		if (!context.active)

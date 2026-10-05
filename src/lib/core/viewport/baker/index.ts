@@ -50,13 +50,13 @@ const kMaxRects = 128;
 export class Baker {
 	public canvas: OffscreenCanvas | HTMLCanvasElement;
 
-	protected options: BakerOptions = { mode: BakeMode.Height };
+	protected options: BakerOptions = { mode: BakeMode.None };
 	protected renderer: Three.WebGLRenderer;
 	protected scene: Three.Scene;
 	protected camera: Three.OrthographicCamera;
 	protected mesh: Three.InstancedMesh<Three.BufferGeometry, Three.ShaderMaterial>;
 
-	constructor(canvas?: OffscreenCanvas | HTMLCanvasElement) {
+	constructor(canvas?: OffscreenCanvas | HTMLCanvasElement, mode?: BakeMode) {
 		this.canvas = canvas ?? new OffscreenCanvas(0, 0);
 
 		this.scene = new Three.Scene();
@@ -66,6 +66,7 @@ export class Baker {
 		this.mesh.frustumCulled = false;
 
 		this.scene.add(this.mesh);
+		this.setMode(mode ?? BakeMode.None);
 
 		this.camera = new Three.OrthographicCamera();
 		this.camera.position.set(0, 0, 10);
@@ -73,9 +74,8 @@ export class Baker {
 		
 		this.renderer = new Three.WebGLRenderer({
 			canvas: this.canvas,
-			// alpha: true,
-			// antialias: false,
-			// depth: false,
+			alpha: true,
+			depth: false,
 		});
 	}
 
@@ -96,13 +96,9 @@ export class Baker {
 		this.mesh.material.uniformsNeedUpdate = true;
 	}
 
-	setOptions(options: BakerOptions) {
-		this.options.mode = options.mode;
-		this.options.radius = options.radius;
-		this.options.bevel = options.bevel;
-		this.options.expo = options.expo;
-
-		switch (options.mode) {
+	setMode(mode: BakeMode) {
+		this.options.mode = mode;
+		switch (mode) {
 			case BakeMode.Normal:
 				this.mesh.material = bakeMaterialNormal;
 				break;
@@ -113,7 +109,12 @@ export class Baker {
 				this.mesh.material = bakeMaterialCombined;
 				break;
 		}
+	}
 
+	setOptions(options: Omit<BakerOptions, 'mode'>) {
+		this.options.radius = options.radius;
+		this.options.bevel = options.bevel;
+		this.options.expo = options.expo;
 		this.#updateOptions();
 	}
 
