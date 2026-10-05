@@ -24,6 +24,10 @@
 		<Checkbox checked></Checkbox>
 	</label>
 	<label>
+		<span>Use baked normals</span>
+		<Checkbox checked></Checkbox>
+	</label>
+	<label>
 		<span>Scale</span>
 		<Picker bind:index={indexGetSet.value} options={['.25x', '.5x', '1x', '2x', '4x']}></Picker>
 	</label>

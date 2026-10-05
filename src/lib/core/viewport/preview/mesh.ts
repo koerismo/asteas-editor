@@ -57,13 +57,8 @@ export class ModelHotspotter {
 		const srcUvs = uvSrcAttribute.array;
 		const outUvs = uvTargetAttribute.array;
 
-		// sort faces by V
-		// extend current bounds for each connected face
-		// if a new vert isn't connected:
-		// - if it is inside the current bounds:
-		//   - mark it as attached and continue
-		// - else:
-		//   - start a new boundary
+		// take every face, and mark it as originating from its lowest-index vert
+		// while connections are still made, merge down each face to its neighbors with lower indices
 
 		const sortedFaces = new Uint16Array(faceCorners.length / 3);
 		for (let i=0; i<sortedFaces.length; i++)
@@ -98,7 +93,7 @@ export class ModelHotspotter {
 				console.warn('wtf');
 			}
 
-			if (vMin > islandVMax + 0.01) {
+			if (vMin > islandVMax) {
 				islandIdx ++;
 				islandBounds[islandIdx] = new AABB().invalidate();
 				islandVMax = vMax;

@@ -3,6 +3,7 @@
 	import MenuItem from "./menu/MenuItem.svelte";
 	import HeaderMenuSave from "./HeaderMenuSave.svelte";
 	import HeaderMenu3D from "./HeaderMenu3D.svelte";
+	import HeaderMenuBake from "./HeaderMenuBake.svelte";
 </script>
 
 <header>
@@ -16,6 +17,7 @@
 			<input type="file" />
 		</label>
 	</MenuItem> -->
+	<HeaderMenuBake></HeaderMenuBake>
 	<HeaderMenu3D></HeaderMenu3D>
 	<HeaderMenuSave></HeaderMenuSave>
 </header>
