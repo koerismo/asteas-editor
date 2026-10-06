@@ -1,3 +1,5 @@
+precision highp float;
+
 varying float vRadius;
 
 varying vec2 vUv;
@@ -33,19 +35,19 @@ void main() {
 	vec2 deltaPos = vUv * vSize - halfSize;
 
 	float depth = clamp(
-		-roundedSquareSdf(deltaPos, halfSize, vRadius),
+		-roundedSquareSdf(deltaPos, halfSize, vRadius) / uBevel,
 		0.0,
-		uBevel
+		1.0
 	);
 
-	float depthFac = 1.0 - depth / uBevel;
+	float depthFac = 1.0 - depth;
 	float depthColor = 1.0 - pow(depthFac, uExpo);
 
 	#if BAKE_MODE == MODE_HEIGHT
 		vec3 rgb = vec3(depthColor);
 	#else
 		vec3 rgb = vec3(0.5, 0.5, 1.0);
-		if (depth < uBevel && depth > 0.0) {
+		if (depth < 1.0 && depth > 0.0) {
 			vec2 offset = roundedSquareNormal(deltaPos, halfSize, vRadius);
 			float expoDeriv = uExpo * pow(depthFac, uExpo - 1.0);
 			vec3 normal = normalize(vec3(offset * expoDeriv * uIntensity, 1.0));

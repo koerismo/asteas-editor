@@ -23,9 +23,9 @@
 	const options = $state({
 		common: {
 			scale: 1,
-			radius: 16.0,
-			bevel: 32.0,
-			expo: 2.0,
+			radius: 0.0,
+			bevel: 8.0,
+			expo: 1.8,
 		},
 		height: {
 			on: true,
@@ -120,7 +120,7 @@
 	<Button onclick={save} disabled={!canSave()}>Save</Button>
 
 
-	<div class="group" hidden={!options.height.on && !options.normals.on}>
+	<div class="group" class:disabled={!options.height.on && !options.normals.on}>
 		<b>Options</b>
 		<label>
 			<span>Scale</span>
@@ -136,7 +136,7 @@
 		</label>
 		<label>
 			<span>Exponent</span>
-			<Numeric bind:value={options.common.expo} min="0.01" max="2" step="0.01"></Numeric>
+			<Numeric bind:value={options.common.expo} min="0.1" max="4" step="0.1"></Numeric>
 		</label>
 	</div>
 
@@ -151,7 +151,7 @@
 
 <style>
 	canvas {
-		width: 128px;
+		max-width: 100%;
 	}
 
 	div.preview {
@@ -177,13 +177,9 @@
 		padding: calc(var(--gap) + var(--hr-margin) * 2) 0;
 		margin-top: 0.4em;
 
-		&[hidden] {
-			display: none;
-		}
-
-		/* &.disabled {
+		&.disabled {
 			opacity: 0.5;
-		} */
+		}
 	}
 
 	/* i {
@@ -201,6 +197,10 @@
 		gap: 0.6em;
 		place-items: center;
 		color: var(--text-2);
+
+		:global(input) {
+			min-width: 50%;
+		}
 
 		span {
 			flex-grow: 1;
