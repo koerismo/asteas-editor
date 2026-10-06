@@ -139,10 +139,10 @@
 			<span>Exponent</span>
 			<Numeric bind:value={options.common.expo} min="0.1" max="4.0" step="0.1"></Numeric>
 		</label>
-		<label>
+		<!-- <label>
 			<span>DirectX</span>
 			<Checkbox bind:checked={options.normals.dx}></Checkbox>
-		</label>
+		</label> -->
 	</div>
 
 	<div class="group">
