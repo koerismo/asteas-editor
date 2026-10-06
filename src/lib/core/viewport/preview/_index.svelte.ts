@@ -7,7 +7,7 @@ import type { RectEntry } from '$lib/core/file.js';
 import { Viewport } from '../renderer.js';
 import { ModelHotspotter } from './mesh.js';
 import { GLTFLoader } from 'three/addons/loaders/GLTFLoader.js';
-import Cube1 from '$lib/assets/meshes/cyl1.glb?url';
+import Cube1 from '$lib/assets/meshes/cube2.glb?url';
 import { on } from 'svelte/events';
 import { Button } from '../mouse.js';
 
@@ -105,7 +105,9 @@ export class PreviewViewport extends Viewport<Three.PerspectiveCamera> {
 		
 		// TODO: This is miserable
 		material.map = this.texture?.clone() ?? null;
-		material.map!.magFilter = Three.LinearFilter;
+		if (material.map) {
+			material.map.magFilter = Three.LinearFilter;
+		}
 
 		// TODO: stop cloning this fucking image???
 		material.normalMap = normal?.clone() ?? null;
@@ -131,9 +133,11 @@ export class PreviewViewport extends Viewport<Three.PerspectiveCamera> {
 		this.mesh = group.scene.children[0] as Three.Mesh;
 
 		const mbm = this.mesh.material as Three.MeshStandardMaterial;
-		mbm.aoMap!.colorSpace = Three.SRGBColorSpace;
-		mbm.aoMapIntensity = 1.2;
-		// this.mesh.material.aoMap = this.mesh.material.map;
+
+		if (mbm.aoMap) {
+			mbm.aoMap!.colorSpace = Three.SRGBColorSpace;
+			mbm.aoMapIntensity = 1.2;
+		}
 
 		this.hotspotter = new ModelHotspotter(this.mesh.geometry);
 
