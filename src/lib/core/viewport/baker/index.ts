@@ -69,7 +69,7 @@ const kMaxRects = 128;
 export class Baker {
 	protected options: BakerOptions = { mode: BakeMode.None };
 	
-	public canvas: OffscreenCanvas | HTMLCanvasElement;
+	public canvas?: OffscreenCanvas | HTMLCanvasElement;
 	protected renderer: Three.WebGLRenderer;
 	protected mesh: Three.InstancedMesh<Three.BufferGeometry, Three.ShaderMaterial>;
 
@@ -80,7 +80,7 @@ export class Baker {
 	protected rtt = new Three.WebGLRenderTarget();
 
 	constructor(canvas?: OffscreenCanvas | HTMLCanvasElement, mode?: BakeMode) {
-		this.canvas = canvas ?? new OffscreenCanvas(0, 0);
+		this.canvas = canvas;
 
 		this.rtScene = new Three.Scene();
 
@@ -109,18 +109,22 @@ export class Baker {
 
 	render() {
 		if (
-			!this.canvas.width ||
-			!this.canvas.height ||
+			!this.rtt.width ||
+			!this.rtt.height ||
 			this.options.mode === BakeMode.None
 		) return;
 
 		this.renderer.setRenderTarget(this.rtt);
+		this.renderer.setViewport(0, 0, this.rtt.width, this.rtt.height);
 		this.renderer.clear();
 		this.renderer.render(this.rtScene, this.camera);
 
-		this.renderer.setRenderTarget(null);
-		this.renderer.clear();
-		this.renderer.render(this.copyScene, this.camera);
+		if (this.canvas && this.canvas.width && this.canvas.height) {
+			this.renderer.setRenderTarget(null);
+			this.renderer.setViewport(0, 0, this.canvas.width, this.canvas.height);
+			this.renderer.clear();
+			this.renderer.render(this.copyScene, this.camera);
+		}
 	}
 
 	copyToTexture() {
@@ -129,6 +133,8 @@ export class Baker {
 		const data = new Uint8Array(this.rtt.width * this.rtt.height * 4);
 		this.renderer.readRenderTargetPixels(this.rtt, 0, 0, this.rtt.width, this.rtt.height, data);
 		const tex = new Three.DataTexture(data, this.rtt.width, this.rtt.height);
+		tex.minFilter = Three.LinearMipmapLinearFilter;
+		tex.magFilter = Three.LinearFilter;
 		return tex;
 	}
 
@@ -147,11 +153,11 @@ export class Baker {
 				this.rtScene.background = BG_NORMAL;
 				this.mesh.material = bakeMaterialNormal;
 				break;
-				case BakeMode.Height:
+			case BakeMode.Height:
 				this.rtScene.background = BG_HEIGHT;
 				this.mesh.material = bakeMaterialHeight;
 				break;
-				case BakeMode.Combined:
+			case BakeMode.Combined:
 				this.rtScene.background = null;
 				this.mesh.material = bakeMaterialCombined;
 				break;
@@ -173,7 +179,6 @@ export class Baker {
 
 	setSize(width: number, height: number, scale: number) {
 		this.rtt.setSize(width, height);
-		this.renderer.setSize(width, height, false);
 		this.camera.top = 0;
 		this.camera.left = 0;
 		this.camera.right = width / scale;

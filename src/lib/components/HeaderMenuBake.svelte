@@ -7,6 +7,7 @@
 	import { BakeMode, Baker } from '$lib/core/viewport/baker';
 	import Button from './buttons/Button.svelte';
 	import Numeric from './inputs/Numeric.svelte';
+	import Checkbox from './buttons/Checkbox.svelte';
 
 	const editor = getEditorState();
 	const view = getViewState();
@@ -136,15 +137,19 @@
 		</label>
 		<label>
 			<span>Exponent</span>
-			<Numeric bind:value={options.common.expo} min="0.1" max="4" step="0.1"></Numeric>
+			<Numeric bind:value={options.common.expo} min="0.1" max="4.0" step="0.1"></Numeric>
+		</label>
+		<label>
+			<span>DirectX</span>
+			<Checkbox bind:checked={options.normals.dx}></Checkbox>
 		</label>
 	</div>
 
 	<div class="group">
 		<b>Preview</b>
 		<div class="preview">
-			<canvas bind:this={heightCanvas}></canvas>
-			<canvas bind:this={normalCanvas}></canvas>
+			<canvas bind:this={heightCanvas} width="256" height="256"></canvas>
+			<canvas bind:this={normalCanvas} width="256" height="256"></canvas>
 		</div>
 	</div>
 </MenuItem>
@@ -187,10 +192,10 @@
 		font-size: 0.9em;
 	} */
 
-	/* hr {
+	hr {
 		border-color: var(--border);
 		margin: var(--hr-margin) 0;
-	} */
+	}
 
 	label {
 		display: flex;
@@ -198,7 +203,7 @@
 		place-items: center;
 		color: var(--text-2);
 
-		:global(input) {
+		:global(input[type="number"]) {
 			min-width: 50%;
 		}
 
