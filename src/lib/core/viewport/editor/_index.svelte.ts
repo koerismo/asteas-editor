@@ -5,7 +5,7 @@ import { clamp } from 'three/src/math/MathUtils.js';
 // General utility
 import { RectEntry } from '$lib/core/file.js';
 import { AABB, type Vec2Like } from '$lib/core/aabb.js';
-import { type EditorState } from '$lib/core/context.svelte.js';
+import { ViewportState, type EditorState } from '$lib/core/context.svelte.js';
 
 // Viewport-specific
 import { RectMode, SelectionRect, VisualRect } from './selection_rect.js';
@@ -37,7 +37,9 @@ export class EditorViewport extends Viewport<Three.OrthographicCamera> {
 	grid: GridObject = new GridObject();
 	// contextMenu: ContextMenu;
 
-	state: EditorState;
+	editorState: EditorState;
+	viewState: ViewportState;
+	
 	selected: number[] = [];
 	visualRects: VisualRect[] = [];
 	selectionRect: SelectionRect;
@@ -75,8 +77,8 @@ export class EditorViewport extends Viewport<Three.OrthographicCamera> {
 
 	constructor(
 			canvas: HTMLCanvasElement,
-			state: EditorState,
-			// menu: ContextMenu,
+			editorState: EditorState,
+			viewState: ViewportState,
 		) {
 		super(
 			canvas,
@@ -86,7 +88,8 @@ export class EditorViewport extends Viewport<Three.OrthographicCamera> {
 		);
 
 		this.mouse = new MouseComponent(this, canvas);
-		this.state = state;
+		this.editorState = editorState;
+		this.viewState = viewState;
 
 		this.camera = new Three.OrthographicCamera();
 		this.camera.position.z = 64;
@@ -107,14 +110,14 @@ export class EditorViewport extends Viewport<Three.OrthographicCamera> {
 			$effect.root(() => {
 				$effect(() => {
 					// console.log('Building rects...');
-					this.rebuildRects(this.state.rects ?? []);
+					this.rebuildRects(this.editorState.rects ?? []);
 				});
 				$effect(() => {
 					// console.log('Setting selection...')
-					this.setSelection(this.state.selection);
+					this.setSelection(this.editorState.selection);
 				});
 				$effect(() => {
-					this.setImage(this.state.image);
+					this.loadImage(this.editorState.image);
 				});
 			})
 		);
@@ -125,7 +128,7 @@ export class EditorViewport extends Viewport<Three.OrthographicCamera> {
 		this.scene.add(this.grid);
 		
 		this.imagePlane.position.z = -10;
-		this.setImage();
+		this.loadImage();
 	}
 
 	updateCamera() {
@@ -222,8 +225,8 @@ export class EditorViewport extends Viewport<Three.OrthographicCamera> {
 			const rect = this.visualRects[rectIdx];
 			rectBounds[rectIdx] = rect.visual_aabb;
 		}
-		this.state.$setRectBounds(rectBounds);
-		this.state.$commitActions();
+		this.editorState.$setRectBounds(rectBounds);
+		this.editorState.$commitActions();
 	}
 
 	onMouseMove(event: MouseEvent): void {
@@ -239,7 +242,7 @@ export class EditorViewport extends Viewport<Three.OrthographicCamera> {
 			this.mouse.dragged &&
 			this.currentAction === UserAction.None
 		) {
-			this.state.$commitActions();
+			this.editorState.$commitActions();
 
 			// Resizing
 			if (selectionBoxCorner !== -1) {
@@ -250,9 +253,9 @@ export class EditorViewport extends Viewport<Three.OrthographicCamera> {
 			else if (withinSelectionBox) {
 				if (event.shiftKey) {
 					this.currentAction = UserAction.CopyTranslating;
-					this.state.$selectionClear();
-					const inds = this.state.$rectsClone(this.selected);
-					this.state.$selectionAdd(inds);
+					this.editorState.$selectionClear();
+					const inds = this.editorState.$rectsClone(this.selected);
+					this.editorState.$selectionAdd(inds);
 					break action;
 				} else {
 					this.currentAction = UserAction.Translating;
@@ -337,9 +340,9 @@ export class EditorViewport extends Viewport<Three.OrthographicCamera> {
 			}
 
 			if (event.shiftKey) {
-				this.state.$selectionAdd(selection)
+				this.editorState.$selectionAdd(selection)
 			} else {
-				this.state.$setSelection(selection);
+				this.editorState.$setSelection(selection);
 			}
 
 			this.selectionRect.setMode(RectMode.Handles);
@@ -357,12 +360,12 @@ export class EditorViewport extends Viewport<Three.OrthographicCamera> {
 				
 				if (selectIdx !== -1) {
 					if (event.shiftKey) {
-						this.state.$selectionToggle(selectIdx);
+						this.editorState.$selectionToggle(selectIdx);
 					} else {
-						this.state.$setSelection([selectIdx]);
+						this.editorState.$setSelection([selectIdx]);
 					}
 				} else if (!event.shiftKey) {
-					this.state.$selectionClear();
+					this.editorState.$selectionClear();
 				}
 			}
 		}
@@ -465,11 +468,17 @@ export class EditorViewport extends Viewport<Three.OrthographicCamera> {
 		}
 	}
 
-	async setImage(image?: VImageEither) {
-		if (!image) return this.setTexture();
+	async loadImage(image?: VImageEither) {
+		if (!image) {
+			this.viewState.maps.color = undefined;
+			this.setTexture();
+			return;
+		}
 		const v = await new VTextureLoader().parseImage(image);
 		this.setTexture(v);
 		this.centerCamera();
+		this.viewState.maps.color = v;
+		return v;
 	}
 
 	setTexture(v?: Three.Texture) {

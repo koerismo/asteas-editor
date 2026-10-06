@@ -1,19 +1,19 @@
 <script lang="ts">
 	import MenuItem from './menu/MenuItem.svelte';
 	import Button from './buttons/Button.svelte';
-	import { getEditorCtx } from '$lib/core/context.svelte.js';
+	import { getEditorState } from '$lib/core/context.svelte.js';
 	import Checkbox from './buttons/Checkbox.svelte';
 	import type { SaveOptions } from '$lib/core/disk_io';
 	import PickerMultiple from './pickers/PickerMultiple.svelte';
 
-	const context = getEditorCtx();
+	const editor = getEditorState();
 
 	function getStatusMsg(): string | undefined {
-		if (!context.active)
+		if (!editor.active)
 			return 'No session active.';
 		if (!(options.vtf.on || options.hot.on || options.rect.on))
 			return 'No targets selected.';
-		if (options.vtf.on && !context.image)
+		if (options.vtf.on && !editor.image)
 			return "No active image to export."
 	}
 
@@ -40,7 +40,7 @@
 	});
 
 	function onSave() {
-		context.io.save(options);
+		editor.io.save(options);
 	}
 
 </script>
@@ -56,17 +56,17 @@
 		]}
 	></PickerMultiple>
 
-	{@const disabled = !context.image}
+	{@const disabled = !editor.image}
 	
 	<div class="group" hidden={!options.vtf.on} class:disabled>
 		<b>Vtf</b>
 		<i>{
-			context.vtf
+			editor.vtf
 				? 'The current VTF will be modified.'
 				: 'A new VTF will be generated.'
 		}</i>
 
-		{#if !context.vtf}
+		{#if !editor.vtf}
 			<label>
 				<span>Use DXT</span>
 				<Checkbox bind:checked={options.vtf.create.lossy} {disabled}></Checkbox>

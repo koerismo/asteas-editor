@@ -8,6 +8,7 @@
 
 <header>
 	<!-- <Picker options={['Edit', 'Paint', 'Remove']} index={0}></Picker> -->
+	<HeaderMenuBake></HeaderMenuBake>
 	<div style="flex-grow: 1;"></div>
 	<!-- <MenuItem text="Load">
 		<b>Load Options</b>
@@ -17,7 +18,6 @@
 			<input type="file" />
 		</label>
 	</MenuItem> -->
-	<HeaderMenuBake></HeaderMenuBake>
 	<HeaderMenu3D></HeaderMenu3D>
 	<HeaderMenuSave></HeaderMenuSave>
 </header>

@@ -1,6 +1,8 @@
 import * as Three from 'three';
-import VertShader from './shader.vert?raw';
-import FragShader from './shader.frag?raw';
+import BakeVert from './shader.vert?raw';
+import BakeFrag from './shader.frag?raw';
+import CopyVert from './screen.vert?raw';
+import CopyFrag from './screen.frag?raw';
 import type { RectLike } from '$lib/core/aabb.js';
 
 export const enum BakeMode {
@@ -21,12 +23,14 @@ export interface BakerOptions {
 const rectGeometry = new Three.PlaneGeometry(1, 1);
 rectGeometry.translate(0.5, 0.5, 0);
 
+const quadGeometry = new Three.PlaneGeometry(2, 2);
+
 function makeBakeMaterial(mode: BakeMode) {
 	return new Three.ShaderMaterial({
-		vertexShader: VertShader,
-		fragmentShader: FragShader,
+		vertexShader: BakeVert,
+		fragmentShader: BakeFrag,
 		side: Three.DoubleSide,
-		transparent: true,
+		// transparent: true,
 		uniforms: {
 			uBevel: { value: 0.0 },
 			uRadius: { value: 0.0 },
@@ -40,8 +44,21 @@ function makeBakeMaterial(mode: BakeMode) {
 			'MODE_COMBINED': BakeMode.Combined,
 		}
 	});
-	
 }
+
+function makeCopyMaterial(texture: Three.Texture) {
+	return new Three.ShaderMaterial({
+		vertexShader: CopyVert,
+		fragmentShader: CopyFrag,
+		// transparent: true,
+		uniforms: {
+			uMap: { value: texture },
+		}
+	});
+}
+
+const BG_HEIGHT = new Three.Color(0.0, 0.0, 0.0);
+const BG_NORMAL = new Three.Color(0.5, 0.5, 1.0);
 
 const bakeMaterialHeight = makeBakeMaterial(BakeMode.Height);
 const bakeMaterialNormal = makeBakeMaterial(BakeMode.Normal);
@@ -50,35 +67,44 @@ const bakeMaterialCombined = makeBakeMaterial(BakeMode.Combined);
 const kMaxRects = 128;
 
 export class Baker {
-	public canvas: OffscreenCanvas | HTMLCanvasElement;
-
 	protected options: BakerOptions = { mode: BakeMode.None };
+	
+	public canvas: OffscreenCanvas | HTMLCanvasElement;
 	protected renderer: Three.WebGLRenderer;
-	protected scene: Three.Scene;
-	protected camera: Three.OrthographicCamera;
 	protected mesh: Three.InstancedMesh<Three.BufferGeometry, Three.ShaderMaterial>;
+
+	protected rtScene = new Three.Scene();
+	protected copyScene = new Three.Scene();
+
+	protected camera = new Three.OrthographicCamera();
+	protected rtt = new Three.WebGLRenderTarget();
 
 	constructor(canvas?: OffscreenCanvas | HTMLCanvasElement, mode?: BakeMode) {
 		this.canvas = canvas ?? new OffscreenCanvas(0, 0);
 
-		this.scene = new Three.Scene();
-		this.scene.background = new Three.Color(0x000000);
+		this.rtScene = new Three.Scene();
 
 		this.mesh = new Three.InstancedMesh(rectGeometry, bakeMaterialCombined, kMaxRects);
 		this.mesh.frustumCulled = false;
 
-		this.scene.add(this.mesh);
+		this.rtScene.add(this.mesh);
 		this.setMode(mode ?? BakeMode.None);
 
 		this.camera = new Three.OrthographicCamera();
 		this.camera.position.set(0, 0, 10);
 		this.camera.near = 1.0;
-		
+
+		this.rtt = new Three.WebGLRenderTarget();
+		const copyPlane = new Three.Mesh(quadGeometry, makeCopyMaterial(this.rtt.texture));
+		this.copyScene.add(copyPlane);
+
 		this.renderer = new Three.WebGLRenderer({
 			canvas: this.canvas,
 			alpha: true,
 			depth: false,
 		});
+
+		this.renderer.autoClear = false;
 	}
 
 	render() {
@@ -88,7 +114,22 @@ export class Baker {
 			this.options.mode === BakeMode.None
 		) return;
 
-		this.renderer.render(this.scene, this.camera);
+		this.renderer.setRenderTarget(this.rtt);
+		this.renderer.clear();
+		this.renderer.render(this.rtScene, this.camera);
+
+		this.renderer.setRenderTarget(null);
+		this.renderer.clear();
+		this.renderer.render(this.copyScene, this.camera);
+	}
+
+	copyToTexture() {
+		// TODO: Ideally we don't clone this data each time
+		// is it possible to transfer it???
+		const data = new Uint8Array(this.rtt.width * this.rtt.height * 4);
+		this.renderer.readRenderTargetPixels(this.rtt, 0, 0, this.rtt.width, this.rtt.height, data);
+		const tex = new Three.DataTexture(data, this.rtt.width, this.rtt.height);
+		return tex;
 	}
 
 	#updateOptions() {
@@ -103,12 +144,15 @@ export class Baker {
 		this.options.mode = mode;
 		switch (mode) {
 			case BakeMode.Normal:
+				this.rtScene.background = BG_NORMAL;
 				this.mesh.material = bakeMaterialNormal;
 				break;
-			case BakeMode.Height:
+				case BakeMode.Height:
+				this.rtScene.background = BG_HEIGHT;
 				this.mesh.material = bakeMaterialHeight;
 				break;
-			case BakeMode.Combined:
+				case BakeMode.Combined:
+				this.rtScene.background = null;
 				this.mesh.material = bakeMaterialCombined;
 				break;
 		}
@@ -128,6 +172,7 @@ export class Baker {
 	}
 
 	setSize(width: number, height: number, scale: number) {
+		this.rtt.setSize(width, height);
 		this.renderer.setSize(width, height, false);
 		this.camera.top = 0;
 		this.camera.left = 0;

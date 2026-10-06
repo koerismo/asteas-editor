@@ -2,10 +2,10 @@
 	import Upload from "../buttons/Upload.svelte";
 	import HelloExample from "./HelloExample.svelte";
 	import Icon from '$lib/assets/logo-white.svg';
-	import { getEditorCtx } from "$lib/core/context.svelte.js";
+	import { getEditorState } from "$lib/core/context.svelte.js";
 	import { EditorIO } from "$lib/core/disk_io";
 	
-	const context = getEditorCtx();
+	const context = getEditorState();
 
 	
 	function onFiles(files: FileList) {

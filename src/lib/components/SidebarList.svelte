@@ -2,7 +2,7 @@
 	import { SvelteSet } from 'svelte/reactivity';
 	import { HotspotRect } from 'vtf-js/resources';
 	import { RectEntry, RectFile } from '$lib/core/file.js';
-	import { getEditorCtx  } from '$lib/core/context.svelte.js';
+	import { getEditorState  } from '$lib/core/context.svelte.js';
 
 	import SidebarRect from './SidebarRect.svelte';
 	import SidebarRectGhost from './SidebarRectGhost.svelte';
@@ -14,7 +14,7 @@
 
 	let { collapsed }: { collapsed: boolean } = $props();
 	
-	const context = getEditorCtx();
+	const context = getEditorState();
 
 	const HoverSelect = {
 		None: 0,

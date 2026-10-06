@@ -3,7 +3,7 @@
 	// import { onMount } from 'svelte';
 	// import { RectFile } from '$lib/core/file.js';
 	
-	import { getEditorCtx } from '$lib/core/context.svelte.js';
+	import { getEditorState } from '$lib/core/context.svelte.js';
 
 	import SidebarList from './SidebarList.svelte';
 	import Button from './buttons/Button.svelte';
@@ -16,7 +16,7 @@
 	import IconCollapse from '@lucide/svelte/icons/chevrons-down-up';
 	import IconExpand from '@lucide/svelte/icons/unfold-vertical';
 
-	const context = getEditorCtx();
+	const context = getEditorState();
 
 	let collapsed = $state(false);
 	let rectList = $state<SidebarList>();

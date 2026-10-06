@@ -8,9 +8,25 @@ import { AABB } from './aabb.js';
 import { makeSubscriber } from  './history/reactive.js';
 import { History } from './history/history.js';
 import { EditorIO } from './disk_io.js';
+import type { Texture } from 'three';
 
-function makeId(type: string, id: number) {
-	return type + '#' + id;
+// function makeId(type: string, id: number) {
+// 	return type + '#' + id;
+// }
+
+export interface ViewportMaps {
+	color?: Texture;
+	normal?: Texture;
+	height?: Texture;
+}
+
+export class ViewportState {
+	enable: boolean = $state(false);
+	maps: ViewportMaps = $state({});
+
+	meshScale: number = $state(1.0);
+	useLighting: boolean = $state(true);
+	useBakedNormals: boolean = $state(true);
 }
 
 export class EditorState {
@@ -28,10 +44,6 @@ export class EditorState {
 
 	public image: VImageEither | undefined = $state.raw();
 	public vtf: Vtf | undefined = $state.raw();
-
-	public viewportOptions = $state({
-		scale: 1.0,
-	});
 
 	get selection(): ReadonlySet<number> {
 		this.#selectSubscriber.use();
@@ -330,6 +342,7 @@ export class EditorState {
 	}
 }
 
-export const [getEditorCtx, setEditorCtx] = createContext<EditorState>();
+export const [getViewState, setViewState] = createContext<ViewportState>();
+export const [getEditorState, setEditorState] = createContext<EditorState>();
 
 

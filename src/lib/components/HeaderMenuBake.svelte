@@ -1,6 +1,6 @@
 <script lang="ts">
 	import MenuItem from './menu/MenuItem.svelte';
-	import { getEditorCtx } from '$lib/core/context.svelte.js';
+	import { getEditorState, getViewState } from '$lib/core/context.svelte.js';
 	import Picker from './pickers/Picker.svelte';
 	import PickerMultiple from './pickers/PickerMultiple.svelte';
 	import { onMount } from 'svelte';
@@ -8,8 +8,9 @@
 	import Button from './buttons/Button.svelte';
 	import Numeric from './inputs/Numeric.svelte';
 
-	const context = getEditorCtx();
-	
+	const editor = getEditorState();
+	const view = getViewState();
+
 	function opt(name: string, out: { on: boolean }, desc?: string) {
 		return {
 			name,
@@ -24,7 +25,7 @@
 			scale: 1,
 			radius: 16.0,
 			bevel: 32.0,
-			expo: 0.5,
+			expo: 2.0,
 		},
 		height: {
 			on: true,
@@ -55,15 +56,15 @@
 	});
 
 	$effect(() => {
-		heightBaker?.setRects(context.rects);
-		normalBaker?.setRects(context.rects);
+		heightBaker?.setRects(editor.rects);
+		normalBaker?.setRects(editor.rects);
 	});
 
 	$effect(() => {
-		if (context.image) {
+		if (editor.image) {
 			const S = options.common.scale;
-			heightBaker?.setSize(context.image.width * S, context.image.height * S, S);
-			normalBaker?.setSize(context.image.width * S, context.image.height * S, S);
+			heightBaker?.setSize(editor.image.width * S, editor.image.height * S, S);
+			normalBaker?.setSize(editor.image.width * S, editor.image.height * S, S);
 		} else {
 			heightBaker?.setSize(0, 0, 1);
 			normalBaker?.setSize(0, 0, 1);
@@ -76,12 +77,37 @@
 	});
 
 	function bake() {
-		if (options.height.on) heightBaker.render();
-		if (options.normals.on) normalBaker.render();
+		if (options.height.on) {
+			heightBaker.render();
+			view.maps.height = heightBaker.copyToTexture();
+		} else {
+			view.maps.height = undefined;
+		}
+
+		if (options.normals.on) {
+			normalBaker.render();
+			view.maps.normal = normalBaker.copyToTexture();
+		} else {
+			view.maps.normal = undefined;
+		}
+	}
+
+	function canSave() {
+		if (!options.normals.on && !options.height.on)
+			return false;
+		if (options.normals.on && !view.maps.normal)
+			return false;
+		if (options.height.on && !view.maps.height)
+			return false;
+		return true;
+	}
+
+	function save() {
+
 	}
 </script>
 
-<MenuItem text="Bake" width={'18em'}>
+<MenuItem text="Bake" side="left" width={'18em'}>
 	<b>Bake</b>
 	<PickerMultiple
 		options={[
@@ -91,6 +117,8 @@
 	></PickerMultiple>
 
 	<Button onclick={bake}>Bake</Button>
+	<Button onclick={save} disabled={!canSave()}>Save</Button>
+
 
 	<div class="group" hidden={!options.height.on && !options.normals.on}>
 		<b>Options</b>
@@ -114,14 +142,28 @@
 
 	<div class="group">
 		<b>Preview</b>
-		<canvas bind:this={heightCanvas}></canvas>
-		<canvas bind:this={normalCanvas}></canvas>
+		<div class="preview">
+			<canvas bind:this={heightCanvas}></canvas>
+			<canvas bind:this={normalCanvas}></canvas>
+		</div>
 	</div>
 </MenuItem>
 
 <style>
 	canvas {
 		width: 128px;
+	}
+
+	div.preview {
+		display: flex;
+		gap: 0.5em;
+
+		canvas {
+			width: 100%;
+			aspect-ratio: 1 / 1;
+			background-color: var(--bg);
+			border-radius: var(--radius-sm);
+		}
 	}
 
 	div.group {
@@ -139,20 +181,20 @@
 			display: none;
 		}
 
-		&.disabled {
+		/* &.disabled {
 			opacity: 0.5;
-		}
+		} */
 	}
 
-	i {
+	/* i {
 		color: var(--text-3);
 		font-size: 0.9em;
-	}
+	} */
 
-	hr {
+	/* hr {
 		border-color: var(--border);
 		margin: var(--hr-margin) 0;
-	}
+	} */
 
 	label {
 		display: flex;

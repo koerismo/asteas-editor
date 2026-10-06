@@ -1,13 +1,14 @@
 <script lang="ts">
 	import { onMount } from 'svelte';
 	import type { PreviewViewport } from '$lib/core/viewport/preview/_index.svelte.js';
-	import { getEditorCtx } from '$lib/core/context.svelte.js';
+	import { getEditorState, getViewState } from '$lib/core/context.svelte.js';
 	import LoadingIcon from '@lucide/svelte/icons/loader-circle';
 
 	let canvas: HTMLCanvasElement;
 	let renderer: PreviewViewport;
 	let loading = $state(false);
-	const context = getEditorCtx();
+	const editor = getEditorState();
+	const view = getViewState();
 	
 	onMount(() => {
 		let cancel = false;
@@ -16,7 +17,7 @@
 			loading = true;
 			const { PreviewViewport } = await import('$lib/core/viewport/preview/_index.svelte.js');
 			if (cancel) return;
-			renderer = new PreviewViewport(canvas, context);
+			renderer = new PreviewViewport(canvas, editor, view);
 			loading = false;
 		}
 

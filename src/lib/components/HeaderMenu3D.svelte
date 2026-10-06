@@ -1,17 +1,17 @@
 <script lang="ts">
 	import MenuItem from './menu/MenuItem.svelte';
-	import { getEditorCtx } from '$lib/core/context.svelte.js';
+	import { getEditorState, getViewState } from '$lib/core/context.svelte.js';
 	import Checkbox from './buttons/Checkbox.svelte';
 	import Picker from './pickers/Picker.svelte';
 
-	const context = getEditorCtx();
-	
+	const view = getViewState();
+
 	const indexGetSet = {
 		get value() {
-			return 2 + Math.log2(context.viewportOptions.scale);
+			return 2 + Math.log2(view.meshScale);
 		},
 		set value(v: number) {
-			context.viewportOptions.scale = 2 ** (v - 2);
+			view.meshScale = 2 ** (v - 2);
 		}
 	}
 
@@ -21,11 +21,11 @@
 	<b>3D View</b>
 	<label>
 		<span>Enable</span>
-		<Checkbox checked></Checkbox>
+		<Checkbox bind:checked={view.enable}></Checkbox>
 	</label>
 	<label>
 		<span>Use baked normals</span>
-		<Checkbox checked></Checkbox>
+		<Checkbox bind:checked={view.useBakedNormals}></Checkbox>
 	</label>
 	<label>
 		<span>Scale</span>
