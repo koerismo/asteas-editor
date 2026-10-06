@@ -11,7 +11,7 @@
 	function getStatusMsg(): string | undefined {
 		if (!editor.active)
 			return 'No session active.';
-		if (!(options.vtf.on || options.hot.on || options.rect.on))
+		if (!(options.vtf.on || options.hot.on || options.rect.on || options.obj.on))
 			return 'No targets selected.';
 		if (options.vtf.on && !editor.image)
 			return "No active image to export."
@@ -37,6 +37,7 @@
 		},
 		hot: { on: false },
 		rect: { on: false },
+		obj: { on: false },
 	});
 
 	function onSave() {
@@ -53,6 +54,7 @@
 			opt('vtf', options.vtf),
 			opt('hot', options.hot),
 			opt('rect', options.rect),
+			opt('obj', options.obj),
 		]}
 	></PickerMultiple>
 

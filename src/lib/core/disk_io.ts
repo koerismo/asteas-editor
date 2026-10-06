@@ -7,6 +7,7 @@ import type { EditorState } from './context.svelte.js';
 import { HotspotTextFormat } from './text_format.js';
 import { RectFile } from './file.js';
 import { downloadZip } from 'client-zip';
+import { HotspotDuvFormat } from './obj_format.js';
 
 /**
  * `abc.def` -> `def`
@@ -39,6 +40,7 @@ export interface SaveOptions {
 	};
 	hot: { on: boolean; };
 	rect: { on: boolean; };
+	obj: { on: boolean; };
 }
 
 export class EditorIO {
@@ -49,6 +51,7 @@ export class EditorIO {
 	async loadFiles(files: FileList, fromHello: boolean = false) {
 		let textFile: File | undefined;
 		let resFile: File | undefined;
+		let objFile: File | undefined;
 		let imageFile: File | undefined;
 
 		for (let i=0; i<files.length; i++) {
@@ -57,6 +60,8 @@ export class EditorIO {
 
 			if (ext === 'hot' && !resFile) {
 				resFile = file;
+			} else if (ext === 'obj' && !objFile) {
+				objFile = file;
 			} else if ((ext === 'rect' || ext === 'txt') && !textFile) {
 				textFile = file;
 			} else if (!imageFile) {
@@ -99,6 +104,14 @@ export class EditorIO {
 			const res = HotspotTextFormat.decode(text);
 			rects ??= RectFile.fromResource(res);
 			filename ??= textFile.name;
+		}
+
+		// Load from .obj (DreamUV format)
+		else if (objFile) {
+			const text = await objFile.text();
+			const res = HotspotDuvFormat.decode(text, 512, 512);
+			rects ??= RectFile.fromResource(res);
+			filename ??= objFile.name;
 		}
 
 		if (rects)
@@ -265,6 +278,12 @@ export class EditorIO {
 		if (options.rect.on) {
 			const rectText = HotspotTextFormat.encode(res);
 			output.push(new File([rectText], filename + '.rect'));
+		}
+
+		if (options.obj.on) {
+			const image = this.context.image;
+			const rectText = HotspotDuvFormat.encode(res, image.width, image.height);
+			output.push(new File([rectText], filename + '.obj'));
 		}
 
 		this.download(output);

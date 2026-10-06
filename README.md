@@ -8,15 +8,32 @@
 
 A simple and polished Hotspot texture editor, licensed under GPLv3+
 
-Supports:
-- Importing and exporting vtf, png, jpeg, and webp
-- Importing and exporting Strata text files
-- Embedding and extracting Strata embedded resources
-- Previewing texture application
+Features:
+- Multi-selection and quick editing
+- Generates texture maps for material authoring
+- Previews texture application on interactive models
+- Imports most common image and rect formats, and exports vtfs
+- Imports and exports Strata text files
+- Embeds and extracts Strata embedded resources
+
+## Formats
+
+| Formats | Imports | Exports | Use |
+| -- | -- | -- | -- |
+| `rect` | &check; | &check; | Atlas |
+| `hot` | &check; | &check; | Atlas |
+| `obj` | &check; | &check; | Atlas |
+| | | | |
+| `vtf` | &check; | &check; | Atlas, Texture |
+| | | | |
+| `jpeg` | &check; | | Texture |
+| `png` | &check; | | Texture |
+| `gif` | &check; | | Texture |
+| | | | |
 
 ## Documentation
 
-More to come!
+This editor is primarily designed for use with Strata Source, however, its formats can be adapted for use with any engine. (Ex. Blender + DreamUV)
 
 ### Keybinds
 
@@ -24,6 +41,7 @@ More to come!
 | --- | ------ |
 | `Ctrl+Z` | Undo |
 | `Ctrl+Y`, `Ctrl+Shift+Z`  | Redo |
+| `Ctrl+A` | Toggle all selected |
 | `Shift` | Edit selection |
 | `Shift+Click` | Modify property on all selected |
 | `Delete`, `Backspace` | Delete Selected |
