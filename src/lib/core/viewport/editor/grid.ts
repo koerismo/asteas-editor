@@ -1,9 +1,17 @@
 import * as Three from 'three';
 import GridVert from './grid.vert?raw';
 import GridFrag from './grid.frag?raw';
+import { makeShaderMaterial, type ParamsToUniforms } from '../shader_material.js';
 
+type GridShaderParams = ParamsToUniforms<{
+	uInvProjectionMatrix: Three.Matrix4,
+	uPixelSize: Three.Vector2,
+	uGridPower: number,
+	uMousePos: Three.Vector2,
+	opacity: number,
+}>;
 
-const gridMaterial = new Three.ShaderMaterial({
+const gridMaterial = makeShaderMaterial<GridShaderParams>({
 	uniforms: {
 		uInvProjectionMatrix: { value: new Three.Matrix4() },
 		uPixelSize: { value: new Three.Vector2(1.0, 1.0) },
@@ -19,7 +27,7 @@ const gridMaterial = new Three.ShaderMaterial({
 
 export class GridObject extends Three.Mesh<
 	Three.PlaneGeometry,
-	Three.ShaderMaterial
+	typeof gridMaterial
 > {
 	gridPower = 0.0;
 
@@ -42,11 +50,10 @@ export class GridObject extends Three.Mesh<
 		group: Three.Group,
 	): void {
 		this.material.uniforms.uInvProjectionMatrix.value = camera.projectionMatrixInverse;
-		renderer.getSize(
-			this.material.uniforms.uPixelSize.value
-		);
-		this.material.uniforms.uPixelSize.value.x /= devicePixelRatio;
-		this.material.uniforms.uPixelSize.value.y /= devicePixelRatio;
+		const pixelSize = this.material.uniforms.uPixelSize.value;
+		renderer.getSize(pixelSize);
+		pixelSize.x /= devicePixelRatio;
+		pixelSize.y /= devicePixelRatio;
 
 	}
 	

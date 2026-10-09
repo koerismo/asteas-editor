@@ -1,7 +1,6 @@
 import * as Three from 'three';
-import type { VImageEither } from 'vtf-js';
 
-import type { EditorState, ViewportMaps, ViewportState } from '$lib/core/context.svelte.js';
+import type { EditorState } from '$lib/core/context.svelte.js';
 import type { RectEntry } from '$lib/core/file.js';
 
 import { Viewport } from '../renderer.js';
@@ -20,9 +19,7 @@ export class PreviewViewport extends Viewport<Three.PerspectiveCamera> {
 
 	constructor(
 			public canvas: HTMLCanvasElement,
-			public editorState: EditorState,
-			public viewState: ViewportState,
-
+			public state: EditorState,
 		) {
 		super(
 			canvas,
@@ -51,18 +48,15 @@ export class PreviewViewport extends Viewport<Three.PerspectiveCamera> {
 
 		this.scene.background = new Three.Color(0x111111);
 
-		this.init().then(() => {
+		void this.init().then(() => {
 			this.start();
 		});
 
 		this.disposables.push(
 			$effect.root(() => {
 				$effect(() => {
-					this.hotspotter?.setScale(viewState.meshScale);
-					this.refit(editorState.rects ?? []);
-				});
-				$effect(() => {
-					this.refit(editorState.rects ?? []);
+					this.hotspotter?.setScale(state.viewport.meshScale3d);
+					this.refit(state.document?.rects ?? []);
 				});
 				$effect(() => {
 					this.updateMaps();
@@ -96,7 +90,7 @@ export class PreviewViewport extends Viewport<Three.PerspectiveCamera> {
 	// }
 
 	updateMaps() {
-		const maps = this.viewState.maps;
+		const maps = this.state.viewport.maps;
 		this.texture = maps.color;
 		const normal = maps.normal;
 
@@ -124,7 +118,7 @@ export class PreviewViewport extends Viewport<Three.PerspectiveCamera> {
 		this.hotspotter.setRects(rects);
 		this.hotspotter.setSize(this.texture.width, this.texture.height)
 		this.hotspotter.fit(
-			this.mesh!.geometry.getAttribute('uv')!
+			this.mesh.geometry.getAttribute('uv')
 		);
 	}
 
@@ -135,7 +129,7 @@ export class PreviewViewport extends Viewport<Three.PerspectiveCamera> {
 		const mbm = this.mesh.material as Three.MeshStandardMaterial;
 
 		if (mbm.aoMap) {
-			mbm.aoMap!.colorSpace = Three.SRGBColorSpace;
+			mbm.aoMap.colorSpace = Three.SRGBColorSpace;
 			mbm.aoMapIntensity = 1.2;
 		}
 
@@ -144,7 +138,7 @@ export class PreviewViewport extends Viewport<Three.PerspectiveCamera> {
 		// this.scene.add(new Three.AmbientLight(0xffffff, 3.0));
 		this.scene.add(this.mesh);
 
-		const geo = this.mesh.geometry;
+		// const geo = this.mesh.geometry;
 		// const uvSrc = geo.getAttribute('uv')!;
 		// geo.setAttribute('uv2', uvSrc.clone());
 		this.updateMaps();

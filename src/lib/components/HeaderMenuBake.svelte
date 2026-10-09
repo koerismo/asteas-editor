@@ -1,6 +1,6 @@
 <script lang="ts">
 	import MenuItem from './menu/MenuItem.svelte';
-	import { getEditorState, getViewState } from '$lib/core/context.svelte.js';
+	import { getState } from '$lib/core/context.svelte.js';
 	import Picker from './pickers/Picker.svelte';
 	import PickerMultiple from './pickers/PickerMultiple.svelte';
 	import { onMount } from 'svelte';
@@ -8,9 +8,12 @@
 	import Button from './buttons/Button.svelte';
 	import Numeric from './inputs/Numeric.svelte';
 	import Checkbox from './buttons/Checkbox.svelte';
+	import { FileSaver, setFileExt } from '$lib/core/disk_io';
 
-	const editor = getEditorState();
-	const view = getViewState();
+	const editor = getState();
+	const mapCache = $derived(editor.viewport.maps);
+
+	const saver = new FileSaver();
 
 	function opt(name: string, out: { on: boolean }, desc?: string) {
 		return {
@@ -57,18 +60,19 @@
 	});
 
 	$effect(() => {
-		heightBaker?.setRects(editor.rects);
-		normalBaker?.setRects(editor.rects);
+		heightBaker?.setRects(editor.document?.rects ?? []);
+		normalBaker?.setRects(editor.document?.rects ?? []);
 	});
 
 	$effect(() => {
-		if (editor.image) {
+		if (editor.document) {
 			const S = options.common.scale;
-			heightBaker?.setSize(editor.image.width * S, editor.image.height * S, S);
-			normalBaker?.setSize(editor.image.width * S, editor.image.height * S, S);
+			const w = editor.document.width * S, h = editor.document.height * S;
+			heightBaker?.setSize(w, h, S, true);
+			normalBaker?.setSize(w, h, S, true);
 		} else {
-			heightBaker?.setSize(0, 0, 1);
-			normalBaker?.setSize(0, 0, 1);
+			heightBaker?.setSize(0, 0, 1, true);
+			normalBaker?.setSize(0, 0, 1, true);
 		}
 	});
 
@@ -80,31 +84,49 @@
 	function bake() {
 		if (options.height.on) {
 			heightBaker.render();
-			view.maps.height = heightBaker.copyToTexture();
+			editor.viewport.maps.height = heightBaker.copyToTexture();
 		} else {
-			view.maps.height = undefined;
+			editor.viewport.maps.height = undefined;
 		}
 
 		if (options.normals.on) {
 			normalBaker.render();
-			view.maps.normal = normalBaker.copyToTexture();
+			editor.viewport.maps.normal = normalBaker.copyToTexture();
 		} else {
-			view.maps.normal = undefined;
+			editor.viewport.maps.normal = undefined;
 		}
 	}
 
 	function canSave() {
 		if (!options.normals.on && !options.height.on)
 			return false;
-		if (options.normals.on && !view.maps.normal)
+		if (options.normals.on && !mapCache.normal)
 			return false;
-		if (options.height.on && !view.maps.height)
+		if (options.height.on && !mapCache.height)
 			return false;
 		return true;
 	}
+	
+	async function canvasToFile(canvas: HTMLCanvasElement, filename: string): Promise<File> {
+		return new Promise((resolve, reject) => {
+			canvas.toBlob((blob) => {
+				if (blob) resolve(new File([blob], filename, { type: 'image/png' }));
+				else reject();
+			}, 'image/png');
+		});
+	}
 
-	function save() {
+	async function save() {
+		if (!editor.document) return;
+		const rootName = setFileExt(editor.document.name, '')
+		const files: File[] = [];
 
+		if (options.normals.on)
+			files.push(await canvasToFile(normalCanvas, rootName + '_normals.png'));
+		if (options.height.on)
+			files.push(await canvasToFile(heightCanvas, rootName + '_height.png'));
+
+		saver.download(files, rootName + '_bake.zip');
 	}
 </script>
 
@@ -114,6 +136,7 @@
 		options={[
 			opt('height', options.height),
 			opt('normals', options.normals),
+			// opt('curvature', options.curvature),
 		]}
 	></PickerMultiple>
 

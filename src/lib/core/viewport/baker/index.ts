@@ -102,6 +102,7 @@ export class Baker {
 			canvas: this.canvas,
 			alpha: true,
 			depth: false,
+			preserveDrawingBuffer: true,
 		});
 
 		this.renderer.autoClear = false;
@@ -122,7 +123,6 @@ export class Baker {
 		if (this.canvas && this.canvas.width && this.canvas.height) {
 			this.renderer.setRenderTarget(null);
 			this.renderer.setViewport(0, 0, this.canvas.width, this.canvas.height);
-			this.renderer.clear();
 			this.renderer.render(this.copyScene, this.camera);
 		}
 	}
@@ -177,7 +177,12 @@ export class Baker {
 		this.#updateOptions();
 	}
 
-	setSize(width: number, height: number, scale: number) {
+	setSize(width: number, height: number, scale: number, setCanvasSize: boolean = false) {
+		if (setCanvasSize && this.canvas) {
+			this.canvas.width = width;
+			this.canvas.height = height;
+		}
+		
 		this.rtt.setSize(width, height);
 		this.camera.top = 0;
 		this.camera.left = 0;

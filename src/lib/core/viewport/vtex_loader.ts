@@ -5,10 +5,7 @@ import {
 	CompressedTexture,
 	type CompressedPixelFormat,
 	DataTexture,
-	FileLoader,
-	Loader,
 	SRGBColorSpace,
-	NearestFilter,
 	LinearFilter,
 	Texture,
 	RepeatWrapping,
@@ -21,49 +18,38 @@ const formatMap: Partial<Record<VFormats, { format: CompressedPixelFormat, size:
 	[VFormats.DXT5]: { format: RGBA_S3TC_DXT5_Format, size: 16 },
 };
 
-export class VTextureLoader extends Loader<DataTexture | CompressedTexture> {
-	
-	setFlags(texture: Texture) {
+export const VTextureLoader = {
+	applyFlags(texture: Texture) {
 		texture.colorSpace = SRGBColorSpace;
 		texture.minFilter = LinearFilter;
 		texture.wrapS = RepeatWrapping;
 		texture.wrapT = RepeatWrapping;
 		texture.needsUpdate = true;
 		return texture;
-	}
+	},
 
-	async parseImage(image: VImageEither) {
+	parseImage(image: VImageEither) {
 		if (image.isEncoded && image.format in formatMap) {
+			// eslint-disable-next-line @typescript-eslint/no-non-null-assertion
 			const compressedFormat = formatMap[image.format]!;
 			const texture = new CompressedTexture([{
 				data: image.data,
 				width: image.width,
 				height: image.height
 			}], image.width, image.height, compressedFormat.format);
-			return this.setFlags(texture);
+
+			return this.applyFlags(texture);
 		}
 		else {
 			const imageRawU8 = image.decode().coerce(Uint8Array);
 			const texture = new DataTexture(imageRawU8.data, imageRawU8.width, imageRawU8.height);
-			return this.setFlags(texture);
+			return this.applyFlags(texture);
 		}
-	}
+	},
 
 	async parse(buffer: ArrayBuffer) {
 		const vtf = await Vtf.decode(buffer, { noClone: true, onDemand: true });
 		const image = vtf.body.getRawImage(0, 0, 0, 0);
 		return this.parseImage(image);
-	}
-
-	async load(url: string) {
-		const loader = new FileLoader( this.manager );
-
-		loader.setPath( this.path );
-		loader.setResponseType( 'arraybuffer' );
-		loader.setRequestHeader( this.requestHeader );
-		loader.setWithCredentials( this.withCredentials );
-
-		const buffer = await loader.loadAsync(url) as ArrayBuffer;
-		return this.parse(buffer);
-	}
-}
+	},
+} as const;

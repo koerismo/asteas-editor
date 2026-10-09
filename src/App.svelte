@@ -6,16 +6,13 @@
 	import Hello from '$lib/components/intro/Hello.svelte';
 	import Sidebar from '$lib/components/Sidebar.svelte';
 
-	import { EditorState, setEditorState, setViewState, ViewportState } from '$lib/core/context.svelte.js';
+	import { EditorState, setState } from '$lib/core/context.svelte.js';
 	
 	// import { HotspotRect } from 'vtf-js/resources';
 	// import { RectFile } from '$lib/core/file.js';
 
 	const editorState = new EditorState();
-	setEditorState(editorState);
-
-	const viewState = new ViewportState();
-	setViewState(viewState);
+	setState(editorState);
 
 	// context.setFile(RectFile.fromRects([
 	// 	new HotspotRect(0x10, 10, 10, 20, 20),

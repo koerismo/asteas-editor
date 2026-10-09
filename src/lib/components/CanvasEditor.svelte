@@ -1,7 +1,7 @@
 <script lang="ts">
 	import { onMount } from 'svelte';
 	import type { EditorViewport } from '$lib/core/viewport/editor/_index.svelte.js';
-	import { getEditorState, getViewState } from '$lib/core/context.svelte.js';
+	import { getState } from '$lib/core/context.svelte.js';
 	import LoadingIcon from '@lucide/svelte/icons/loader-circle';
 	// import ContextMenu from './menu/ContextMenu.svelte';
 
@@ -9,9 +9,8 @@
 	let renderer: EditorViewport;
 	// let contextMenu: ContextMenu;
 
+	const editor = getState();
 	let loading = $state(false);
-	const editor = getEditorState();
-	const view = getViewState();
 	
 	onMount(() => {
 		let cancel = false;
@@ -20,7 +19,7 @@
 			loading = true;
 			const { EditorViewport } = await import('$lib/core/viewport/editor/_index.svelte.js');
 			if (cancel) return;
-			renderer = new EditorViewport(canvas, editor, view);
+			renderer = new EditorViewport(canvas, editor);
 			loading = false;
 		}
 

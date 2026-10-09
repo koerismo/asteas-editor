@@ -3,19 +3,9 @@
 	import Button from './buttons/Button.svelte';
 	import { getState } from '$lib/core/context.svelte.js';
 	import Checkbox from './buttons/Checkbox.svelte';
-	import type { SaveOptions } from '$lib/core/disk_io';
 	import PickerMultiple from './pickers/PickerMultiple.svelte';
 
 	const editor = getState();
-
-	function getStatusMsg(): string | undefined {
-		if (!editor.document)
-			return 'No session active.';
-		if (!(options.vtf.on || options.hot.on || options.rect.on || options.obj.on))
-			return 'No targets selected.';
-		if (options.vtf.on && !editor.document.maps.color)
-			return 'No active image to export.'
-	}
 
 	function opt(name: string, out: { on: boolean }, desc?: string) {
 		return {
@@ -26,7 +16,7 @@
 		}
 	}
 
-	const options: SaveOptions = $state({
+	const options = $state({
 		vtf: {
 			on: true,
 			create: {
@@ -46,19 +36,10 @@
 
 </script>
 
-<MenuItem text="Save" width={'18em'}>
-	<b>Save</b>
+<MenuItem text="Load" width={'18em'}>
+	<b>Load</b>
 
-	<PickerMultiple
-		options={[
-			opt('vtf', options.vtf),
-			opt('hot', options.hot),
-			opt('rect', options.rect),
-			opt('obj', options.obj),
-		]}
-	></PickerMultiple>
-
-	{@const disabled = !editor.document}
+	{@const disabled = !editor.document?.vtf}
 	
 	<div class="group" hidden={!options.vtf.on} class:disabled>
 		<b>Vtf</b>
@@ -98,13 +79,8 @@
 			<Checkbox></Checkbox>
 		</label> -->
 	</div>
-
-	{@const msg = getStatusMsg()}
-	{#if msg}
-		<i>{msg}</i>
-	{/if}
-
-	<Button onclick={onSave} disabled={!!msg}>Save</Button>
+<!-- 
+	<Button onclick={onSave} disabled={!!msg}>Save</Button> -->
 </MenuItem>
 
 <style>

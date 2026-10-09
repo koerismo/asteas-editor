@@ -3,7 +3,7 @@ import { VHeader, VHeaderTags, VHotspotResource } from 'vtf-js/resources';
 import { getPixelArrayMax } from 'vtf-js/dist/core/image.js';
 import 'vtf-js/addons/squish';
 
-import type { EditorState } from './context.svelte.js';
+import type { AtlasDocument } from './context.svelte.js';
 import { HotspotTextFormat } from './text_format.js';
 import { RectFile } from './file.js';
 import { downloadZip } from 'client-zip';
@@ -14,15 +14,15 @@ import { HotspotDuvFormat } from './obj_format.js';
  * 
  * `abc` -> `abc`
  */
-function getFileExt(s: string): string {
+export function getFileExt(s: string): string {
 	return s.slice(s.lastIndexOf('.') + 1);
 }
 
-function getFileName(s: string): string {
+export function getFileName(s: string): string {
 	return s.slice(s.lastIndexOf('/') + 1);
 }
 
-function setFileExt(s: string, to: string): string {
+export function setFileExt(s: string, to: string): string {
 	const dot = s.lastIndexOf('.');
 	return dot === -1
 		? s + to
@@ -43,10 +43,27 @@ export interface SaveOptions {
 	obj: { on: boolean; };
 }
 
-export class EditorIO {
-	constructor(
-		private context: EditorState
-	) {}
+export class FileSaver {
+	async download(files: File[], filename?: string) {
+		const a = document.createElement('a');
+
+		if (files.length > 1) {
+			const zip = await downloadZip(files).blob();
+			a.href = URL.createObjectURL(zip);
+			a.download = setFileExt(filename ?? (files[0].name), '.zip');
+		} else {
+			a.href = URL.createObjectURL(files[0]);
+			a.download = files[0].name;
+		}
+
+		a.click();
+
+		URL.revokeObjectURL(a.href);
+		a.remove();
+	}
+}
+
+export class EditorIO extends FileSaver {
 
 	async loadFiles(files: FileList, fromHello: boolean = false) {
 		let textFile: File | undefined;
@@ -219,24 +236,6 @@ export class EditorIO {
 		return vtf;
 	}
 
-	protected async download(files: File[]) {
-		const a = document.createElement('a');
-	
-		if (files.length > 1) {
-			const zip = await downloadZip(files).blob();
-			a.href = URL.createObjectURL(zip);
-			a.download = setFileExt(this.context.filename, '.zip');
-		} else {
-			a.href = URL.createObjectURL(files[0]);
-			a.download = files[0].name;
-		}
-
-		a.click();
-
-		URL.revokeObjectURL(a.href);
-		a.remove();
-	}
-
 	async save(options: SaveOptions) {
 		if (!this.context) throw 'no context!';
 		if (!this.context.image) throw 'no image!';
@@ -286,6 +285,6 @@ export class EditorIO {
 			output.push(new File([rectText], filename + '.obj'));
 		}
 
-		this.download(output);
+		this.download(output, this.context.filename);
 	}
 }

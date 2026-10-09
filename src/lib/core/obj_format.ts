@@ -9,8 +9,8 @@ interface OBJMeshDict {
 	faces: number[][];
 }
 
-class OBJExporter {
-	static export({ vertices, uvs, faces }: OBJMeshDict) {
+const OBJExporter = {
+	export({ vertices, uvs, faces }: OBJMeshDict): string {
 		const output: string[] = [
 			'# Asteas Atlas Tool ' + APP_VERSION,
 			'o Atlas'
@@ -31,13 +31,13 @@ class OBJExporter {
 		}
 		
 		return output.join('\n');
-	}
-}
+	},
+} as const;
 
 const RE_SPLIT = /\s+/g;
 
-class OBJLoader {
-	static load(text: string): OBJMeshDict {
+const OBJLoader = {
+	load(text: string): OBJMeshDict {
 		const lines = text.split('\n');
 		const objVerts: number[] = [];
 		const objUvs: number[] = [];
@@ -69,17 +69,15 @@ class OBJLoader {
 			const cmd = args.shift();
 
 			switch (cmd) {
-				case 'l':
-				case 'vp':
-				case 'vn':
-					continue;
+				// case 'l':
+				// case 'vp':
+				// case 'vn':
+				// 	continue;
 				case 'v':
-					const x = +args[0], y = +args[1], z = +args[2];
-					objVerts.push(x, y, z);
+					objVerts.push(+args[0], +args[1], +args[2]);
 					break;
 				case 'vt':
-					const u = +args[0], v = +(args[1] ?? 0);
-					objUvs.push(u, v);
+					objUvs.push(+args[0], +(args[1] ?? 0));
 					break;
 				case 'f':
 					faces.push(args.map<number>(v => {
@@ -99,13 +97,13 @@ class OBJLoader {
 			vertices,
 			faces,
 		}
-	}
-}
+	},
+} as const;
 
 const FLAGS_DEFAULT = HotSpotRectFlags.AllowRotation | HotSpotRectFlags.AllowReflection;
 
-export class HotspotDuvFormat {
-	static decode(text: string, width: number, height: number): VHotspotResource {
+export const HotspotDuvFormat = {
+	decode(text: string, width: number, height: number): VHotspotResource {
 		const { faces, uvs } = OBJLoader.load(text);
 		const rects = new Array<HotspotRect>(faces.length);
 
@@ -135,9 +133,9 @@ export class HotspotDuvFormat {
 		}
 
 		return new VHotspotResource(0x0, 1, 0x0, rects);
-	}
+	},
 
-	static encode(res: VHotspotResource, width: number, height: number): string {
+	encode(res: VHotspotResource, width: number, height: number): string {
 		let vertCount = 0
 
 		const vertices: number[] = [];
@@ -174,5 +172,5 @@ export class HotspotDuvFormat {
 			vertices,
 			faces,
 		});
-	}
-}
+	},
+} as const;

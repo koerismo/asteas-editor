@@ -2,7 +2,7 @@
 	import { SvelteSet } from 'svelte/reactivity';
 	import { HotspotRect } from 'vtf-js/resources';
 	import { RectEntry, RectFile } from '$lib/core/file.js';
-	import { getEditorState  } from '$lib/core/context.svelte.js';
+	import { getState } from '$lib/core/context.svelte.js';
 
 	import SidebarRect from './SidebarRect.svelte';
 	import SidebarRectGhost from './SidebarRectGhost.svelte';
@@ -14,7 +14,7 @@
 
 	let { collapsed }: { collapsed: boolean } = $props();
 	
-	const context = getEditorState();
+	const editor = getState();
 
 	const HoverSelect = {
 		None: 0,
@@ -34,8 +34,10 @@
 	});
 
 	function onMouseDownRect(rectId: number) {
+		if (!editor.document) return;
+
 		if (!shiftKey) {
-			context.$setSelection([rectId]);
+			editor.document.$setSelection([rectId]);
 			hoverSelect = HoverSelect.Select;
 			return;
 		}
@@ -48,12 +50,15 @@
 	}
 
 	function onMouseEnterRect(id: number) {
+		if (!editor.document)
+			return;
 		if (!hoverSelect)
 			return;
+
 		if (hoverSelect === HoverSelect.Select) {
-			context.$selectionAdd([id]);
+			editor.document.$selectionAdd([id]);
 		} else {
-			context.$selectionRemove([id]);
+			editor.document.$selectionRemove([id]);
 		}
 	}
 
@@ -62,6 +67,8 @@
 	}
 
 	function onKeyDown(event: KeyboardEvent) {
+		if (!editor.document)
+			return;
 		if (event.target !== document.body && !self.contains(event.target as Node))
 			return;
 
@@ -69,9 +76,9 @@
 
 		if (event.key === 'Delete' || event.key === 'Backspace') {
 			event.preventDefault();
-			context.$commitActions();
-			context.$rectsRemoveSelected();
-			context.$commitActions();
+			editor.document.$commitActions();
+			editor.document.$rectsRemoveSelected();
+			editor.document.$commitActions();
 			return;
 		}
 
@@ -83,9 +90,9 @@
 		
 		if (event.key === 'Escape') {
 			event.preventDefault();
-			context.$commitActions();
-			context.$selectionClear();
-			context.$commitActions();
+			editor.document.$commitActions();
+			editor.document.$selectionClear();
+			editor.document.$commitActions();
 			return;
 		}
 	}
@@ -95,57 +102,70 @@
 	}
 
 	export function getSelectionSize(): number {
-		return context.selection.size;
+		if (!editor.document) return 0;
+		return editor.document.selection.size;
 	}
 
 	export function toggleAllSelected() {
-		context.$commitActions();
-		if (context.selection.size) {
-			context.$selectionClear();
+		if (!editor.document)
+			return;
+
+		editor.document.$commitActions();
+		if (editor.document.selection.size) {
+			editor.document.$selectionClear();
 		} else {
-			context.$selectionSetAll();
+			editor.document.$selectionSetAll();
 		}
-		context.$commitActions();
+		editor.document.$commitActions();
 	}
 
 	function isIdSelected(rectId: number) {
-		return context.selection.has(rectId);
+		if (!editor.document) return false;
+		return editor.document.selection.has(rectId);
 	}
 
 	function setFlags(rectId: number, flags: number, mask: number) {
-		context.$commitActions();
-		if (shiftKey && context.selection.has(rectId)) {
-			context.$setRectFlags(Array.from(context.selection.values()), flags, mask);
+		if (!editor.document)
+			return;
+
+		editor.document.$commitActions();
+		if (shiftKey && editor.document.selection.has(rectId)) {
+			editor.document.$setRectFlags(Array.from(editor.document.selection.values()), flags, mask);
 		} else {
-			context.$setRectFlags([rectId], flags, mask);
+			editor.document.$setRectFlags([rectId], flags, mask);
 		}
-		context.$commitActions();
+		editor.document.$commitActions();
 	}
 
 	function addRect() {
-		context.$rectsAdd([
+		if (!editor.document)
+			return;
+
+		editor.document.$rectsAdd([
 			new RectEntry(
-				new HotspotRect(0x0, 0, 0, context.getWidth(), context.getHeight())
+				new HotspotRect(0x0, 0, 0, editor.document.width, editor.document.height)
 			)
 		]);
-		context.$commitActions();
+		editor.document.$commitActions();
 	}
 </script>
 
 <div class:collapsed={collapsed} bind:this={self}>
-	{#each context.rects as _rect, i (_rect.uuid)}
-		<div transition:scale={{ duration: 100, easing: cubicOut, start: 0.8 }}>
-			<SidebarRect
-				rect={context.rects[i]}
-				index={i}
-				selected={context.selection.has(i)}
-				active={false}
-				setFlags={(v, m) => setFlags(i, v, m)}
-				onmousedown={() => onMouseDownRect(i)}
-				onmouseenter={() => onMouseEnterRect(i)}
-				></SidebarRect>
-		</div>
-	{/each}
+	{#if editor.document}
+		{#each editor.document.rects as _rect, i (_rect.uuid)}
+			<div transition:scale={{ duration: 100, easing: cubicOut, start: 0.8 }}>
+				<SidebarRect
+					rect={editor.document.rects[i]}
+					index={i}
+					selected={editor.document.selection.has(i)}
+					active={false}
+					setFlags={(v, m) => setFlags(i, v, m)}
+					onmousedown={() => onMouseDownRect(i)}
+					onmouseenter={() => onMouseEnterRect(i)}
+					></SidebarRect>
+			</div>
+		{/each}
+	{/if}
 	<SidebarRectGhost onclick={addRect}></SidebarRectGhost>
 </div>
 

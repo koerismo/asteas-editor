@@ -3,7 +3,7 @@
 	// import { onMount } from 'svelte';
 	// import { RectFile } from '$lib/core/file.js';
 	
-	import { getEditorState } from '$lib/core/context.svelte.js';
+	import { getState } from '$lib/core/context.svelte.js';
 
 	import SidebarList from './SidebarList.svelte';
 	import Button from './buttons/Button.svelte';
@@ -16,13 +16,13 @@
 	import IconCollapse from '@lucide/svelte/icons/chevrons-down-up';
 	import IconExpand from '@lucide/svelte/icons/unfold-vertical';
 
-	const context = getEditorState();
+	const editor = getState();
 
 	let collapsed = $state(false);
 	let rectList = $state<SidebarList>();
 
 	$effect(() => {
-		return context.mount();
+		return editor.document?.mount();
 	});
 
 </script>
@@ -32,22 +32,22 @@
 		<div>
 			<Button
 				variant="icon"
-				disabled={!context.canUndo()}
-				onclick={() => context.undo()}
+				disabled={!editor.document?.canUndo()}
+				onclick={() => editor.document?.undo()}
 				title="Undo"
 				><IconUndo></IconUndo></Button
 			>
 			<Button
 				variant="icon"
-				disabled={!context.canRedo()}
-				onclick={() => context.redo()}
+				disabled={!editor.document?.canRedo()}
+				onclick={() => editor.document?.redo()}
 				title="Redo"
 				><IconRedo></IconRedo></Button
 			>
 			<Button
 				variant="icon"
-				disabled={!context.selection.size}
-				onclick={() => context.$rectsRemoveSelected()}
+				disabled={!editor.document?.selection.size}
+				onclick={() => editor.document?.$rectsRemoveSelected()}
 				title="Delete selected"
 				><TrashCan></TrashCan></Button
 			>
@@ -79,7 +79,7 @@
 		</div>
 	</section>
 	<section>
-		{#if context.active}
+		{#if editor.document}
 			<SidebarList {collapsed} bind:this={rectList}></SidebarList>
 		{/if}
 	</section>

@@ -5,7 +5,7 @@ import { clamp } from 'three/src/math/MathUtils.js';
 // General utility
 import { RectEntry } from '$lib/core/file.js';
 import { AABB, type Vec2Like } from '$lib/core/aabb.js';
-import { ViewportState, type EditorState } from '$lib/core/context.svelte.js';
+import type { AtlasDocument, EditorState } from '$lib/core/context.svelte.js';
 
 // Viewport-specific
 import { RectMode, SelectionRect, VisualRect } from './selection_rect.js';
@@ -37,8 +37,7 @@ export class EditorViewport extends Viewport<Three.OrthographicCamera> {
 	grid: GridObject = new GridObject();
 	// contextMenu: ContextMenu;
 
-	editorState: EditorState;
-	viewState: ViewportState;
+	state: EditorState;
 	
 	selected: number[] = [];
 	visualRects: VisualRect[] = [];
@@ -77,8 +76,7 @@ export class EditorViewport extends Viewport<Three.OrthographicCamera> {
 
 	constructor(
 			canvas: HTMLCanvasElement,
-			editorState: EditorState,
-			viewState: ViewportState,
+			state: EditorState,
 		) {
 		super(
 			canvas,
@@ -88,8 +86,7 @@ export class EditorViewport extends Viewport<Three.OrthographicCamera> {
 		);
 
 		this.mouse = new MouseComponent(this, canvas);
-		this.editorState = editorState;
-		this.viewState = viewState;
+		this.state = state;
 
 		this.camera = new Three.OrthographicCamera();
 		this.camera.position.z = 64;
@@ -110,25 +107,29 @@ export class EditorViewport extends Viewport<Three.OrthographicCamera> {
 			$effect.root(() => {
 				$effect(() => {
 					// console.log('Building rects...');
-					this.rebuildRects(this.editorState.rects ?? []);
+					this.rebuildRects(this.state.document?.rects ?? []);
 				});
 				$effect(() => {
 					// console.log('Setting selection...')
-					this.setSelection(this.editorState.selection);
+					this.setSelection(this.state.document?.selection ?? new Set());
 				});
 				$effect(() => {
-					this.loadImage(this.editorState.image);
+					void this.loadImage(this.state.document?.maps.color);
 				});
 			})
 		);
 	}
 
+	getDocument(): AtlasDocument | undefined {
+		return this.state.document;
+	}
+
 	init() {
 		this.scene.add(this.imagePlane);
 		this.scene.add(this.grid);
-		
+
 		this.imagePlane.position.z = -10;
-		this.loadImage();
+		void this.loadImage();
 	}
 
 	updateCamera() {
@@ -219,20 +220,28 @@ export class EditorViewport extends Viewport<Three.OrthographicCamera> {
 	}
 
 	applyVisual() {
+		const document = this.getDocument();
+		if (!document) return;
+
 		const rectBounds: Record<number, AABB> = {};
+
 		for (let i=0; i<this.selected.length; i++) {
 			const rectIdx = this.selected[i];
 			const rect = this.visualRects[rectIdx];
 			rectBounds[rectIdx] = rect.visual_aabb;
 		}
-		this.editorState.$setRectBounds(rectBounds);
-		this.editorState.$commitActions();
+
+		document.$setRectBounds(rectBounds);
+		document.$commitActions();
 	}
 
 	onMouseMove(event: MouseEvent): void {
 		this.screenToWorld(this.mouse.pos_nrm, this.mouseWorldPos);
 		this.grid.setMousePos(this.mouseWorldPos);
 
+		const document = this.getDocument();
+		if (!document) return;
+		
 		const withinSelectionBox = this.hasSelection() && this.mouseSelectedWithin;
 		const selectionBoxCorner = this.mouseSelectedCorner;
 
@@ -242,7 +251,7 @@ export class EditorViewport extends Viewport<Three.OrthographicCamera> {
 			this.mouse.dragged &&
 			this.currentAction === UserAction.None
 		) {
-			this.editorState.$commitActions();
+			document.$commitActions();
 
 			// Resizing
 			if (selectionBoxCorner !== -1) {
@@ -253,9 +262,9 @@ export class EditorViewport extends Viewport<Three.OrthographicCamera> {
 			else if (withinSelectionBox) {
 				if (event.shiftKey) {
 					this.currentAction = UserAction.CopyTranslating;
-					this.editorState.$selectionClear();
-					const inds = this.editorState.$rectsClone(this.selected);
-					this.editorState.$selectionAdd(inds);
+					document.$selectionClear();
+					const inds = document.$rectsClone(this.selected);
+					document.$selectionAdd(inds);
 					break action;
 				} else {
 					this.currentAction = UserAction.Translating;
@@ -326,6 +335,9 @@ export class EditorViewport extends Viewport<Three.OrthographicCamera> {
 	}
 
 	onMouseUp(event: MouseEvent): void {
+		const document = this.getDocument();
+		if (!document) return;
+
 		if (this.getActionMutatesRects()) {
 			this.applyVisual();
 		}
@@ -340,9 +352,9 @@ export class EditorViewport extends Viewport<Three.OrthographicCamera> {
 			}
 
 			if (event.shiftKey) {
-				this.editorState.$selectionAdd(selection)
+				document.$selectionAdd(selection)
 			} else {
-				this.editorState.$setSelection(selection);
+				document.$setSelection(selection);
 			}
 
 			this.selectionRect.setMode(RectMode.Handles);
@@ -360,12 +372,12 @@ export class EditorViewport extends Viewport<Three.OrthographicCamera> {
 				
 				if (selectIdx !== -1) {
 					if (event.shiftKey) {
-						this.editorState.$selectionToggle(selectIdx);
+						document.$selectionToggle(selectIdx);
 					} else {
-						this.editorState.$setSelection([selectIdx]);
+						document.$setSelection([selectIdx]);
 					}
 				} else if (!event.shiftKey) {
-					this.editorState.$selectionClear();
+					document.$selectionClear();
 				}
 			}
 		}
@@ -419,6 +431,8 @@ export class EditorViewport extends Viewport<Three.OrthographicCamera> {
 		if (this.hasSelection()) {
 			for (let i=0; i<this.selected.length; i++) {
 				const rect = this.visualRects[this.selected[i]];
+				// TODO: Update types
+				// eslint-disable-next-line @typescript-eslint/no-unnecessary-condition
 				if (rect)
 					this.selectionRect.rect.expandToRect(rect.rect);
 			}
@@ -451,7 +465,7 @@ export class EditorViewport extends Viewport<Three.OrthographicCamera> {
 	getRectAtPoint(point: Three.Vector2Like) {
 		for (let i=0; i<this.visualRects.length; i++) {
 			const rect = this.visualRects[i];
-			if (!rect.rect.containsPoint(point as Three.Vector2)) continue;
+			if (!rect.rect.containsPoint(point)) continue;
 			return i;
 		}
 		return -1;
@@ -468,16 +482,18 @@ export class EditorViewport extends Viewport<Three.OrthographicCamera> {
 		}
 	}
 
-	async loadImage(image?: VImageEither) {
+	loadImage(image?: VImageEither): Three.Texture | undefined {
 		if (!image) {
-			this.viewState.maps.color = undefined;
+			this.state.viewport.maps.color = undefined;
 			this.setTexture();
 			return;
 		}
-		const v = await new VTextureLoader().parseImage(image);
+
+		const v = VTextureLoader.parseImage(image);
+
 		this.setTexture(v);
 		this.centerCamera();
-		this.viewState.maps.color = v;
+		this.state.viewport.maps.color = v;
 		return v;
 	}
 

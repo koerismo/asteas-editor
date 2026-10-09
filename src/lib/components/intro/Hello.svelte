@@ -2,15 +2,14 @@
 	import Upload from "../buttons/Upload.svelte";
 	import HelloExample from "./HelloExample.svelte";
 	import Icon from '$lib/assets/logo-white.svg';
-	import { getEditorState } from "$lib/core/context.svelte.js";
-	import { EditorIO } from "$lib/core/disk_io";
+	import { getState } from '$lib/core/context.svelte.js';
+	import { EditorIO } from '$lib/core/disk_io.js';
 	
-	const context = getEditorState();
-
+	const editor = getState();
 	
 	function onFiles(files: FileList) {
 		if (!files.length) return;
-		context.io.loadFiles(files, true);
+		editor.io.loadFiles(files, true);
 	}
 
 	import ThumbExample from '$lib/assets/examples/thumb_example.jpg';
@@ -24,7 +23,7 @@
 	<HelloExample
 		{thumb}
 		{url}
-		{context}
+		{editor}
 		{title}
 		{author}></HelloExample>
 {/snippet}

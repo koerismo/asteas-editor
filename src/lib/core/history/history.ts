@@ -16,7 +16,7 @@ export class HistoryActionGroup<T> {
 		const prev = this.items.length && this.items[this.items.length - 1];
 		if (action.fastMerge && prev && prev.fastMerge && prev.type === action.type) {
 			// TODO: Precautionary context binding. Is this necessary?
-			prev.redo = () => action.redo();
+			prev.redo = () => { action.redo(); }
 			// console.info('Merging with quick method!');
 		} else {
 			this.items.push(Object.assign({}, action));
@@ -35,7 +35,7 @@ export class HistoryActionGroup<T> {
 	}
 }
 
-export class History<T = string> {
+export class History<T> {
 	protected _history: HistoryActionGroup<T>[] = [];
 	protected _working_group: HistoryActionGroup<T> = new HistoryActionGroup();
 	protected _pos: number = 0;

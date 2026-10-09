@@ -22,9 +22,9 @@ export class ModelHotspotter {
 	constructor(geo: Three.BufferGeometry) {
 		this.geo = geo;
 
-		const uvsIn = geo.getAttribute('uv')!;
+		const uvsIn = geo.getAttribute('uv');
 		const uvsOut = new Three.Float32BufferAttribute(new Float32Array(uvsIn.array.length), 2);
-		geo.setAttribute(this.uvFixName, uvsOut)!;
+		geo.setAttribute(this.uvFixName, uvsOut);
 
 		this._parseIslands(uvsIn, uvsOut);
 		
@@ -50,7 +50,8 @@ export class ModelHotspotter {
 	 * This is fairly expensive, so don't run it often!!!
 	 */
 	_parseIslands(uvSrcAttribute: Attr, uvTargetAttribute: Attr) {
-		const faceCorners = this.geo.index!.array;
+		if (!this.geo.index) throw Error('whoops');
+		const faceCorners = this.geo.index.array;
 		const vertexIslands = new Uint16Array(faceCorners.length).fill(0xffff);
 
 		// Grab vertex UVs
@@ -175,7 +176,7 @@ export class ModelHotspotter {
 		const vertexIslands = islandAttribute.array;
 
 		if (targetUvAttribute.count !== uvCount) {
-			throw `Target mesh size does not match analyzed mesh! (${targetUvAttribute.count} !== ${uvCount})`;
+			throw Error(`Target mesh size does not match analyzed mesh! (${targetUvAttribute.count} !== ${uvCount})`);
 		}
 
 		const xFormBuffer = new Float64Array(this.islands.length * 6);

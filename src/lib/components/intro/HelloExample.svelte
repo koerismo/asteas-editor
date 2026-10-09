@@ -4,13 +4,13 @@
 	let {
 		thumb: img,
 		url,
-		context,
+		editor,
 		title,
 		author,
 	}: {
 		thumb: string;
 		url: string;
-		context: EditorState,
+		editor: EditorState,
 		title: string;
 		author: string
 	} = $props();
@@ -20,7 +20,7 @@
 	let loading = $state(false);
 	async function onclick() {
 		loading = true;
-		await context.io.loadExample(url);
+		await editor.io.loadExample(url);
 		loading = false;
 	}
 </script>
