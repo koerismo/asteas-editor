@@ -5,7 +5,7 @@ import { clamp } from 'three/src/math/MathUtils.js';
 // General utility
 import { RectEntry } from '$lib/core/file.js';
 import { AABB, type Vec2Like } from '$lib/core/aabb.js';
-import type { AtlasDocument, EditorState } from '$lib/core/context.svelte.js';
+import type { DocumentState, EditorState } from '$lib/core/context.svelte.js';
 
 // Viewport-specific
 import { RectMode, SelectionRect, VisualRect } from './selection_rect.js';
@@ -13,7 +13,7 @@ import { Button, MouseComponent } from '../mouse.js';
 
 import { GridObject } from './grid.js';
 import { VTextureLoader } from '../vtex_loader.js';
-import { Viewport } from '../renderer.js';
+import { Viewport } from '../viewport_shared.js';
 // import type ContextMenu from '$lib/components/menu/ContextMenu.svelte';
 
 const kCommonQuad = new Three.PlaneGeometry();
@@ -93,15 +93,15 @@ export class EditorViewport extends Viewport<Three.OrthographicCamera> {
 		this.camera.near = 1;
 		this.scene.background = new Three.Color(0x111111);
 
-		this.init();
+		this.imagePlane.position.z = -10;
+		this.scene.add(this.imagePlane);
+		this.scene.add(this.grid);
 
 		this.selectionRect = new SelectionRect(new AABB());
 		this.selectionRect.setMode(RectMode.Handles);
 		this.scene.add(this.selectionRect);
 
-		this.start();
-
-		// Begin render loop.
+		this.loadImage();
 		
 		this.disposables.push(
 			$effect.root(() => {
@@ -118,18 +118,13 @@ export class EditorViewport extends Viewport<Three.OrthographicCamera> {
 				});
 			})
 		);
+
+		// Begin render loop!
+		this.setup();
 	}
 
-	getDocument(): AtlasDocument | undefined {
+	getDocument(): DocumentState | undefined {
 		return this.state.document;
-	}
-
-	init() {
-		this.scene.add(this.imagePlane);
-		this.scene.add(this.grid);
-
-		this.imagePlane.position.z = -10;
-		void this.loadImage();
 	}
 
 	updateCamera() {

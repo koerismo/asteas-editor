@@ -3,13 +3,13 @@ import type { VImageEither, Vtf } from 'vtf-js';
 import { on } from 'svelte/events';
 
 import { RectEntry } from './file.js';
-import { AABB } from './aabb.js';
+import { AABB, type RectLike } from './aabb.js';
 
 import { makeSubscriber } from  './history/reactive.js';
 import { History } from './history/history.js';
 
 import type { Texture } from 'three';
-// import { EditorIO } from './disk_io.js';
+// import { EditorIO } from './file_uploader.js';
 
 // function makeId(type: string, id: number) {
 // 	return type + '#' + id;
@@ -24,32 +24,41 @@ export interface TextureMaps<T> {
 export type ViewportMaps = TextureMaps<Texture>;
 export type DocumentMaps = TextureMaps<VImageEither>;
 
-export class EditorState {
-	readonly viewport = new ViewportState();
-
-	#document: AtlasDocument | undefined = $state.raw();
-	get document() { return this.#document; }
-
-	clearDocument() {
-		this.#document = undefined;
-	}
-
-	setDocument(document: AtlasDocument) {
-		this.#document = document;
-	}
-}
 
 export class ViewportState {
-	/** GPU texture cache. See {@link AtlasDocument} for the document CPU ones. */
+	/** GPU texture cache. See {@link DocumentState} for the document CPU ones. */
 	maps: ViewportMaps = $state({});
-
 	enable3d: boolean = $state(false);
 	meshScale3d: number = $state(1.0);
 	useLighting3d: boolean = $state(true);
 	useBakedNormals3d: boolean = $state(true);
 }
 
-export class AtlasDocument {
+export interface AtlasFile {
+	name: string;
+	width: number;
+	height: number;
+	maps: DocumentMaps;
+	rects: RectLike[];
+}
+
+
+export class EditorState {
+	readonly viewport = new ViewportState();
+
+	#document: DocumentState | undefined = $state.raw();
+	get document() { return this.#document; }
+
+	clearDocument() {
+		this.#document = undefined;
+	}
+
+	setDocument(document: DocumentState) {
+		this.#document = document;
+	}
+}
+
+export class DocumentState implements AtlasFile {
 	#history = new History<string>();
 	#selection = new Set<number>();
 	#rects: RectEntry[] = [];
@@ -67,6 +76,14 @@ export class AtlasDocument {
 	constructor(name: string, rects: RectEntry[]) {
 		this.name = name;
 		this.#rects = rects;
+	}
+
+	static fromAtlasFile(file: AtlasFile): DocumentState {
+		const state = new DocumentState(file.name, file.rects.map(v => new RectEntry(v)));
+		state.width = file.width;
+		state.height = file.height;
+		state.maps = file.maps;
+		return state;
 	}
 
 	get selection(): ReadonlySet<number> {

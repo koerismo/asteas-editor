@@ -37,24 +37,29 @@ export abstract class Viewport<T extends Camera> extends Disposable {
 
 	#started = false;
 
-	start() {
+	setup() {
 		if (this.#started)
-			throw Error('Viewport start() run multiple times!');
-		
+			throw Error('Viewport setup() run multiple times!');
+
 		this.#started = true;
 		this.#onResizeEnd();
 
 		const observer = new ResizeObserver(this.#onResize.bind(this));
 		observer.observe(this.renderer.domElement);
 
-		// Begin render loop.
+		// Add listeners for deconstruction
+		this.disposables.push(() => {
+			observer.disconnect();
+			this.renderer.dispose();
+		});
+
+		// Begin render loop
 		this.render();
-		this.disposables.push(() => { observer.disconnect(); });
 	}
 
 	render() {
 		if (this.disposed) return;
-		
+
 		if (this.needsCameraUpdate) {
 			this.needsCameraUpdate = false;
 			this.updateCamera();

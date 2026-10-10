@@ -3,7 +3,7 @@ import * as Three from 'three';
 import type { EditorState } from '$lib/core/context.svelte.js';
 import type { RectEntry } from '$lib/core/file.js';
 
-import { Viewport } from '../renderer.js';
+import { Viewport } from '../viewport_shared.js';
 import { ModelHotspotter } from './mesh.js';
 import { GLTFLoader } from 'three/addons/loaders/GLTFLoader.js';
 import Cube1 from '$lib/assets/meshes/cube2.glb?url';
@@ -47,11 +47,6 @@ export class PreviewViewport extends Viewport<Three.PerspectiveCamera> {
 		this.scene.add(lightAmbient);
 
 		this.scene.background = new Three.Color(0x111111);
-
-		void this.init().then(() => {
-			this.start();
-		});
-
 		this.disposables.push(
 			$effect.root(() => {
 				$effect(() => {
@@ -64,8 +59,11 @@ export class PreviewViewport extends Viewport<Three.PerspectiveCamera> {
 			})
 		);
 
-		this.disposables.push(on(this.canvas, 'mousemove', this.onMouseMove.bind(this)))
-		this.disposables.push(on(this.canvas, 'wheel', this.onWheel.bind(this)))
+		this.disposables.push(on(this.canvas, 'mousemove', this.onMouseMove.bind(this)));
+		this.disposables.push(on(this.canvas, 'wheel', this.onWheel.bind(this)));
+
+		// Begin render loop!
+		this.setup();
 	}
 
 	onMouseMove(event: MouseEvent) {
@@ -122,28 +120,25 @@ export class PreviewViewport extends Viewport<Three.PerspectiveCamera> {
 		);
 	}
 
-	async init() {
-		const group = await new GLTFLoader().loadAsync(Cube1);
-		this.mesh = group.scene.children[0] as Three.Mesh;
+	setup() {
+		const loader = new GLTFLoader();
+		loader.load(Cube1, group => {
+			if (this.disposed) return;
 
-		const mbm = this.mesh.material as Three.MeshStandardMaterial;
-
-		if (mbm.aoMap) {
-			mbm.aoMap.colorSpace = Three.SRGBColorSpace;
-			mbm.aoMapIntensity = 1.2;
-		}
-
-		this.hotspotter = new ModelHotspotter(this.mesh.geometry);
-
-		// this.scene.add(new Three.AmbientLight(0xffffff, 3.0));
-		this.scene.add(this.mesh);
-
-		// const geo = this.mesh.geometry;
-		// const uvSrc = geo.getAttribute('uv')!;
-		// geo.setAttribute('uv2', uvSrc.clone());
-		this.updateMaps();
-
-		// this.mesh.scale.set(32, 32, 32);
-		// this.mesh.material.side = Three.BackSide;
+			this.mesh = group.scene.children[0] as Three.Mesh;
+			const material = this.mesh.material as Three.MeshStandardMaterial;
+			
+			if (material.isMeshStandardMaterial) {
+				if (material.aoMap) {
+					material.aoMap.colorSpace = Three.SRGBColorSpace;
+					material.aoMapIntensity = 1.2;
+				}
+			}
+	
+			this.hotspotter = new ModelHotspotter(this.mesh.geometry);
+			this.scene.add(this.mesh);
+			this.updateMaps();
+	
+		});
 	}
 }

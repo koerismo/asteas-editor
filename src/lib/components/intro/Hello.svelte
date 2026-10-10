@@ -2,14 +2,23 @@
 	import Upload from "../buttons/Upload.svelte";
 	import HelloExample from "./HelloExample.svelte";
 	import Icon from '$lib/assets/logo-white.svg';
-	import { getState } from '$lib/core/context.svelte.js';
-	import { EditorIO } from '$lib/core/disk_io.js';
+	import { DocumentState, getState } from '$lib/core/context.svelte.js';
+	import { UploadHandler } from '$lib/core/file_uploader.js';
 	
 	const editor = getState();
 	
-	function onFiles(files: FileList) {
+	async function onFiles(files: FileList) {
 		if (!files.length) return;
-		editor.io.loadFiles(files, true);
+		
+		const handler = new UploadHandler();
+		await handler.loadFiles(files);
+
+		const atlas = handler.toAtlasFile();
+		if (!atlas) return;
+		console.log(atlas);
+
+		const document = DocumentState.fromAtlasFile(atlas);
+		editor.setDocument(document);
 	}
 
 	import ThumbExample from '$lib/assets/examples/thumb_example.jpg';

@@ -1,5 +1,6 @@
 <script lang="ts">
-	import type { EditorState } from '$lib/core/context.svelte';
+	import { DocumentState, type EditorState } from '$lib/core/context.svelte';
+	import { UploadHandler } from '$lib/core/file_uploader.js';
 
 	let {
 		thumb: img,
@@ -20,7 +21,16 @@
 	let loading = $state(false);
 	async function onclick() {
 		loading = true;
-		await editor.io.loadExample(url);
+
+		const handler = new UploadHandler();
+		await handler.loadUrl(url);
+
+		const atlas = handler.toAtlasFile();
+		if (!atlas) return;
+
+		const document = DocumentState.fromAtlasFile(atlas);
+		editor.setDocument(document);
+
 		loading = false;
 	}
 </script>

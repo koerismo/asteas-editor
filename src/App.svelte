@@ -30,7 +30,7 @@
 <!-- main body -->
 <main>
 	<Header></Header>
-	{#if editorState.active}
+	{#if editorState.document}
 	<div>
 		<Editor></Editor>
 		<Preview></Preview>

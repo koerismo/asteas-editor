@@ -1,7 +1,6 @@
 <script lang="ts">
-	import { SvelteSet } from 'svelte/reactivity';
 	import { HotspotRect } from 'vtf-js/resources';
-	import { RectEntry, RectFile } from '$lib/core/file.js';
+	import { RectEntry } from '$lib/core/file.js';
 	import { getState } from '$lib/core/context.svelte.js';
 
 	import SidebarRect from './SidebarRect.svelte';

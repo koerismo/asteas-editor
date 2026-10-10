@@ -14,7 +14,6 @@ export class Disposable {
 	}
 }
 
-export interface AsyncInitable extends Disposable {
-	setup(): void;
-	teardown(): void;
+export interface CancelToken {
+	canceled: boolean;
 }

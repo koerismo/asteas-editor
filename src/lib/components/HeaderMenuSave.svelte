@@ -2,8 +2,8 @@
 	import MenuItem from './menu/MenuItem.svelte';
 	import Button from './buttons/Button.svelte';
 	import { getState } from '$lib/core/context.svelte.js';
+	import type { SaveOptions } from '$lib/core/file_uploader.js';
 	import Checkbox from './buttons/Checkbox.svelte';
-	import type { SaveOptions } from '$lib/core/disk_io';
 	import PickerMultiple from './pickers/PickerMultiple.svelte';
 
 	const editor = getState();

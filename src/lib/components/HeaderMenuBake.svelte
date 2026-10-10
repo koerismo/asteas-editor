@@ -8,12 +8,10 @@
 	import Button from './buttons/Button.svelte';
 	import Numeric from './inputs/Numeric.svelte';
 	import Checkbox from './buttons/Checkbox.svelte';
-	import { FileSaver, setFileExt } from '$lib/core/disk_io';
+	import { download, setFileExt } from '$lib/core/file_uploader.js';
 
 	const editor = getState();
 	const mapCache = $derived(editor.viewport.maps);
-
-	const saver = new FileSaver();
 
 	function opt(name: string, out: { on: boolean }, desc?: string) {
 		return {
@@ -126,7 +124,7 @@
 		if (options.height.on)
 			files.push(await canvasToFile(heightCanvas, rootName + '_height.png'));
 
-		saver.download(files, rootName + '_bake.zip');
+		download(files, rootName + '_bake.zip');
 	}
 </script>
 
