@@ -5,7 +5,7 @@ import Handle from '$lib/assets/viewport/handle.png';
 
 const handleGeometry = new Three.PlaneGeometry(1, 1);
 const handleMaterial = new Three.MeshBasicMaterial({
-	map: await (new Three.TextureLoader().loadAsync(Handle)),
+	map: await new Three.TextureLoader().loadAsync(Handle),
 	side: Three.DoubleSide,
 	alphaTest: 0.5,
 });
@@ -13,20 +13,25 @@ const handleMaterial = new Three.MeshBasicMaterial({
 const rectGeometry = new Three.PlaneGeometry(1, 1);
 rectGeometry.translate(0.5, 0.5, 0);
 
-const borderMaterial = makeMaterial(0x615FFF, 1.0);
-const centerMaterial = makeMaterial(0x615FFF, 0.1);
-const centerActiveMaterial = makeMaterial(0x615FFF, 0.3);
-const selectionBoxMaterial = makeMaterial(0xFFFFFF, 0.2);
+const borderMaterial = makeMaterial(0x615fff, 1.0);
+const centerMaterial = makeMaterial(0x615fff, 0.1);
+const centerActiveMaterial = makeMaterial(0x615fff, 0.3);
+const selectionBoxMaterial = makeMaterial(0xffffff, 0.2);
 
 function makeMaterial(color: number, opacity: number) {
-	return new Three.MeshBasicMaterial({ color, opacity, transparent: opacity < 1.0, side: Three.DoubleSide });
+	return new Three.MeshBasicMaterial({
+		color,
+		opacity,
+		transparent: opacity < 1.0,
+		side: Three.DoubleSide,
+	});
 }
 
 const HANDLE_SIZE = 32;
 const V_XNEG = new Three.Vector3(-1, 1, 1);
 const V_YNEG = new Three.Vector3(1, -1, 1);
 
-export type RectMode = typeof RectMode[keyof typeof RectMode];
+export type RectMode = (typeof RectMode)[keyof typeof RectMode];
 export const RectMode = {
 	Invalid: -1,
 	Default: 0,
@@ -160,7 +165,13 @@ export class VisualRect extends Three.Object3D {
 		const h = this.visual_aabb.height;
 
 		const withBounds = (x: number, y: number, w: number, h: number) => {
-			mat4.set(w, 0, 0, x, 0, h, 0, y, 0, 0, 1, 0, 0, 0, 0, 1);
+			// prettier-ignore
+			mat4.set(
+				w, 0, 0, x,
+				0, h, 0, y,
+				0, 0, 1, 0,
+				0, 0, 0, 1,
+			);
 		};
 
 		const S1 = this.pixelSize;
@@ -190,7 +201,11 @@ export class VisualRect extends Three.Object3D {
 }
 
 export class SelectionRect extends VisualRect {
-	protected handleMeshes = new Three.InstancedMesh(handleGeometry, handleMaterial, 4);
+	protected handleMeshes = new Three.InstancedMesh(
+		handleGeometry,
+		handleMaterial,
+		4,
+	);
 
 	constructor(aabb: AABB) {
 		super(aabb, 0.0, false);
@@ -205,7 +220,7 @@ export class SelectionRect extends VisualRect {
 		if (this.mode === mode) return;
 		this.borderMeshes.visible = false;
 		this.centerMesh.visible = mode === RectMode.Dragging;
-		this.handleMeshes.visible = (mode !== RectMode.Default && mode !== RectMode.Dragging);
+		this.handleMeshes.visible = mode !== RectMode.Default && mode !== RectMode.Dragging;
 		this.updateMesh();
 	}
 
@@ -242,5 +257,4 @@ export class SelectionRect extends VisualRect {
 
 		this.handleMeshes.instanceMatrix.needsUpdate = true;
 	}
-	
 }
