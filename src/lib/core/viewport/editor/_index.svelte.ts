@@ -479,7 +479,7 @@ export class EditorViewport extends Viewport<Three.OrthographicCamera> {
 
 	loadImage(image?: VImageEither): Three.Texture | undefined {
 		if (!image) {
-			this.state.viewport.maps.color = undefined;
+			this.state.viewport.mapCache.color = undefined;
 			this.setTexture();
 			return;
 		}
@@ -488,7 +488,7 @@ export class EditorViewport extends Viewport<Three.OrthographicCamera> {
 
 		this.setTexture(v);
 		this.centerCamera();
-		this.state.viewport.maps.color = v;
+		this.state.viewport.mapCache.color = v;
 		return v;
 	}
 

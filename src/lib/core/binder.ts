@@ -7,6 +7,7 @@ interface BinderFn {
 }
 
 export default function Binder(element: EventTarget): BinderFn {
+	// eslint-disable-next-line @typescript-eslint/no-explicit-any
 	const boundList: [string, (...args: any[]) => void][] = [];
 
 	const unbindFn = function () {

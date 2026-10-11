@@ -8,10 +8,12 @@
 	import Button from './buttons/Button.svelte';
 	import Numeric from './inputs/Numeric.svelte';
 	import Checkbox from './buttons/Checkbox.svelte';
-	import { download, setFileExt } from '$lib/core/file_uploader.js';
+
+	import { setFileExt } from '$lib/core/file_uploader.js';
+	import { download } from '$lib/core/file_downloader.js';
 
 	const editor = getState();
-	const mapCache = $derived(editor.viewport.maps);
+	const mapCache = $derived(editor.viewport.mapCache);
 
 	function opt(name: string, out: { on: boolean }, desc?: string) {
 		return {
@@ -80,18 +82,21 @@
 	});
 
 	function bake() {
+		if (!editor.document)
+			return;
+
 		if (options.height.on) {
 			heightBaker.render();
-			editor.viewport.maps.height = heightBaker.copyToTexture();
+			editor.document.maps.height = heightBaker.getData();
 		} else {
-			editor.viewport.maps.height = undefined;
+			editor.document.maps.height = undefined;
 		}
 
 		if (options.normals.on) {
 			normalBaker.render();
-			editor.viewport.maps.normal = normalBaker.copyToTexture();
+			editor.document.maps.normal = normalBaker.getData();
 		} else {
-			editor.viewport.maps.normal = undefined;
+			editor.document.maps.normal = undefined;
 		}
 	}
 

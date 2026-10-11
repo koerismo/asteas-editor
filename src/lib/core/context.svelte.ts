@@ -27,7 +27,7 @@ export type DocumentMaps = TextureMaps<VImageEither>;
 
 export class ViewportState {
 	/** GPU texture cache. See {@link DocumentState} for the document CPU ones. */
-	maps: ViewportMaps = $state({});
+	mapCache: ViewportMaps = $state({});
 	enable3d: boolean = $state(false);
 	meshScale3d: number = $state(1.0);
 	useLighting3d: boolean = $state(true);
@@ -41,7 +41,6 @@ export interface AtlasFile {
 	maps: DocumentMaps;
 	rects: RectLike[];
 }
-
 
 export class EditorState {
 	readonly viewport = new ViewportState();
@@ -74,6 +73,8 @@ export class DocumentState implements AtlasFile {
 	public vtf: Vtf | undefined = $state.raw();
 
 	constructor(name: string, rects: RectEntry[]) {
+		if (import.meta.env.DEV && name.includes('.'))
+			throw Error('FOOTGUN WARNING: Name should not have extension!');
 		this.name = name;
 		this.#rects = rects;
 	}

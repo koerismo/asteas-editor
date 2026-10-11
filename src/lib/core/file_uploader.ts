@@ -1,14 +1,12 @@
-import { VImageData, Vtf, VCollection, VFormats, VFilters, type VImageEither } from 'vtf-js';
-import { getPixelArrayMax } from 'vtf-js/dist/core/image.js';
-import 'vtf-js/addons/squish';
+// import { VImageData, Vtf, VCollection, VFormats, VFilters, type VImageEither } from 'vtf-js';
+// import { getPixelArrayMax } from 'vtf-js/dist/core/image.js';
 
 import * as TextFormat from './formats/text_atlas.js';
 import * as BinFormat from './formats/binary_atlas.js';
 import * as ObjFormat from './formats/obj_atlas.js';
-import * as VtfFormat from './formats/vtf_texture.js';
+import * as VtfFormat from './formats/vtf_atlas_texture.js';
 import * as WebFormat from './formats/web_texture.js';
 
-import { downloadZip } from 'client-zip';
 import type { AtlasFile, DocumentMaps } from './context.svelte.js';
 
 export interface LoadAtlasMeta {
@@ -50,38 +48,6 @@ export function setFileExt(s: string, to: string): string {
 	return dot === -1
 		? s + to
 		: s.slice(0, dot) + to;
-}
-
-export async function download(files: File[], filename?: string) {
-	const a = document.createElement('a');
-
-	if (files.length > 1) {
-		const zip = await downloadZip(files).blob();
-		a.href = URL.createObjectURL(zip);
-		a.download = setFileExt(filename ?? (files[0].name), '.zip');
-	} else {
-		a.href = URL.createObjectURL(files[0]);
-		a.download = files[0].name;
-	}
-
-	a.click();
-
-	URL.revokeObjectURL(a.href);
-	a.remove();
-}
-
-export interface SaveOptions {
-	vtf: {
-		on: boolean;
-		create: {
-			lossy: boolean;
-			mipmaps: boolean;
-			strata: boolean;
-		};
-	};
-	hot: { on: boolean; };
-	rect: { on: boolean; };
-	obj: { on: boolean; };
 }
 
 export class UploadHandler {
@@ -127,7 +93,7 @@ export class UploadHandler {
 		if (!meta) return;
 
 		return {
-			name: meta.name,
+			name: setFileExt(meta.name, ''),
 			width: meta.width,
 			height: meta.height,
 			rects: atlas.rects,
@@ -229,51 +195,7 @@ export class UploadHandler {
 			return;
 		}
 
-		const file = new File([await res.blob()], getFileName(url));
+		const file = new File([await res.blob()], url);
 		await this.loadFile(file, getFileExt(file.name), UploadType.kAll);
-	}
-
-	// #region Saving
-
-	protected generateVtf(
-		image: VImageData,
-		options: SaveOptions['vtf']['create'],
-	) {
-		let format: VFormats;
-		let hasAlpha = false;
-		const maxV = getPixelArrayMax(image.data);
-
-		for (let i = 3; i < image.data.length; i += 4) {
-			if (image.data[i] >= maxV) continue;
-			hasAlpha = true;
-			break;
-		}
-
-		if (options.lossy) {
-			format = hasAlpha ? VFormats.DXT5 : VFormats.DXT1;
-		} else {
-			format = hasAlpha ? VFormats.RGBA8888 : VFormats.RGB888;
-		}
-
-		const data = new VCollection(image.width, image.height);
-		data.resize();
-		data.setImage(image);
-
-		const vtf = new Vtf(data, { format });
-
-		if (options.mipmaps) {
-			data.resize({ mips: -1 });
-			data.generateMips(VFilters.CatRom, true);
-
-			vtf.computeReflectivity();
-			vtf.computeThumb();
-		}
-
-		if (options.strata) {
-			vtf.version = 6;
-			vtf.compression_level = -1;
-		}
-
-		return vtf;
 	}
 }

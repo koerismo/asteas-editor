@@ -17,18 +17,22 @@
 
 </script>
 
-<MenuItem text="3D" width={'18em'}>
-	<b>3D View</b>
+<MenuItem text="View" width={'20em'}>
+	<b>Viewport Settings</b>
 	<label>
-		<span>Enable</span>
+		<span>Enable 3D</span>
 		<Checkbox bind:checked={editor.viewport.enable3d}></Checkbox>
 	</label>
 	<label>
-		<span>Use baked normals</span>
+		<span>Enable Lighting</span>
+		<Checkbox bind:checked={editor.viewport.useLighting3d}></Checkbox>
+	</label>
+	<label>
+		<span>Enable Normals</span>
 		<Checkbox bind:checked={editor.viewport.useBakedNormals3d}></Checkbox>
 	</label>
 	<label>
-		<span>Scale</span>
+		<span>Fit Scale</span>
 		<Picker bind:index={indexGetSet.value} options={['.25x', '.5x', '1x', '2x', '4x']}></Picker>
 	</label>
 </MenuItem>

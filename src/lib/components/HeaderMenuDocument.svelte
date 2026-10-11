@@ -4,6 +4,8 @@
 	import { getState } from '$lib/core/context.svelte.js';
 	import Checkbox from './buttons/Checkbox.svelte';
 	import PickerMultiple from './pickers/PickerMultiple.svelte';
+	import Upload from './inputs/Upload.svelte';
+	import Numeric from './inputs/Numeric.svelte';
 
 	const editor = getState();
 
@@ -31,53 +33,45 @@
 	});
 
 	function onSave() {
+		// editor.document.
 		// editor.io.save(options);
 	}
 
 </script>
 
-<MenuItem text="Load" width={'18em'}>
-	<b>Load</b>
+<MenuItem text="Document"side="left" width={'18em'}>
+	<b>Document Configuration</b>
 
-	{@const disabled = !editor.document?.vtf}
+	<div class="group">
+		<b>Maps</b>
+		<div>
+			<span>Color</span>
+			<Upload></Upload>
+		</div>
+		<div>
+			<span>Normals</span>
+			<Upload></Upload>
+		</div>
+		<div>
+			<span>Height</span>
+			<Upload></Upload>
+		</div>
+	</div>
 	
-	<div class="group" hidden={!options.vtf.on} class:disabled>
-		<b>Vtf</b>
-		<i>{
-			editor.document?.vtf
-				? 'The current VTF will be modified.'
-				: 'A new VTF will be generated.'
-		}</i>
-
-		{#if !editor.document?.vtf}
-			<label>
-				<span>Use DXT</span>
-				<Checkbox bind:checked={options.vtf.create.lossy} {disabled}></Checkbox>
-			</label>
-			<label>
-				<span>Generate mipmaps</span>
-				<Checkbox bind:checked={options.vtf.create.mipmaps} {disabled}></Checkbox>
-			</label>
-			<label>
-				<span>Use Strata compression</span>
-				<Checkbox bind:checked={options.vtf.create.strata} {disabled}></Checkbox>
-			</label>
-		{/if}
-
-	</div>
-
-	<div class="group" hidden={!options.hot.on}>
-		<b>Hotfile</b>
-		<i>No options.</i>
-	</div>
-
-	<div class="group" hidden={!options.rect.on}>
-		<b>Rectfile</b>
-		<i>No options.</i>
-		<!-- <label>
-			<span>Metadata extension</span>
+	<div class="group">
+		<b>Atlas</b>
+		<Button>Sync Dimensions</Button>
+		<label>
+			<span>dimensions</span>
+			<div>
+				<Numeric></Numeric>
+				<Numeric></Numeric>
+			</div>
+		</label>
+		<label>
+			<span>width</span>
 			<Checkbox></Checkbox>
-		</label> -->
+		</label>
 	</div>
 <!-- 
 	<Button onclick={onSave} disabled={!!msg}>Save</Button> -->

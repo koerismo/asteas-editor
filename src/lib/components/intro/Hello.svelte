@@ -1,5 +1,5 @@
 <script lang="ts">
-	import Upload from "../buttons/Upload.svelte";
+	import Upload from "../buttons/UploadArea.svelte";
 	import HelloExample from "./HelloExample.svelte";
 	import Icon from '$lib/assets/logo-white.svg';
 	import { DocumentState, getState } from '$lib/core/context.svelte.js';

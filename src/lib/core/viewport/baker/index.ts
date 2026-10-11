@@ -4,6 +4,7 @@ import BakeFrag from './shader.frag?raw';
 import CopyVert from './screen.vert?raw';
 import CopyFrag from './screen.frag?raw';
 import type { RectLike } from '$lib/core/aabb.js';
+import { VImageData } from 'vtf-js';
 
 export const enum BakeMode {
 	None,
@@ -68,6 +69,7 @@ const kMaxRects = 128;
 
 export class Baker {
 	protected options: BakerOptions = { mode: BakeMode.None };
+	protected stale: boolean = true;
 	
 	public canvas?: OffscreenCanvas | HTMLCanvasElement;
 	protected renderer: Three.WebGLRenderer;
@@ -125,17 +127,18 @@ export class Baker {
 			this.renderer.setViewport(0, 0, this.canvas.width, this.canvas.height);
 			this.renderer.render(this.copyScene, this.camera);
 		}
+
+		this.stale = false;
 	}
 
-	copyToTexture() {
-		// TODO: Ideally we don't clone this data each time
-		// is it possible to transfer it???
+	getStale() {
+		return this.stale;
+	}
+
+	getData() {
 		const data = new Uint8Array(this.rtt.width * this.rtt.height * 4);
 		this.renderer.readRenderTargetPixels(this.rtt, 0, 0, this.rtt.width, this.rtt.height, data);
-		const tex = new Three.DataTexture(data, this.rtt.width, this.rtt.height);
-		tex.minFilter = Three.LinearMipmapLinearFilter;
-		tex.magFilter = Three.LinearFilter;
-		return tex;
+		return new VImageData(data, this.rtt.width, this.rtt.height);
 	}
 
 	#updateOptions() {
@@ -148,6 +151,8 @@ export class Baker {
 
 	setMode(mode: BakeMode) {
 		this.options.mode = mode;
+		this.stale = true;
+
 		switch (mode) {
 			case BakeMode.Normal:
 				this.rtScene.background = BG_NORMAL;
@@ -163,7 +168,7 @@ export class Baker {
 				break;
 		}
 	}
-	
+
 	getDefaultIntensity() {
 		const expo = this.options.expo ?? 1.0;
 		return 1 / expo;
@@ -174,6 +179,7 @@ export class Baker {
 		this.options.bevel = options.bevel;
 		this.options.expo = options.expo;
 		this.options.intensity = options.intensity;
+		this.stale = true;
 		this.#updateOptions();
 	}
 
@@ -182,6 +188,9 @@ export class Baker {
 			this.canvas.width = width;
 			this.canvas.height = height;
 		}
+
+		if (width === this.rtt.width && height !== this.rtt.height)
+			return;
 		
 		this.rtt.setSize(width, height);
 		this.camera.top = 0;
@@ -189,6 +198,7 @@ export class Baker {
 		this.camera.right = width / scale;
 		this.camera.bottom = height / scale;
 		this.camera.updateProjectionMatrix();
+		this.stale = true;
 	}
 
 	setRects(rects: RectLike[]) {
@@ -212,5 +222,6 @@ export class Baker {
 		}
 
 		this.mesh.instanceMatrix.needsUpdate = true;
+		this.stale = true;
 	}
 }

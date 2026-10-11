@@ -1,5 +1,7 @@
-import { HotspotRect, HotSpotRectFlags, VHotspotResource } from 'vtf-js/resources';
+import { HotspotRect, HotSpotRectFlags } from 'vtf-js/resources';
 import { UploadType, type LoadAtlasMeta, type LoadResult } from '../file_uploader.js';
+import type { RectLike } from '../aabb.js';
+import type { AtlasFile } from '../context.svelte.js';
 
 interface OBJMeshDict {
 	/** step=3 */
@@ -105,13 +107,16 @@ export async function load(file: File, filter: UploadType, context: LoadAtlasMet
 	if (!(filter & UploadType.kAtlas)) return {};
 
 	const text = await file.text();
-	const res = decode(text, context.width, context.height);
-	return {
-		atlas: { rects: res.rects }
-	}
+	const rects = decode(text, context.width, context.height);
+	return { atlas: { rects } }
 }
 
-export function decode(text: string, width: number, height: number): VHotspotResource {
+export function save(src: AtlasFile): File {
+	const text = encode(src.rects, src.width, src.height);
+	return new File([text], src.name + '.obj');
+}
+
+export function decode(text: string, width: number, height: number): HotspotRect[] {
 	const { faces, uvs } = OBJFormat.decode(text);
 	const rects = new Array<HotspotRect>(faces.length);
 
@@ -140,10 +145,10 @@ export function decode(text: string, width: number, height: number): VHotspotRes
 		);
 	}
 
-	return new VHotspotResource(0x0, 1, 0x0, rects);
+	return rects;
 }
 
-export function encode(res: VHotspotResource, width: number, height: number): string {
+export function encode(rects: RectLike[], width: number, height: number): string {
 	let vertCount = 0
 
 	const vertices: number[] = [];
@@ -166,8 +171,8 @@ export function encode(res: VHotspotResource, width: number, height: number): st
 
 	const faces: number[][] = [];
 
-	for (let i=0; i<res.rects.length; i++) {
-		const rect = res.rects[i];
+	for (let i=0; i<rects.length; i++) {
+		const rect = rects[i];
 		const v1 = getVert(rect.min_x, rect.min_y);
 		const v2 = getVert(rect.max_x, rect.min_y);
 		const v3 = getVert(rect.min_x, rect.max_y);

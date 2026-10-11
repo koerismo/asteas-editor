@@ -185,6 +185,8 @@ export class ModelHotspotter {
 		const output = new RectFitResult(-1, false);
 		const islandSize = new Vec2();
 
+		const flipping = new Vec2(1, 1);
+
 		for (let i=0, idx=0; i<this.islands.length; i++, idx+=6) {
 			this.islands[i].getSize(islandSize);
 			islandSize.x *= this.size.x * this.fitScale * 2.0; 
@@ -200,7 +202,11 @@ export class ModelHotspotter {
 				if (output.rotated)
 					rotation -= 1;
 
-				this.fitter.GetFinalTransform(this.size, this.rects[rectIdx], output.tiling, 0, rotation, mat3x2);
+				flipping.x = this.rects[rectIdx].CanReflect() && Math.random() > 0.5
+					? -1
+					: 1;
+
+				this.fitter.GetFinalTransform(this.size, this.rects[rectIdx], output.tiling, 0, rotation, flipping, mat3x2);
 			} else {
 				mat3x2.values.set([1, 0, 0, 1, 0, 0]);
 			}

@@ -1,6 +1,8 @@
 import { parse, KeyV, KeyVRoot, KeyVSet, DumpQuotationType } from 'fast-vdf';
 import { HotspotRect, HotSpotRectFlags, VHotspotResource } from 'vtf-js/resources';
 import { UploadType, type LoadResult } from '../file_uploader.js';
+import type { AtlasFile } from '../context.svelte.js';
+import type { RectLike } from '../aabb.js';
 
 export async function load(file: File, filter: UploadType): Promise<LoadResult> {
 	if (!(filter & UploadType.kAtlas)) return {};
@@ -10,6 +12,11 @@ export async function load(file: File, filter: UploadType): Promise<LoadResult> 
 	return {
 		atlas: { rects: res.rects }
 	}
+}
+
+export function save(src: AtlasFile): File {
+	const text = encode(src.rects);
+	return new File([text], src.name + '.rect');
 }
 
 export function decode(text: string): VHotspotResource {
@@ -48,16 +55,19 @@ export function decode(text: string): VHotspotResource {
 	return new VHotspotResource(0x0, 1, 0x0, rects);
 }
 
-export function encode(res: VHotspotResource): string {
+export function encode(rects: RectLike[]): string {
 	const root = new KeyVRoot();
-	const rects = new KeyVSet('Rectangles');
-	root.add(rects);
+	const dir = new KeyVSet('Rectangles');
+	root.add(dir);
 
-	for (let i=0; i<res.rects.length; i++) {
-		const rect = res.rects[i];
+	for (let i=0; i<rects.length; i++) {
+		const rect = rects[i];
 		const min = rect.min_x + ' ' + rect.min_y;
 		const max = rect.max_x + ' ' + rect.max_y;
-		const tile = (rect.canTileX() ? 'x' : '') + (rect.canTileY() ? 'y' : '');
+
+		const can_tile_x = rect.flags & HotSpotRectFlags.TileX;
+		const can_tile_y = rect.flags & HotSpotRectFlags.TileY;
+		const tile = (can_tile_x ? 'x' : '') + (can_tile_y ? 'y' : '');
 
 		const tr = new KeyVSet('rectangle');
 		const add = (k: string, v: string) => tr.add(new KeyV(k, v));
@@ -65,16 +75,16 @@ export function encode(res: VHotspotResource): string {
 		add('min', min);
 		add('max', max);
 
-		if (rect.canRotate())
+		if (rect.flags & HotSpotRectFlags.AllowRotation)
 			add('rotate', '1');
-		if (rect.canReflect())
+		if (rect.flags & HotSpotRectFlags.AllowReflection)
 			add('reflect', '1');
-		if (rect.isAltGroup())
+		if (rect.flags & HotSpotRectFlags.AltGroup)
 			add('alt', '1');
 		if (tile)
 			add('tile', tile);
 
-		rects.add(tr);
+		dir.add(tr);
 	}
 
 	return root.dump({

@@ -54,7 +54,7 @@ export class PreviewViewport extends Viewport<Three.PerspectiveCamera> {
 					this.refit(state.document?.rects ?? []);
 				});
 				$effect(() => {
-					this.updateMaps();
+					this.update();
 				});
 			})
 		);
@@ -88,7 +88,7 @@ export class PreviewViewport extends Viewport<Three.PerspectiveCamera> {
 	// }
 
 	updateMaps() {
-		const maps = this.state.viewport.maps;
+		const maps = this.state.viewport.mapCache;
 		this.texture = maps.color;
 		const normal = maps.normal;
 
@@ -120,6 +120,12 @@ export class PreviewViewport extends Viewport<Three.PerspectiveCamera> {
 		);
 	}
 
+	update() {
+		this.updateMaps();
+		if (this.state.document)
+			this.refit(this.state.document.rects);
+	}
+
 	setup() {
 		const loader = new GLTFLoader();
 		loader.load(Cube1, group => {
@@ -137,8 +143,10 @@ export class PreviewViewport extends Viewport<Three.PerspectiveCamera> {
 	
 			this.hotspotter = new ModelHotspotter(this.mesh.geometry);
 			this.scene.add(this.mesh);
-			this.updateMaps();
-	
+
+			this.update();	
 		});
+
+		super.setup();
 	}
 }

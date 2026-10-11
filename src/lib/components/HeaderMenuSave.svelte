@@ -2,48 +2,58 @@
 	import MenuItem from './menu/MenuItem.svelte';
 	import Button from './buttons/Button.svelte';
 	import { getState } from '$lib/core/context.svelte.js';
-	import type { SaveOptions } from '$lib/core/file_uploader.js';
+	import {
+		AtlasDownloadHandler,
+		download,
+		type DownloadOptions,
+	} from '$lib/core/file_downloader.js';
 	import Checkbox from './buttons/Checkbox.svelte';
 	import PickerMultiple from './pickers/PickerMultiple.svelte';
 
 	const editor = getState();
 
 	function getStatusMsg(): string | undefined {
-		if (!editor.document)
-			return 'No session active.';
-		if (!(options.vtf.on || options.hot.on || options.rect.on || options.obj.on))
+		if (!editor.document) return 'No session active.';
+		if (!(
+			options.vtf.on ||
+			options.hot.on ||
+			options.rect.on ||
+			options.obj.on
+		))
 			return 'No targets selected.';
 		if (options.vtf.on && !editor.document.maps.color)
-			return 'No active image to export.'
+			return 'No active image to export.';
 	}
 
 	function opt(name: string, out: { on: boolean }, desc?: string) {
 		return {
 			name,
 			desc,
-			get value() { return out.on },
-			set value(v) { out.on = v; },
-		}
+			get value() {
+				return out.on;
+			},
+			set value(v) {
+				out.on = v;
+			},
+		};
 	}
 
-	const options: SaveOptions = $state({
+	const options: DownloadOptions = $state({
 		vtf: {
-			on: true,
-			create: {
-				lossy: true,
-				mipmaps: true,
-				strata: true,
-			}
+			on: false,
+			source: undefined,
 		},
 		hot: { on: false },
 		rect: { on: false },
-		obj: { on: false },
+		obj: { on: true },
 	});
 
-	function onSave() {
-		// editor.io.save(options);
+	async function onSave() {
+		if (!editor.document) return;
+		const downloader = new AtlasDownloadHandler(editor.document);
+		const files = await downloader.toCollection(options);
+		await download(files, editor.document.name);
 	}
-
 </script>
 
 <MenuItem text="Save" width={'18em'}>
@@ -59,16 +69,16 @@
 	></PickerMultiple>
 
 	{@const disabled = !editor.document}
-	
+
 	<div class="group" hidden={!options.vtf.on} class:disabled>
 		<b>Vtf</b>
-		<i>{
+		<!-- <i>{
 			editor.document?.vtf
 				? 'The current VTF will be modified.'
 				: 'A new VTF will be generated.'
-		}</i>
+		}</i> -->
 
-		{#if !editor.document?.vtf}
+		<!-- {#if !editor.document?.vtf}
 			<label>
 				<span>Use DXT</span>
 				<Checkbox bind:checked={options.vtf.create.lossy} {disabled}></Checkbox>
@@ -81,8 +91,7 @@
 				<span>Use Strata compression</span>
 				<Checkbox bind:checked={options.vtf.create.strata} {disabled}></Checkbox>
 			</label>
-		{/if}
-
+		{/if} -->
 	</div>
 
 	<div class="group" hidden={!options.hot.on}>
