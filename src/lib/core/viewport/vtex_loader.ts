@@ -19,8 +19,8 @@ const formatMap: Partial<Record<VFormats, { format: CompressedPixelFormat, size:
 };
 
 export const VTextureLoader = {
-	applyFlags(texture: Texture) {
-		texture.colorSpace = SRGBColorSpace;
+	applyFlags(texture: Texture, srgb: boolean) {
+		if (srgb) texture.colorSpace = SRGBColorSpace;
 		texture.minFilter = LinearFilter;
 		texture.wrapS = RepeatWrapping;
 		texture.wrapT = RepeatWrapping;
@@ -28,7 +28,7 @@ export const VTextureLoader = {
 		return texture;
 	},
 
-	parseImage(image: VImageEither) {
+	parseImage(image: VImageEither, srgb: boolean) {
 		if (image.isEncoded && image.format in formatMap) {
 			// eslint-disable-next-line @typescript-eslint/no-non-null-assertion
 			const compressedFormat = formatMap[image.format]!;
@@ -38,18 +38,18 @@ export const VTextureLoader = {
 				height: image.height
 			}], image.width, image.height, compressedFormat.format);
 
-			return this.applyFlags(texture);
+			return this.applyFlags(texture, srgb);
 		}
 		else {
 			const imageRawU8 = image.decode().coerce(Uint8Array);
 			const texture = new DataTexture(imageRawU8.data, imageRawU8.width, imageRawU8.height);
-			return this.applyFlags(texture);
+			return this.applyFlags(texture, srgb);
 		}
 	},
 
-	async parse(buffer: ArrayBuffer) {
+	async parse(buffer: ArrayBuffer, srgb: boolean = true) {
 		const vtf = await Vtf.decode(buffer, { noClone: true, onDemand: true });
 		const image = vtf.body.getRawImage(0, 0, 0, 0);
-		return this.parseImage(image);
+		return this.parseImage(image, srgb);
 	},
 } as const;

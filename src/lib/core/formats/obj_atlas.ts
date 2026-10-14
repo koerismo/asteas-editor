@@ -2,6 +2,7 @@ import { HotspotRect, HotSpotRectFlags } from 'vtf-js/resources';
 import { UploadType, type LoadAtlasMeta, type LoadResult } from '../file_uploader.js';
 import type { RectLike } from '../aabb.js';
 import type { AtlasFile } from '../context.svelte.js';
+import { getProduct } from '../version.js';
 
 interface OBJMeshDict {
 	/** step=3 */
@@ -21,7 +22,7 @@ const kDefaultFlags = HotSpotRectFlags.AllowRotation | HotSpotRectFlags.AllowRef
 const OBJFormat = {
 	encode({ vertices, uvs, faces }: OBJMeshDict): string {
 		const output: string[] = [
-			'# Asteas Atlas Tool ' + APP_VERSION,
+			'# ' + getProduct(),
 			'o Atlas'
 		];
 
@@ -103,7 +104,7 @@ const OBJFormat = {
 
 // #region Atlas transpiler
 
-export async function load(file: File, filter: UploadType, context: LoadAtlasMeta): Promise<LoadResult> {
+export async function load(file: Blob, filter: UploadType, context: LoadAtlasMeta): Promise<LoadResult> {
 	if (!(filter & UploadType.kAtlas)) return {};
 
 	const text = await file.text();

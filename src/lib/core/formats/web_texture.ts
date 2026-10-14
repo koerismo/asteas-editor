@@ -1,7 +1,10 @@
 import { VImageData } from 'vtf-js';
 import { UploadType, type LoadResult } from '../file_uploader.js';
 
-export async function load(file: File, filter: UploadType): Promise<LoadResult> {
+export async function load(
+	file: File,
+	filter: UploadType,
+): Promise<LoadResult> {
 	if (!(filter & UploadType.kMaps)) return {};
 
 	const img = new Image();
@@ -20,7 +23,11 @@ export async function load(file: File, filter: UploadType): Promise<LoadResult> 
 	img.remove();
 
 	const color = new VImageData(
-		new Uint8Array(rawData.data.buffer, rawData.data.byteOffset, rawData.data.length),
+		new Uint8Array(
+			rawData.data.buffer,
+			rawData.data.byteOffset,
+			rawData.data.length,
+		),
 		rawData.width,
 		rawData.height,
 	);
@@ -28,4 +35,27 @@ export async function load(file: File, filter: UploadType): Promise<LoadResult> 
 	return {
 		maps: { color },
 	};
+}
+
+export async function save(
+	img: VImageData<Uint8Array<ArrayBuffer>>,
+): Promise<Blob> {
+	const srcData = img.data;
+	const canvas = new OffscreenCanvas(img.width, img.height);
+
+	const data = new ImageData(
+		new Uint8ClampedArray(
+			srcData.buffer,
+			srcData.byteOffset,
+			srcData.length,
+		),
+		img.width,
+		img.height,
+	);
+
+	// eslint-disable-next-line @typescript-eslint/no-non-null-assertion
+	const ctx = canvas.getContext('2d')!;
+	ctx.putImageData(data, 0, 0);
+
+	return await canvas.convertToBlob({ type: 'image/png' });
 }

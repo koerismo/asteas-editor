@@ -1,5 +1,5 @@
 import Binder from '../binder.js';
-import { Disposable } from './disposable.js';
+import { Disposable } from '../disposable.js';
 
 export const Button = {
 	None: 0x0,

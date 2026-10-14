@@ -1,6 +1,5 @@
 import type { Camera, Scene, WebGLRenderer } from 'three';
-import { Disposable } from './disposable.js';
-// import { MouseComponent } from './mouse.js';
+import { Disposable } from '../disposable.js';
 
 export abstract class Viewport<T extends Camera> extends Disposable {
 	needsCameraUpdate = true;

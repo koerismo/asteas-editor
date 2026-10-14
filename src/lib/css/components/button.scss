@@ -47,7 +47,11 @@
 }
 
 @mixin btn-fill-accent($hoverable: true) {
-	@include btn-fill-arbitrary(var(--accent), if($hoverable, var(--accent-400), false));
+	@if $hoverable {
+		@include btn-fill-arbitrary(var(--accent), var(--accent-400));
+	} @else {
+		@include btn-fill-arbitrary(var(--accent), false);
+	}
 }
 
 @mixin btn-fill-danger($hoverable: true) {

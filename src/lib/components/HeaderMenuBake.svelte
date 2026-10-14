@@ -13,7 +13,7 @@
 	import { download } from '$lib/core/file_downloader.js';
 
 	const editor = getState();
-	const mapCache = $derived(editor.viewport.mapCache);
+	// const mapCache = $derived(editor.viewport.mapCache);
 
 	function opt(name: string, out: { on: boolean }, desc?: string) {
 		return {
@@ -101,11 +101,13 @@
 	}
 
 	function canSave() {
+		if (!editor.document)
+			return false;
 		if (!options.normals.on && !options.height.on)
 			return false;
-		if (options.normals.on && !mapCache.normal)
+		if (options.normals.on && !editor.document.maps.normal)
 			return false;
-		if (options.height.on && !mapCache.height)
+		if (options.height.on && !editor.document.maps.height)
 			return false;
 		return true;
 	}

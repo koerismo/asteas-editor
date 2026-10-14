@@ -9,6 +9,7 @@
 	} from '$lib/core/file_downloader.js';
 	import Checkbox from './buttons/Checkbox.svelte';
 	import PickerMultiple from './pickers/PickerMultiple.svelte';
+	import Styles from '$lib/css/components/menu.module.scss';
 
 	const editor = getState();
 
@@ -70,7 +71,7 @@
 
 	{@const disabled = !editor.document}
 
-	<div class="group" hidden={!options.vtf.on} class:disabled>
+	<div class={Styles.Group} hidden={!options.vtf.on} class:disabled>
 		<b>Vtf</b>
 		<!-- <i>{
 			editor.document?.vtf
@@ -94,12 +95,12 @@
 		{/if} -->
 	</div>
 
-	<div class="group" hidden={!options.hot.on}>
+	<div class={Styles.Group} hidden={!options.hot.on}>
 		<b>Hotfile</b>
 		<i>No options.</i>
 	</div>
 
-	<div class="group" hidden={!options.rect.on}>
+	<div class={Styles.Group} hidden={!options.rect.on}>
 		<b>Rectfile</b>
 		<i>No options.</i>
 		<!-- <label>

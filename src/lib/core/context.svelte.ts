@@ -1,5 +1,5 @@
 import { createContext } from 'svelte';
-import type { VImageEither, Vtf } from 'vtf-js';
+import type { VImageEither, VPixelArray, Vtf } from 'vtf-js';
 import { on } from 'svelte/events';
 
 import { RectEntry } from './file.js';
@@ -9,6 +9,7 @@ import { makeSubscriber } from  './history/reactive.js';
 import { History } from './history/history.js';
 
 import type { Texture } from 'three';
+import { TextureSync } from './gpu_sync.svelte.js';
 // import { EditorIO } from './file_uploader.js';
 
 // function makeId(type: string, id: number) {
@@ -43,6 +44,7 @@ export interface AtlasFile {
 }
 
 export class EditorState {
+	readonly textureSync = new TextureSync(this);
 	readonly viewport = new ViewportState();
 
 	#document: DocumentState | undefined = $state.raw();
@@ -97,9 +99,9 @@ export class DocumentState implements AtlasFile {
 		return this.#rects;
 	}
 
-	setMap(map: keyof DocumentMaps, image?: VImageEither) {
-		this.maps[map] = image;
-	}
+	// setMap(map: keyof DocumentMaps, image?: VImageEither<VPixelArray<ArrayBuffer>>) {
+	// 	this.maps[map] = image;
+	// }
 
 	mount() {
 		return on(document, 'keydown', this._onKeyDown.bind(this));

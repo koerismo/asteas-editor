@@ -68,6 +68,7 @@
 	function onKeyDown(event: KeyboardEvent) {
 		if (!editor.document)
 			return;
+
 		if (event.target !== document.body && !self.contains(event.target as Node))
 			return;
 
@@ -75,6 +76,10 @@
 
 		if (event.key === 'Delete' || event.key === 'Backspace') {
 			event.preventDefault();
+
+			if (!editor.document.selection.size)
+				return;
+			
 			editor.document.$commitActions();
 			editor.document.$rectsRemoveSelected();
 			editor.document.$commitActions();

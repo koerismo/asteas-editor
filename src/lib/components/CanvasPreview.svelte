@@ -16,6 +16,7 @@
 			loading = true;
 			const { PreviewViewport } = await import('$lib/core/viewport/preview/_index.svelte.js');
 			if (cancel) return;
+			await editor.textureSync.initialize();
 			renderer = new PreviewViewport(canvas, editor);
 			loading = false;
 		}

@@ -102,11 +102,14 @@ export class PreviewViewport extends Viewport<Three.PerspectiveCamera> {
 		}
 
 		// TODO: stop cloning this fucking image???
-		material.normalMap = normal?.clone() ?? null;
-
-		if (material.normalMap)
+		material.normalMap = normal ?? null;
+		
+		if (material.normalMap) {
+			material.normalMap.needsUpdate = true;
 			material.normalMap.flipY = true;
-
+			material.normalMap.colorSpace = Three.NoColorSpace;
+		}
+		
 		material.normalScale.set(1, 1);
 		material.needsUpdate = true;
 	}

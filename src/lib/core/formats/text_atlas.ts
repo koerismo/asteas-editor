@@ -4,13 +4,14 @@ import { UploadType, type LoadResult } from '../file_uploader.js';
 import type { AtlasFile } from '../context.svelte.js';
 import type { RectLike } from '../aabb.js';
 
-export async function load(file: File, filter: UploadType): Promise<LoadResult> {
+export async function load(file: Blob, filter: UploadType): Promise<LoadResult> {
 	if (!(filter & UploadType.kAtlas)) return {};
 
 	const text = await file.text();
-	const res = decode(text);
+	const rects = decode(text);
+
 	return {
-		atlas: { rects: res.rects }
+		atlas: { rects },
 	}
 }
 
@@ -19,7 +20,7 @@ export function save(src: AtlasFile): File {
 	return new File([text], src.name + '.rect');
 }
 
-export function decode(text: string): VHotspotResource {
+export function decode(text: string): HotspotRect[] {
 	const root = parse(text);
 	const main = root.dir('rectangles');
 	const rects: HotspotRect[] = [];
@@ -52,7 +53,7 @@ export function decode(text: string): VHotspotResource {
 		));
 	}
 
-	return new VHotspotResource(0x0, 1, 0x0, rects);
+	return rects;
 }
 
 export function encode(rects: RectLike[]): string {

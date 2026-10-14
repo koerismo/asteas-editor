@@ -2,6 +2,7 @@
 	import type { Snippet } from 'svelte';
 	import Button from '../buttons/Button.svelte';
 	import MenuItemPopup from './MenuItemPopup.svelte';
+
 	let { text, children, width, side }: { text: string; children?: any, width?: string, side?: 'left' | 'right'; } = $props();
 	const id = $props.id();
 	

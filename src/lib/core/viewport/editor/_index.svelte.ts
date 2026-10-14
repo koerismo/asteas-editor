@@ -114,7 +114,7 @@ export class EditorViewport extends Viewport<Three.OrthographicCamera> {
 					this.setSelection(this.state.document?.selection ?? new Set());
 				});
 				$effect(() => {
-					void this.loadImage(this.state.document?.maps.color);
+					this.setTexture(this.state.viewport.mapCache.color);
 				});
 			})
 		);
@@ -484,11 +484,10 @@ export class EditorViewport extends Viewport<Three.OrthographicCamera> {
 			return;
 		}
 
-		const v = VTextureLoader.parseImage(image);
-
+		const v = VTextureLoader.parseImage(image, true);
 		this.setTexture(v);
 		this.centerCamera();
-		this.state.viewport.mapCache.color = v;
+		// this.state.viewport.mapCache.color = v;
 		return v;
 	}
 
