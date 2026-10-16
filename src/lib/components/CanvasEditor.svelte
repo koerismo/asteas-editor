@@ -15,17 +15,18 @@
 	onMount(() => {
 		let cancel = false;
 
-		async function initCanvas() {
+		(async () => {
 			loading = true;
 			const { EditorViewport } = await import('$lib/core/viewport/editor/_index.svelte.js');
-			if (cancel) return;
-			await editor.textureSync.initialize();
-			renderer = new EditorViewport(canvas, editor);
-			loading = false;
-		}
+			const tmp = new EditorViewport(canvas, editor);
 
-		initCanvas();
-		
+			if (cancel) return;
+
+			renderer = tmp;
+			loading = false;
+			await editor.textureSync.initialize();
+		})();
+
 		return () => {
 			cancel = true;
 			renderer?.dispose();

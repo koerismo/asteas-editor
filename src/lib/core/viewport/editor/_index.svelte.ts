@@ -100,8 +100,6 @@ export class EditorViewport extends Viewport<Three.OrthographicCamera> {
 		this.selectionRect = new SelectionRect(new AABB());
 		this.selectionRect.setMode(RectMode.Handles);
 		this.scene.add(this.selectionRect);
-
-		this.loadImage();
 		
 		this.disposables.push(
 			$effect.root(() => {
@@ -114,7 +112,11 @@ export class EditorViewport extends Viewport<Three.OrthographicCamera> {
 					this.setSelection(this.state.document?.selection ?? new Set());
 				});
 				$effect(() => {
+					const prev_texture = this.image;
 					this.setTexture(this.state.viewport.mapCache.color);
+					if (this.image !== prev_texture) {
+						this.centerCamera();
+					}
 				});
 			})
 		);
@@ -477,21 +479,9 @@ export class EditorViewport extends Viewport<Three.OrthographicCamera> {
 		}
 	}
 
-	loadImage(image?: VImageEither): Three.Texture | undefined {
-		if (!image) {
-			this.state.viewport.mapCache.color = undefined;
-			this.setTexture();
-			return;
-		}
-
-		const v = VTextureLoader.parseImage(image, true);
-		this.setTexture(v);
-		this.centerCamera();
-		// this.state.viewport.mapCache.color = v;
-		return v;
-	}
-
 	setTexture(v?: Three.Texture) {
+		// console.log('viewport settexture:', typeof v);
+
 		if (!v) {
 			this.image = undefined;
 			this.imagePlane.material.map = null;

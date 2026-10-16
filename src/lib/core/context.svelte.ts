@@ -1,5 +1,5 @@
 import { createContext } from 'svelte';
-import type { VImageEither, VPixelArray, Vtf } from 'vtf-js';
+import type { VImageEither, Vtf } from 'vtf-js';
 import { on } from 'svelte/events';
 
 import { RectEntry } from './file.js';
@@ -27,12 +27,24 @@ export type DocumentMaps = TextureMaps<VImageEither>;
 
 
 export class ViewportState {
+	#mapCacheSubscriber = makeSubscriber();
+	#mapCache: ViewportMaps = {};
+
 	/** GPU texture cache. See {@link DocumentState} for the document CPU ones. */
-	mapCache: ViewportMaps = $state({});
+	get mapCache(): Readonly<ViewportMaps> {
+		this.#mapCacheSubscriber.use();
+		return this.#mapCache;
+	}
+
 	enable3d: boolean = $state(false);
 	meshScale3d: number = $state(1.0);
 	useLighting3d: boolean = $state(true);
 	useBakedNormals3d: boolean = $state(true);
+
+	setCacheMap(key: keyof ViewportMaps, tex: Texture | undefined) {
+		this.#mapCache[key] = tex;
+		this.#mapCacheSubscriber.update();
+	}
 }
 
 export interface AtlasFile {

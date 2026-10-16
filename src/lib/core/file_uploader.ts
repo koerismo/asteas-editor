@@ -81,12 +81,13 @@ export class UploadHandler {
 		const maps: LoadResult['maps'] = this.#result.maps ?? { };
 
 		const metaFromColor = (): LoadAtlasMeta | undefined => {
-			if (maps.color)
-				return {
-					width: maps.color.width,
-					height: maps.color.height,
-					name: this.#fallbackName ?? 'untitled',
-				};
+			if (!maps.color) return;
+
+			return {
+				width: maps.color.width,
+				height: maps.color.height,
+				name: this.#fallbackName ?? 'untitled',
+			};
 		};
 
 		const meta = this.#context ?? atlas.meta ?? metaFromColor();

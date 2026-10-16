@@ -90,24 +90,22 @@ export class PreviewViewport extends Viewport<Three.PerspectiveCamera> {
 	updateMaps() {
 		const maps = this.state.viewport.mapCache;
 		this.texture = maps.color;
-		const normal = maps.normal;
 
 		if (!this.mesh) return;
 		const material = this.mesh.material as Three.MeshStandardMaterial;
-		
-		// TODO: This is miserable
-		material.map = this.texture?.clone() ?? null;
+
+		// TODO: Make sure this is getting freed somehow to avoid texture data memleak
+		material.map = maps.color?.clone() ?? null;
+
 		if (material.map) {
 			material.map.magFilter = Three.LinearFilter;
 		}
 
-		// TODO: stop cloning this fucking image???
-		material.normalMap = normal ?? null;
-		
+		material.normalMap = maps.normal ?? null;
+
 		if (material.normalMap) {
-			material.normalMap.needsUpdate = true;
+			material.normalMap.magFilter = Three.LinearFilter;
 			material.normalMap.flipY = true;
-			material.normalMap.colorSpace = Three.NoColorSpace;
 		}
 		
 		material.normalScale.set(1, 1);

@@ -4,19 +4,12 @@
 	import { getState } from '$lib/core/context.svelte.js';
 	import Checkbox from './buttons/Checkbox.svelte';
 	import PickerMultiple from './pickers/PickerMultiple.svelte';
-	import Upload from './inputs/Upload.svelte';
+	import Upload from './inputs/FileUpload.svelte';
 	import Numeric from './inputs/Numeric.svelte';
+	import Styles from '$lib/css/components/menu.module.scss';
+	import MapUpload from './inputs/MapUpload.svelte';
 
 	const editor = getState();
-
-	function opt(name: string, out: { on: boolean }, desc?: string) {
-		return {
-			name,
-			desc,
-			get value() { return out.on },
-			set value(v) { out.on = v; },
-		}
-	}
 
 	const options = $state({
 		vtf: {
@@ -32,6 +25,17 @@
 		obj: { on: false },
 	});
 
+	// function makeFileBind<T>(obj: T, key: keyof T) {
+	// 	return {
+	// 		get files(): File[] {
+	// 			return obj[key] ? [obj[key]] 
+	// 		},
+	// 		set files(f: File[]) {
+
+	// 		}
+	// 	}
+	// }
+
 	function onSave() {
 		// editor.document.
 		// editor.io.save(options);
@@ -42,23 +46,23 @@
 <MenuItem text="Document"side="left" width={'18em'}>
 	<b>Document Configuration</b>
 
-	<div class="group">
+	<div class={Styles.Group}>
 		<b>Maps</b>
 		<div>
 			<span>Color</span>
-			<Upload></Upload>
+			<MapUpload state={editor} key="color"></MapUpload>
 		</div>
 		<div>
 			<span>Normals</span>
-			<Upload></Upload>
+			<MapUpload state={editor} key="normal"></MapUpload>
 		</div>
 		<div>
 			<span>Height</span>
-			<Upload></Upload>
+			<MapUpload state={editor} key="height"></MapUpload>
 		</div>
 	</div>
 	
-	<div class="group">
+	<div class={Styles.Group}>
 		<b>Atlas</b>
 		<Button>Sync Dimensions</Button>
 		<label>
@@ -78,7 +82,7 @@
 </MenuItem>
 
 <style>
-	div.group {
+	/* div.group {
 		--gap: 0.4em;
 		--hr-margin: 0.1em;
 
@@ -96,19 +100,19 @@
 		&.disabled {
 			opacity: 0.5;
 		}
-	}
+	} */
 
-	i {
+	/* i {
 		color: var(--text-3);
 		font-size: 0.9em;
-	}
+	} */
 
-	hr {
+	/* hr {
 		border-color: var(--border);
 		margin: var(--hr-margin) 0;
-	}
+	} */
 
-	label {
+	/* label {
 		display: flex;
 		gap: 0.6em;
 		place-items: center;
@@ -117,5 +121,5 @@
 		span {
 			flex-grow: 1;
 		}
-	}
+	} */
 </style>

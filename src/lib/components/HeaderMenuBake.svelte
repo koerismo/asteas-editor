@@ -13,7 +13,6 @@
 	import { download } from '$lib/core/file_downloader.js';
 
 	const editor = getState();
-	// const mapCache = $derived(editor.viewport.mapCache);
 
 	function opt(name: string, out: { on: boolean }, desc?: string) {
 		return {
@@ -68,11 +67,11 @@
 		if (editor.document) {
 			const S = options.common.scale;
 			const w = editor.document.width * S, h = editor.document.height * S;
-			heightBaker?.setSize(w, h, S, true);
-			normalBaker?.setSize(w, h, S, true);
+			heightBaker?.setSize(w, h, S);
+			normalBaker?.setSize(w, h, S);
 		} else {
-			heightBaker?.setSize(0, 0, 1, true);
-			normalBaker?.setSize(0, 0, 1, true);
+			heightBaker?.setSize(0, 0, 1);
+			normalBaker?.setSize(0, 0, 1);
 		}
 	});
 
@@ -81,7 +80,7 @@
 		normalBaker?.setOptions(options.common);
 	});
 
-	function bake() {
+	async function bake() {
 		if (!editor.document)
 			return;
 
@@ -111,15 +110,6 @@
 			return false;
 		return true;
 	}
-	
-	async function canvasToFile(canvas: HTMLCanvasElement, filename: string): Promise<File> {
-		return new Promise((resolve, reject) => {
-			canvas.toBlob((blob) => {
-				if (blob) resolve(new File([blob], filename, { type: 'image/png' }));
-				else reject();
-			}, 'image/png');
-		});
-	}
 
 	async function save() {
 		if (!editor.document) return;
@@ -127,9 +117,9 @@
 		const files: File[] = [];
 
 		if (options.normals.on)
-			files.push(await canvasToFile(normalCanvas, rootName + '_normals.png'));
+			files.push(new File([await normalBaker.toBlob()], rootName + '_normals.png'));
 		if (options.height.on)
-			files.push(await canvasToFile(heightCanvas, rootName + '_height.png'));
+			files.push(new File([await heightBaker.toBlob()], rootName + '_height.png'));
 
 		download(files, rootName + '_bake.zip');
 	}

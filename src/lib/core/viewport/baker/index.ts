@@ -141,6 +141,22 @@ export class Baker {
 		return new VImageData(data, this.rtt.width, this.rtt.height);
 	}
 
+	async toBlob(type: 'image/png' = 'image/png'): Promise<Blob> {
+		const canvas = this.canvas;
+		if (!canvas)
+			throw Error('Baker requires an attached canvas to generate a Blob!');
+
+		if (canvas instanceof OffscreenCanvas)
+			return await canvas.convertToBlob({ type, quality: 100 });
+
+		return new Promise<Blob>((resolve, reject) => {
+			canvas.toBlob(blob => {
+				if (blob) resolve(blob);
+				else reject(Error('Failed to convert canvas to Blob!'));
+			}, type, 100);
+		});
+	}
+
 	#updateOptions() {
 		this.mesh.material.uniforms.uRadius.value = this.options.radius ?? 0;
 		this.mesh.material.uniforms.uBevel.value = this.options.bevel ?? 0;
@@ -183,8 +199,8 @@ export class Baker {
 		this.#updateOptions();
 	}
 
-	setSize(width: number, height: number, scale: number, setCanvasSize: boolean = false) {
-		if (setCanvasSize && this.canvas) {
+	setSize(width: number, height: number, scale: number) {
+		if (this.canvas) {
 			this.canvas.width = width;
 			this.canvas.height = height;
 		}

@@ -33,7 +33,9 @@
 	{#if editorState.document}
 	<div>
 		<Editor></Editor>
+		{#if editorState.viewport.enable3d}
 		<Preview></Preview>
+		{/if}
 	</div>
 	{:else}
 		<Hello></Hello>

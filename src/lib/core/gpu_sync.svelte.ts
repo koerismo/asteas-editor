@@ -1,4 +1,4 @@
-import type { VImageEither, VPixelArray } from 'vtf-js';
+import type { VImageEither } from 'vtf-js';
 
 import { Disposable } from './disposable.js';
 import type { DocumentMaps, EditorState } from './context.svelte.js';
@@ -27,15 +27,21 @@ export class TextureSync extends Disposable {
 	}
 
 	protected upload(
-		map: keyof DocumentMaps,
-		texture: VImageEither<VPixelArray> | undefined,
+		key: keyof DocumentMaps,
+		texture: VImageEither | undefined,
 		srgb: boolean = true,
 	) {
-		if (!this.vtex_loader) return;
-		this.state.viewport.mapCache[map] = texture
-			? this.vtex_loader.parseImage(texture, srgb)
-			: undefined;
-		console.log(texture, this.state.viewport.mapCache[map]);
+		if (!this.vtex_loader) return; // { console.log('load fail:', map); return; }
+		// console.log('load:', map, texture);
+
+		const converted = texture && this.vtex_loader.parseImage(texture, srgb);
+		this.state.viewport.setCacheMap(key, converted);
+
+		// console.log('load:', key, !!texture);
+
+		// TODO: SOMETHING EVIL IS AFOOT HERE.
+		// WE LITERALLY CANNOT REMOVE THIS CONLOG OR IT BREAKS
+		// console.log('load:', !!converted);
 	}
 
 	async initialize() {

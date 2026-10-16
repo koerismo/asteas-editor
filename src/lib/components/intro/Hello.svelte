@@ -15,7 +15,6 @@
 
 		const atlas = handler.toAtlasFile();
 		if (!atlas) return;
-		console.log(atlas);
 
 		const document = DocumentState.fromAtlasFile(atlas);
 		editor.setDocument(document);
