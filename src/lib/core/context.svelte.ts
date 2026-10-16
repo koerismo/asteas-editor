@@ -110,6 +110,11 @@ export class DocumentState implements AtlasFile {
 		return this.#rects;
 	}
 
+	setRects(rects: RectEntry[]) {
+		this.#rects = rects;
+		this.#rectSubscriber.update();
+	}
+
 	// setMap(map: keyof DocumentMaps, image?: VImageEither<VPixelArray<ArrayBuffer>>) {
 	// 	this.maps[map] = image;
 	// }

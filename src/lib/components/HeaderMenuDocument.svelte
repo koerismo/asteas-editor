@@ -12,6 +12,7 @@
 
 	import Styles from '$lib/css/components/menu.module.scss';
 	import { clamp } from 'vtf-js/utils';
+	import AtlasUpload from './inputs/AtlasUpload.svelte';
 
 	const editor = getState();
 
@@ -74,6 +75,7 @@
 	
 	<div class={Styles.Group}>
 		<b>Atlas</b>
+		<AtlasUpload state={editor}></AtlasUpload>
 		<div class={Styles.Group}>
 			<span>Dimensions</span>
 			<div class="hsplit">
