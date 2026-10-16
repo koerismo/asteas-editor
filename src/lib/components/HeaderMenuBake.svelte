@@ -184,6 +184,7 @@ div.preview {
 			max-width: 100%;
 			width: 100%;
 			aspect-ratio: 1 / 1;
+			object-fit: contain;
 			background-color: var(--bg);
 			border-radius: var(--radius-sm);
 		}
