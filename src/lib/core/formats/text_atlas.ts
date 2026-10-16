@@ -3,6 +3,7 @@ import { HotspotRect, HotSpotRectFlags, VHotspotResource } from 'vtf-js/resource
 import { UploadType, type LoadResult } from '../file_uploader.js';
 import type { AtlasFile } from '../context.svelte.js';
 import type { RectLike } from '../aabb.js';
+import { getProduct } from '../version.js';
 
 export async function load(file: Blob, filter: UploadType): Promise<LoadResult> {
 	if (!(filter & UploadType.kAtlas)) return {};
@@ -88,7 +89,7 @@ export function encode(rects: RectLike[]): string {
 		dir.add(tr);
 	}
 
-	return root.dump({
+	return `// ${getProduct()}\n` + root.dump({
 		quote: DumpQuotationType.Auto
 	});
 }
