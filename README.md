@@ -12,9 +12,9 @@ Features:
 - Multi-selection and quick editing
 - Generates texture maps for material authoring
 - Previews texture application on interactive models
-- Imports most common image and rect formats, and exports vtfs
+- Imports most common image and rect formats, and ~~exports~~[^1] vtfs
 - Imports and exports Strata text files
-- Embeds and extracts Strata embedded resources
+- ~~Embeds~~[^1] and extracts Strata embedded resources
 
 ## Formats
 
@@ -26,12 +26,13 @@ Features:
 | | | | |
 | `vtf` | &check; | ~~&check;~~[^1] | Atlas, Texture |
 | | | | |
+| `png` | &check; | &check; | Texture |
 | `jpeg` | &check; | | Texture |
-| `png` | &check; | | Texture |
+| `webp` | &check; | | Texture |
 | `gif` | &check; | | Texture |
 | | | | |
 
-^1: Temporarily disabled for refactoring.
+[^1]: Temporarily disabled for refactoring.
 
 ## Documentation
 
