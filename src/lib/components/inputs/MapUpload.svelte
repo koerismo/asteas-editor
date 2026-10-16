@@ -45,13 +45,15 @@
 	}
 
 	function ondownload() {
-		if (!state.document) return;
-		const map = state.document.maps[key];
+		const document = state.document;
+		if (!document) return;
+
+		const map = document.maps[key];
 		if (!map) return;
 
 		WebFormat.save(map.decode().coerce(Uint8Array)).then(
 			(blob) => {
-				download([new File([blob], 'image', { type: blob.type })]);
+				download([new File([blob], document.name + '_' + key, { type: blob.type })]);
 			},
 		);
 
