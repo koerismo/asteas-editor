@@ -35,10 +35,6 @@
 		doc.height = map.height;
 	}
 
-	type KeysMatching<I, T> = {
-		[K in keyof I]: I[K] extends T ? K : never;
-	}[keyof I];
-
 	function validator(key: 'width' | 'height') {
 		return {
 			get v(): number {
@@ -78,14 +74,14 @@
 	
 	<div class={Styles.Group}>
 		<b>Atlas</b>
-		<Button onclick={syncDimensions} disabled={!canSyncDimensions()}>Sync Dimensions</Button>
 		<div class={Styles.Group}>
-			<span>dimensions</span>
+			<span>Dimensions</span>
 			<div class="hsplit">
 				<Numeric min="1" step="1" max="8192" bind:value={widthWrapped.v} ></Numeric>
 				<Numeric min="1" step="1" max="8192" bind:value={heightWrapped.v} ></Numeric>
 			</div>
 		</div>
+		<Button onclick={syncDimensions} disabled={!canSyncDimensions()}>Sync Dimensions</Button>
 	</div>
 </MenuItem>
 

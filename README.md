@@ -24,12 +24,14 @@ Features:
 | `hot` | &check; | &check; | Atlas |
 | `obj` | &check; | &check; | Atlas |
 | | | | |
-| `vtf` | &check; | &check; | Atlas, Texture |
+| `vtf` | &check; | ~~&check;~~[^1] | Atlas, Texture |
 | | | | |
 | `jpeg` | &check; | | Texture |
 | `png` | &check; | | Texture |
 | `gif` | &check; | | Texture |
 | | | | |
+
+^1: Temporarily disabled for refactoring.
 
 ## Documentation
 
