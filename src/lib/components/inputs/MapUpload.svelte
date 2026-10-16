@@ -1,7 +1,12 @@
 <script lang="ts">
-	import type { EditorState, ViewportMaps } from '$lib/core/context.svelte.js';
+	import type {
+		EditorState,
+		ViewportMaps,
+	} from '$lib/core/context.svelte.js';
 	import { UploadHandler, UploadType } from '$lib/core/file_uploader.js';
+	import { download } from '$lib/core/file_downloader.js';
 	import FileUpload from './FileUpload.svelte';
+	import * as WebFormat from '$lib/core/formats/web_texture.js';
 
 	let { state, key }: { state: EditorState; key: keyof ViewportMaps } =
 		$props();
@@ -35,14 +40,23 @@
 	}
 
 	function onclear(files: FileList | null) {
-		if (state.document)
-			state.document.maps[key] = undefined;
+		if (state.document) state.document.maps[key] = undefined;
 		return false;
 	}
 
 	function ondownload() {
+		if (!state.document) return;
+		const map = state.document.maps[key];
+		if (!map) return;
+
+		WebFormat.save(map.decode().coerce(Uint8Array)).then(
+			(blob) => {
+				download([new File([blob], 'image', { type: blob.type })]);
+			},
+		);
+
 		return false;
 	}
 </script>
 
-<FileUpload {dummy} {oninput} {onclear} downloadable={false}></FileUpload>
+<FileUpload {dummy} {oninput} {ondownload} {onclear}></FileUpload>

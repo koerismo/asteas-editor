@@ -21,6 +21,8 @@
 		padding: 0;
 		margin: 0;
 
+		flex-grow: 0;
+
 		&:checked {
 			@include btn.btn-fill-accent(true);
 			display: flex;

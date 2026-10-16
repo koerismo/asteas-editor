@@ -36,10 +36,9 @@ export class ViewportState {
 		return this.#mapCache;
 	}
 
-	enable3d: boolean = $state(false);
-	meshScale3d: number = $state(1.0);
-	useLighting3d: boolean = $state(true);
-	useBakedNormals3d: boolean = $state(true);
+	enable3d: boolean = $state.raw(false);
+	meshScale3d: number = $state.raw(1.0);
+	useLighting3d: boolean = $state.raw(true);
 
 	setCacheMap(key: keyof ViewportMaps, tex: Texture | undefined) {
 		this.#mapCache[key] = tex;
@@ -80,8 +79,8 @@ export class DocumentState implements AtlasFile {
 	#rectSubscriber = makeSubscriber();
 
 	public name: string;
-	public width: number = 1024;
-	public height: number = 1024;
+	public width: number = $state.raw(1024);
+	public height: number = $state.raw(1024);
 
 	public maps: DocumentMaps = $state({});
 	public vtf: Vtf | undefined = $state.raw();

@@ -51,6 +51,7 @@ function makeCopyMaterial(texture: Three.Texture) {
 	return new Three.ShaderMaterial({
 		vertexShader: CopyVert,
 		fragmentShader: CopyFrag,
+		defines: { FLIP_V: 1, FLIP_GREEN: 0 },
 		// transparent: true,
 		uniforms: {
 			uMap: { value: texture },
@@ -209,10 +210,10 @@ export class Baker {
 			return;
 		
 		this.rtt.setSize(width, height);
-		this.camera.top = 0;
+		this.camera.bottom = 0;
 		this.camera.left = 0;
 		this.camera.right = width / scale;
-		this.camera.bottom = height / scale;
+		this.camera.top = height / scale;
 		this.camera.updateProjectionMatrix();
 		this.stale = true;
 	}

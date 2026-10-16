@@ -7,7 +7,9 @@
 	import { BakeMode, Baker } from '$lib/core/viewport/baker';
 	import Button from './buttons/Button.svelte';
 	import Numeric from './inputs/Numeric.svelte';
-	import Checkbox from './buttons/Checkbox.svelte';
+	import Checkbox from './inputs/Checkbox.svelte';
+
+	import Styles from '$lib/css/components/menu.module.scss';
 
 	import { setFileExt } from '$lib/core/file_uploader.js';
 	import { download } from '$lib/core/file_downloader.js';
@@ -139,21 +141,21 @@
 	<Button onclick={save} disabled={!canSave()}>Save</Button>
 
 
-	<div class="group" class:disabled={!options.height.on && !options.normals.on}>
+	<div class={Styles.Group} class:disabled={!options.height.on && !options.normals.on}>
 		<b>Options</b>
-		<label>
+		<label class={Styles.Row}>
 			<span>Scale</span>
 			<Picker bind:index={scaleGetSet.value} options={['.25x', '.5x', '1x', '2x', '4x']}></Picker>
 		</label>
-		<label>
+		<label class={Styles.Row}>
 			<span>Radius</span>
 			<Numeric bind:value={options.common.radius} min="0" max="256" step="8"></Numeric>
 		</label>
-		<label>
+		<label class={Styles.Row}>
 			<span>Bevel</span>
 			<Numeric bind:value={options.common.bevel} min="0" max="256" step="8"></Numeric>
 		</label>
-		<label>
+		<label class={Styles.Row}>
 			<span>Exponent</span>
 			<Numeric bind:value={options.common.expo} min="0.1" max="4.0" step="0.1"></Numeric>
 		</label>
@@ -163,7 +165,7 @@
 		</label> -->
 	</div>
 
-	<div class="group">
+	<div class={Styles.Group}>
 		<b>Preview</b>
 		<div class="preview">
 			<canvas bind:this={heightCanvas} width="256" height="256"></canvas>
@@ -173,60 +175,17 @@
 </MenuItem>
 
 <style>
+
+div.preview {
+	display: flex;
+	gap: 0.5em;
+
 	canvas {
-		max-width: 100%;
-	}
-
-	div.preview {
-		display: flex;
-		gap: 0.5em;
-
-		canvas {
+			max-width: 100%;
 			width: 100%;
 			aspect-ratio: 1 / 1;
 			background-color: var(--bg);
 			border-radius: var(--radius-sm);
-		}
-	}
-
-	div.group {
-		--gap: 0.4em;
-		--hr-margin: 0.1em;
-
-		display: flex;
-		flex-direction: column;
-		gap: var(--gap);
-		border-top: 1px solid var(--border);
-		padding: calc(var(--gap) + var(--hr-margin) * 2) 0;
-		margin-top: 0.4em;
-
-		&.disabled {
-			opacity: 0.5;
-		}
-	}
-
-	/* i {
-		color: var(--text-3);
-		font-size: 0.9em;
-	} */
-
-	hr {
-		border-color: var(--border);
-		margin: var(--hr-margin) 0;
-	}
-
-	label {
-		display: flex;
-		gap: 0.6em;
-		place-items: center;
-		color: var(--text-2);
-
-		:global(input[type="number"]) {
-			min-width: 50%;
-		}
-
-		span {
-			flex-grow: 1;
 		}
 	}
 </style>

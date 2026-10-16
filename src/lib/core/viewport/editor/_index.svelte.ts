@@ -1,5 +1,4 @@
 import * as Three from 'three';
-import type { VImageEither } from 'vtf-js';
 import { clamp } from 'three/src/math/MathUtils.js';
 
 // General utility
@@ -12,7 +11,6 @@ import { RectMode, SelectionRect, VisualRect } from './selection_rect.js';
 import { Button, MouseComponent } from '../mouse.js';
 
 import { GridObject } from './grid.js';
-import { VTextureLoader } from '../vtex_loader.js';
 import { Viewport } from '../viewport_shared.js';
 // import type ContextMenu from '$lib/components/menu/ContextMenu.svelte';
 
@@ -152,6 +150,7 @@ export class EditorViewport extends Viewport<Three.OrthographicCamera> {
 		this.camera.position.x = this.image ? this.image.width / 2 : 0;
 		this.camera.position.y = this.image ? this.image.height / 2 : 0;
 		this.zoom = 1.5 / (this.image?.width ?? 512);
+		this.needsCameraUpdate = true;
 	}
 
 	onPan(x: number, y: number) {

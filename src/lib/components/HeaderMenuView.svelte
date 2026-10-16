@@ -1,11 +1,12 @@
 <script lang="ts">
 	import MenuItem from './menu/MenuItem.svelte';
 	import { getState } from '$lib/core/context.svelte.js';
-	import Checkbox from './buttons/Checkbox.svelte';
+	import Checkbox from './inputs/Checkbox.svelte';
 	import Picker from './pickers/Picker.svelte';
 
-	const editor = getState();
+	import Styles from '$lib/css/components/menu.module.scss';
 
+	const editor = getState();
 	const indexGetSet = {
 		get value() {
 			return 2 + Math.log2(editor.viewport.meshScale3d);
@@ -19,63 +20,16 @@
 
 <MenuItem text="View" width={'20em'}>
 	<b>Viewport Settings</b>
-	<label>
+	<label class={Styles.Row}>
 		<span>Enable 3D</span>
 		<Checkbox bind:checked={editor.viewport.enable3d}></Checkbox>
 	</label>
-	<label>
+	<label class={Styles.Row}>
 		<span>Enable Lighting</span>
 		<Checkbox bind:checked={editor.viewport.useLighting3d}></Checkbox>
 	</label>
-	<label>
-		<span>Enable Normals</span>
-		<Checkbox bind:checked={editor.viewport.useBakedNormals3d}></Checkbox>
-	</label>
-	<label>
+	<div class={Styles.Row}>
 		<span>Fit Scale</span>
 		<Picker bind:index={indexGetSet.value} options={['.25x', '.5x', '1x', '2x', '4x']}></Picker>
-	</label>
+	</div>
 </MenuItem>
-
-<style>
-	div.group {
-		--gap: 0.4em;
-		--hr-margin: 0.1em;
-
-		display: flex;
-		flex-direction: column;
-		gap: var(--gap);
-		border-top: 1px solid var(--border);
-		padding: calc(var(--gap) + var(--hr-margin) * 2) 0;
-		margin-top: 0.4em;
-
-		&[hidden] {
-			display: none;
-		}
-
-		&.disabled {
-			opacity: 0.5;
-		}
-	}
-
-	i {
-		color: var(--text-3);
-		font-size: 0.9em;
-	}
-
-	hr {
-		border-color: var(--border);
-		margin: var(--hr-margin) 0;
-	}
-
-	label {
-		display: flex;
-		gap: 0.6em;
-		place-items: center;
-		color: var(--text-2);
-
-		span {
-			flex-grow: 1;
-		}
-	}
-</style>

@@ -1,9 +1,10 @@
 <script lang="ts">
+	import Styles from '$lib/css/components/menu.module.scss';
 	import type { HTMLInputAttributes } from 'svelte/elements';
 	let { value = $bindable(),...args }: HTMLInputAttributes = $props();
 </script>
 
-<input type="number" bind:value {...args} />
+<input type="number" class={Styles.WideInput} bind:value {...args} />
 
 <style>
 	input {

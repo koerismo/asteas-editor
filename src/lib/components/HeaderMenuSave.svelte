@@ -7,8 +7,8 @@
 		download,
 		type DownloadOptions,
 	} from '$lib/core/file_downloader.js';
-	import Checkbox from './buttons/Checkbox.svelte';
-	import PickerMultiple from './pickers/PickerMultiple.svelte';
+	import Checkbox from './inputs/Checkbox.svelte';
+	import PickerMultiple, { opt } from './pickers/PickerMultiple.svelte';
 	import Styles from '$lib/css/components/menu.module.scss';
 
 	const editor = getState();
@@ -24,19 +24,6 @@
 			return 'No targets selected.';
 		if (options.vtf.on && !editor.document.maps.color)
 			return 'No active image to export.';
-	}
-
-	function opt(name: string, out: { on: boolean }, desc?: string) {
-		return {
-			name,
-			desc,
-			get value() {
-				return out.on;
-			},
-			set value(v) {
-				out.on = v;
-			},
-		};
 	}
 
 	const options: DownloadOptions = $state({
@@ -103,10 +90,11 @@
 	<div class={Styles.Group} hidden={!options.rect.on}>
 		<b>Rectfile</b>
 		<i>No options.</i>
-		<!-- <label>
-			<span>Metadata extension</span>
-			<Checkbox></Checkbox>
-		</label> -->
+	</div>
+
+	<div class={Styles.Group} hidden={!options.obj.on}>
+		<b>Wavefront Obj</b>
+		<i>No options.</i>
 	</div>
 
 	{@const msg = getStatusMsg()}
@@ -116,46 +104,3 @@
 
 	<Button onclick={onSave} disabled={!!msg}>Save</Button>
 </MenuItem>
-
-<style>
-	div.group {
-		--gap: 0.4em;
-		--hr-margin: 0.1em;
-
-		display: flex;
-		flex-direction: column;
-		gap: var(--gap);
-		border-top: 1px solid var(--border);
-		padding: calc(var(--gap) + var(--hr-margin) * 2) 0;
-		margin-top: 0.4em;
-
-		&[hidden] {
-			display: none;
-		}
-
-		&.disabled {
-			opacity: 0.5;
-		}
-	}
-
-	i {
-		color: var(--text-3);
-		font-size: 0.9em;
-	}
-
-	hr {
-		border-color: var(--border);
-		margin: var(--hr-margin) 0;
-	}
-
-	label {
-		display: flex;
-		gap: 0.6em;
-		place-items: center;
-		color: var(--text-2);
-
-		span {
-			flex-grow: 1;
-		}
-	}
-</style>

@@ -1,4 +1,6 @@
 <script lang="ts">
+	import Styles from '$lib/css/components/menu.module.scss';
+
 	import { download } from '$lib/core/file_downloader.js';
 	import { getFileName } from '$lib/core/file_uploader';
 	import XIcon from '@lucide/svelte/icons/x';
@@ -57,7 +59,7 @@
 
 	function downloadInput() {
 		if (ondownload?.() === false) return;
-		if (!files) return;
+		if (!files || !files.length) return;
 		download(files);
 	}
 
@@ -70,7 +72,7 @@
 	}
 </script>
 
-<div class="upload" data-filled={has_files ? '' : undefined}>
+<div class="upload {Styles.WideInput}" data-filled={has_files ? '' : undefined}>
 	<label for={id}>
 		<span>{getTitle()} </span>
 	</label>

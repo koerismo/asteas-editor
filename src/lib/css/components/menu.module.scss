@@ -20,6 +20,10 @@
 		color: var(--text-3);
 		font-size: 0.9em;
 	}
+
+	.WideInput {
+		flex-grow: 1;
+	}
 }
 
 .Sheet > .Group {
@@ -33,6 +37,10 @@
 	padding: calc(var(--gap) + var(--hr-margin) * 2) 0;
 	margin-top: 0.4em;
 
+	&[hidden] {
+		display: none;
+	}
+
 	&.disabled {
 		opacity: 0.5;
 	}
@@ -42,6 +50,7 @@
 	display: flex;
 	gap: 0.6em;
 	place-items: center;
+	justify-content: stretch;
 
 	> span {
 		flex-grow: 1;

@@ -1,19 +1,22 @@
-<script lang="ts">
-	import type { Component } from "svelte";
-
-	// interface Props {
-	// 	options: string[];
-	// 	selected?: Record<number, boolean>;
-	// 	selectedCount?: number;
-	// 	value?: string;
-	// 	oninput?(): void;
-	// }
-
-	interface Option {
+<script module lang="ts">
+	export interface Option {
 		readonly name: Component | string;
 		readonly desc?: string;
 		value: boolean;
 	}
+
+	export function opt(name: Component | string, v: { on: boolean }, desc?: string): Option {
+		return {
+			name, desc,
+			get value() { return v.on; },
+			set value(_v: boolean) { v.on = _v; },
+		}
+	}
+</script>
+
+<script lang="ts">
+	import Styles from '$lib/css/components/menu.module.scss';
+	import type { Component } from 'svelte';
 
 	interface Props {
 		options: Option[];
@@ -36,7 +39,7 @@
 	}
 </script>
 
-<div>
+<div class={Styles.WideInput}>
 	{#each options as option, i (i)}
 		<button
 			role="checkbox"

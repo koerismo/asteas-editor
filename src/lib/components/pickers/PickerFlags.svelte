@@ -1,4 +1,5 @@
 <script lang="ts">
+	import Styles from '$lib/css/components/menu.module.scss';
 	import type { Component } from 'svelte';
 
 	type Option = (
@@ -25,7 +26,7 @@
 	<Icon size="1em"></Icon>
 {/snippet}
 
-<div>
+<div class={Styles.WideInput}>
 	{#each options as [optContent, v, desc], i (i)}
 		<button
 			role="checkbox"

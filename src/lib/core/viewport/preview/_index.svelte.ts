@@ -1,6 +1,6 @@
 import * as Three from 'three';
 
-import type { EditorState } from '$lib/core/context.svelte.js';
+import type { EditorState, ViewportMaps } from '$lib/core/context.svelte.js';
 import type { RectEntry } from '$lib/core/file.js';
 
 import { Viewport } from '../viewport_shared.js';
@@ -10,12 +10,17 @@ import Cube1 from '$lib/assets/meshes/cube2.glb?url';
 import { on } from 'svelte/events';
 import { Button } from '../mouse.js';
 
+import { makeSubscriber } from '$lib/core/history/reactive.js';
+
 export class PreviewViewport extends Viewport<Three.PerspectiveCamera> {
 	zoom: number = 1.0;
-	hotspotter?: ModelHotspotter;
-	mesh?: Three.Mesh;
-	texture?: Three.Texture;
 	orbit: Three.Object3D;
+	mesh?: Three.Mesh = $state.raw();
+
+	#refitSubscriber = makeSubscriber();
+
+	hotspotter?: ModelHotspotter;
+	size?: Three.Vector2Tuple;
 
 	constructor(
 			public canvas: HTMLCanvasElement,
@@ -50,11 +55,22 @@ export class PreviewViewport extends Viewport<Three.PerspectiveCamera> {
 		this.disposables.push(
 			$effect.root(() => {
 				$effect(() => {
-					this.hotspotter?.setScale(state.viewport.meshScale3d);
-					this.refit(state.document?.rects ?? []);
+					// console.log('Scale:', state.viewport.meshScale3d);
+					const scale = state.viewport.meshScale3d;
+					this.hotspotter?.setScale(scale);
+					this.#refitSubscriber.update();
 				});
+
 				$effect(() => {
-					this.update();
+					if (!state.document) return;
+					console.log('Refitting...');
+					this.refit(state.document.rects)
+				});
+				
+				$effect(() => {
+					if (!state.document) return;
+					this.updateMaps(state.viewport.mapCache);
+					this.updateSize(state.document.width, state.document.height);
 				});
 			})
 		);
@@ -87,10 +103,15 @@ export class PreviewViewport extends Viewport<Three.PerspectiveCamera> {
 	// 	this.setTexture(v);
 	// }
 
-	updateMaps() {
-		const maps = this.state.viewport.mapCache;
-		this.texture = maps.color;
+	updateSize(width: number, height: number) {
+		if (this.size && this.size[0] === width && this.size[1] === height)
+			return;
 
+		this.size = [width, height];
+		this.#refitSubscriber.update();
+	}
+
+	updateMaps(maps: ViewportMaps) {
 		if (!this.mesh) return;
 		const material = this.mesh.material as Three.MeshStandardMaterial;
 
@@ -105,26 +126,26 @@ export class PreviewViewport extends Viewport<Three.PerspectiveCamera> {
 
 		if (material.normalMap) {
 			material.normalMap.magFilter = Three.LinearFilter;
-			material.normalMap.flipY = true;
+			// material.normalMap.flipY = true;
 		}
 		
-		material.normalScale.set(1, 1);
+		material.normalScale.set(1, -1);
 		material.needsUpdate = true;
+
+		this.#refitSubscriber.update();
 	}
 
 	refit(rects: RectEntry[]) {
-		if (!this.hotspotter || !this.mesh || !this.texture) return;
+		this.#refitSubscriber.use();
+
+		if (!this.hotspotter || !this.mesh || !this.size)
+			return;
+
 		this.hotspotter.setRects(rects);
-		this.hotspotter.setSize(this.texture.width, this.texture.height)
+		this.hotspotter.setSize(...this.size)
 		this.hotspotter.fit(
 			this.mesh.geometry.getAttribute('uv')
 		);
-	}
-
-	update() {
-		this.updateMaps();
-		if (this.state.document)
-			this.refit(this.state.document.rects);
 	}
 
 	setup() {
@@ -134,7 +155,7 @@ export class PreviewViewport extends Viewport<Three.PerspectiveCamera> {
 
 			this.mesh = group.scene.children[0] as Three.Mesh;
 			const material = this.mesh.material as Three.MeshStandardMaterial;
-			
+
 			if (material.isMeshStandardMaterial) {
 				if (material.aoMap) {
 					material.aoMap.colorSpace = Three.SRGBColorSpace;
@@ -145,7 +166,7 @@ export class PreviewViewport extends Viewport<Three.PerspectiveCamera> {
 			this.hotspotter = new ModelHotspotter(this.mesh.geometry);
 			this.scene.add(this.mesh);
 
-			this.update();	
+			this.#refitSubscriber.update();
 		});
 
 		super.setup();
