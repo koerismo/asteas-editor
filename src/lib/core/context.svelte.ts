@@ -111,6 +111,7 @@ export class DocumentState implements AtlasFile {
 	}
 
 	setRects(rects: RectEntry[]) {
+		this.#history.clear();
 		this.#rects = rects;
 		this.#rectSubscriber.update();
 	}

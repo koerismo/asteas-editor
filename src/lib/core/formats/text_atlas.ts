@@ -1,5 +1,5 @@
 import { parse, KeyV, KeyVRoot, KeyVSet, DumpQuotationType } from 'fast-vdf';
-import { HotspotRect, HotSpotRectFlags, VHotspotResource } from 'vtf-js/resources';
+import { HotspotRect, HotSpotRectFlags } from 'vtf-js/resources';
 import { UploadType, type LoadResult } from '../file_uploader.js';
 import type { AtlasFile } from '../context.svelte.js';
 import type { RectLike } from '../aabb.js';

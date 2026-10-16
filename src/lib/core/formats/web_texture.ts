@@ -1,5 +1,4 @@
 import { VImageData } from 'vtf-js';
-import { DataBuffer } from 'vtf-js';
 import { UploadType, type LoadResult } from '../file_uploader.js';
 
 export async function load(
