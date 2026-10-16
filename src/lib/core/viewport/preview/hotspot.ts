@@ -2,6 +2,7 @@
 // Licensed under LGPLv3.0+
 
 function Ref<T>(t?: T): Ref<T> {
+	// eslint-disable-next-line @typescript-eslint/no-non-null-assertion
 	return { v: t! };
 }
 
@@ -16,7 +17,7 @@ const kFloatInf = Infinity;
 type FloatArray = Float32Array | Float64Array;
 
 function f32swap<T extends FloatArray>(a: T, b: T) {
-	for (let i=0, t=0; i<a.length; i++) {
+	for (let i=0, t: number; i<a.length; i++) {
 		t = a[i];
 		a[i] = b[i];
 		b[i] = t;
@@ -75,7 +76,7 @@ export class Mat3x2 {
 	readonly z: FloatArray;
 
 	constructor(v: FloatArray = new Float64Array(6)) {
-		if (v.length !== 6) throw 'whoops';
+		if (v.length !== 6) throw Error('whoops');
 		this.values = v;
 		this.x = v.subarray(0, 2);
 		this.y = v.subarray(2, 4);
@@ -96,7 +97,7 @@ export const enum RectFlags_t {
     alt_group         = 0x4,  // If true, this region belongs to the alternate group.
     tile_x            = 0x8,  // Can this region tile horizontally?
     tile_y            = 0x10, // Can this region tile vertically?
-    tile_x_y          = tile_x | tile_y,
+    tile_x_y          = 0x18,
 };
 
 
@@ -216,8 +217,9 @@ export class RectFitter {
 		out_tiling.xy[major_axis] = major_axis_count;
 		out_tiling.xy[minor_axis] = minor_axis_count;
 
+		const tiling_weight = (out_tiling.x * out_tiling.y - 1.0) * this.config.weight_tiling;
 		const dims_rect_tiled = new Vec2(dims_rect.x * out_tiling.x, dims_rect.y * out_tiling.y);
-		return this.GetBasicScore(dims_surf, dims_rect_tiled);
+		return this.GetBasicScore(dims_surf, dims_rect_tiled) + tiling_weight;
 	}
 
 	protected GetTiledScore(
@@ -235,17 +237,13 @@ export class RectFitter {
 		const major_axis =
 			+(use_minor_axis ? (dims_surf.y > dims_surf.x) : can_tile_y);
 
-		let tiling_1 = new Vec2(), tiling_2 = new Vec2();
-		let score_1: number, score_2: number;
+		const tiling_1 = new Vec2(), tiling_2 = new Vec2();
+		const score_1 = this.GetTiledScoreOnAxis(dims_surf, dims_rect, major_axis, true, use_minor_axis, tiling_1);
+		const score_2 = this.GetTiledScoreOnAxis(dims_surf, dims_rect, 1 - major_axis, use_minor_axis, true, tiling_2);
 
-		score_1 = this.GetTiledScoreOnAxis(dims_surf, dims_rect, major_axis, true, use_minor_axis, tiling_1);
-		score_2 = this.GetTiledScoreOnAxis(dims_surf, dims_rect, 1 - major_axis, use_minor_axis, true, tiling_2);
-
-		out_tiling.Copy(
-			score_2 > score_1
-				? tiling_2
-				: tiling_1
-		);
+		const t2 = score_2 > score_1;
+		out_score.v = t2 ? score_2 : score_1;
+		out_tiling.Copy(t2 ? tiling_2 : tiling_1);
 	}
 
 	GetScore(
@@ -336,6 +334,7 @@ export class RectFitter {
         tiling: Vec2,
         inset: number,
         rotation: number,
+        scaling: Vec2,
         m: Mat3x2
 	) {
 		// Calculate bounds
@@ -344,19 +343,33 @@ export class RectFitter {
 		const offset_x = (rect.mins.x + inset) / tex_size.x;
 		const offset_y = (rect.mins.y + inset) / tex_size.y;
 
+		const xB = scaling.x * -0.5 + 0.5;  // basis
+		const yB = scaling.y * -0.5 + 0.5;  // basis
+		const yiB = 1 - yB;                 // inverse basis
+		const xiB = 1 - xB;                 // inverse basis
+		const xM = scaling.x;               // slope
+		const yM = scaling.y;               // slope
+		const xiM = -xM;                    // inverse slope
+		const yiM = -yM;                    // inverse slope
+
 		// Create identity matrix
-		m.x[0] = 1;  m.x[1] = 0;
-		m.y[0] = 0;  m.y[1] = 1;
-		m.z[0] = 0;  m.z[1] = 0;
+		m.x[0] = xM;  m.x[1] =  0;
+		m.y[0] =  0;  m.y[1] = yM;
+		m.z[0] = xB;  m.z[1] = yB;
 
 		// Rotate
 		if (rotation === 2) {
-			m.x[0] = -1; m.y[1] = -1;
-			m.z[0] =  1; m.z[1] =  1;
+			m.x[0] = xiM; m.y[1] = yiM;
+			m.z[0] = xiB; m.z[1] = yiB;
 		} else if (rotation) {
 			f32swap(m.x, m.y);
-			if (rotation > 0)  { m.x[1] = -1; m.z[1] = 1; }
-			else               { m.y[0] = -1; m.z[0] = 1; }
+			if (rotation > 0)  {
+				m.x[1] = xiM;
+				m.z[1] = xiB;
+			} else {
+				m.y[0] = yiM;
+				m.z[0] = yiB;
+			}
 		}
 
 		// Scale

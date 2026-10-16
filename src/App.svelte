@@ -1,18 +1,18 @@
 <script lang="ts">
 	import Editor from '$lib/components/CanvasEditor.svelte';
-	// import Preview from '$lib/components/CanvasPreview.svelte';
+	import Preview from '$lib/components/CanvasPreview.svelte';
 	
 	import Header from '$lib/components/Header.svelte';
 	import Hello from '$lib/components/intro/Hello.svelte';
 	import Sidebar from '$lib/components/Sidebar.svelte';
 
-	import { EditorState, setEditorCtx } from '$lib/core/context.svelte.js';
+	import { EditorState, setState } from '$lib/core/context.svelte.js';
 	
 	// import { HotspotRect } from 'vtf-js/resources';
 	// import { RectFile } from '$lib/core/file.js';
 
-	const context = new EditorState();
-	setEditorCtx(context);
+	const editorState = new EditorState();
+	setState(editorState);
 
 	// context.setFile(RectFile.fromRects([
 	// 	new HotspotRect(0x10, 10, 10, 20, 20),
@@ -30,10 +30,12 @@
 <!-- main body -->
 <main>
 	<Header></Header>
-	{#if context.active}
+	{#if editorState.document}
 	<div>
 		<Editor></Editor>
-		<!-- <Preview></Preview> -->
+		{#if editorState.viewport.enable3d}
+		<Preview></Preview>
+		{/if}
 	</div>
 	{:else}
 		<Hello></Hello>

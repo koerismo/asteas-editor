@@ -1,12 +1,13 @@
 <script lang="ts">
+	import Styles from '$lib/css/components/menu.module.scss';
+
 	interface Props {
 		options: string[];
 		index?: number;
 		value?: string;
-		oninput?(opt: string): void;
 	}
 
-	let { options, index = $bindable(-1), value, oninput }: Props = $props();
+	let { options, index = $bindable(-1), value }: Props = $props();
 
 	$effect(() => {
 		if (index < 0 || index >= options.length) return;
@@ -18,7 +19,7 @@
 	}
 </script>
 
-<div role="radiogroup">
+<div role="radiogroup" class={Styles.WideInput}>
 	{#each options as option, i (i)}
 		<button
 			role="radio"
@@ -32,7 +33,7 @@
 
 <style lang="scss">
 	@use '$lib/css/components/button.scss' as btn;
-	
+
 	div {
 		@include btn.btn-group-accent(false);
 	}

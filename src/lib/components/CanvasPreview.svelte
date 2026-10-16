@@ -1,13 +1,13 @@
 <script lang="ts">
 	import { onMount } from 'svelte';
 	import type { PreviewViewport } from '$lib/core/viewport/preview/_index.svelte.js';
-	import { getEditorCtx } from '$lib/core/context.svelte.js';
+	import { getState } from '$lib/core/context.svelte.js';
 	import LoadingIcon from '@lucide/svelte/icons/loader-circle';
 
 	let canvas: HTMLCanvasElement;
 	let renderer: PreviewViewport;
 	let loading = $state(false);
-	const context = getEditorCtx();
+	const editor = getState();
 	
 	onMount(() => {
 		let cancel = false;
@@ -16,7 +16,8 @@
 			loading = true;
 			const { PreviewViewport } = await import('$lib/core/viewport/preview/_index.svelte.js');
 			if (cancel) return;
-			renderer = new PreviewViewport(canvas, context);
+			await editor.textureSync.initialize();
+			renderer = new PreviewViewport(canvas, editor);
 			loading = false;
 		}
 
@@ -41,6 +42,7 @@
 		width: 100%;
 		height: 100%;
 		position: relative;
+		width: 50%;
 
 		div.loader {
 			background-color: #111;

@@ -1,24 +1,30 @@
 import * as Three from 'three';
-import type { VImageEither } from 'vtf-js';
 
-import type { EditorState } from '$lib/core/context.svelte.js';
+import type { EditorState, ViewportMaps } from '$lib/core/context.svelte.js';
 import type { RectEntry } from '$lib/core/file.js';
 
-import { Viewport } from '../renderer.js';
+import { Viewport } from '../viewport_shared.js';
 import { ModelHotspotter } from './mesh.js';
 import { GLTFLoader } from 'three/addons/loaders/GLTFLoader.js';
-import Cube1 from '$lib/assets/meshes/cyl1.glb?url';
-import { VTextureLoader } from '../vtex_loader.js';
+import Cube1 from '$lib/assets/meshes/cube2.glb?url';
+import { on } from 'svelte/events';
+import { Button } from '../mouse.js';
+
+import { makeSubscriber } from '$lib/core/history/reactive.js';
 
 export class PreviewViewport extends Viewport<Three.PerspectiveCamera> {
 	zoom: number = 1.0;
+	orbit: Three.Object3D;
+	mesh?: Three.Mesh = $state.raw();
+
+	#refitSubscriber = makeSubscriber();
+
 	hotspotter?: ModelHotspotter;
-	mesh?: Three.Mesh;
-	texture?: Three.Texture;
+	size?: Three.Vector2Tuple;
 
 	constructor(
 			public canvas: HTMLCanvasElement,
-			public state: EditorState
+			public state: EditorState,
 		) {
 		super(
 			canvas,
@@ -27,82 +33,142 @@ export class PreviewViewport extends Viewport<Three.PerspectiveCamera> {
 			new Three.Scene(),
 		);
 
-		// this.camera.rotation.order
-		this.camera.position.z = 5;
-		this.camera.position.x = 3;
-		this.camera.position.y = 4;
-		this.camera.lookAt(0, 0, 0);
+		this.orbit = new Three.Object3D();
+		this.scene.add(this.orbit);
+		this.orbit.add(this.camera);
+
+		this.camera.position.set(0, 0, 5);
+		this.orbit.rotation.order = 'YXZ';
+
+		const lightDirectional = new Three.DirectionalLight(0xffffff, 2.0);
+		lightDirectional.position.set(-3, 1, 1);
+		this.orbit.add(lightDirectional);
+
+		const lightDirectional2 = new Three.DirectionalLight(0xffffff, 1.0);
+		lightDirectional2.position.set(3, -1, -2);
+		this.orbit.add(lightDirectional2);
+
+		const lightAmbient = new Three.AmbientLight(0xffffff, 0.8);
+		this.scene.add(lightAmbient);
 
 		this.scene.background = new Three.Color(0x111111);
-
-		this.init().then(() => {
-			this.start();
-		});
-
 		this.disposables.push(
 			$effect.root(() => {
 				$effect(() => {
-					this.refit(this.state.rects ?? []);
+					// console.log('Scale:', state.viewport.meshScale3d);
+					const scale = state.viewport.meshScale3d;
+					this.hotspotter?.setScale(scale);
+					this.#refitSubscriber.update();
 				});
+
 				$effect(() => {
-					this.setImage(this.state.image);
+					if (!state.document) return;
+					console.log('Refitting...');
+					this.refit(state.document.rects)
+				});
+				
+				$effect(() => {
+					if (!state.document) return;
+					this.updateMaps(state.viewport.mapCache);
+					this.updateSize(state.document.width, state.document.height);
 				});
 			})
 		);
+
+		this.disposables.push(on(this.canvas, 'mousemove', this.onMouseMove.bind(this)));
+		this.disposables.push(on(this.canvas, 'wheel', this.onWheel.bind(this)));
+
+		// Begin render loop!
+		this.setup();
 	}
 
+	onMouseMove(event: MouseEvent) {
+		if (event.buttons !== Button.Left) return;
+		this.orbit.rotation.x -= event.movementY * 0.01;
+		this.orbit.rotation.y -= event.movementX * 0.01;
+	}
+	
+	onWheel(event: WheelEvent) {
+		this.camera.position.z += event.deltaY * 0.01;
+	}
+	
 	updateCamera() {
 		this.camera.aspect = this.canvas.clientWidth / this.canvas.clientHeight;
 		this.camera.updateProjectionMatrix();
 	}
 
-	async setImage(image?: VImageEither) {
-		if (!image) return this.setTexture();
-		const v = await new VTextureLoader().parseImage(image);
-		this.setTexture(v);
+	// async setImage(image?: VImageEither) {
+	// 	if (!image) return this.setTexture();
+	// 	const v = await new VTextureLoader().parseImage(image);
+	// 	this.setTexture(v);
+	// }
+
+	updateSize(width: number, height: number) {
+		if (this.size && this.size[0] === width && this.size[1] === height)
+			return;
+
+		this.size = [width, height];
+		this.#refitSubscriber.update();
 	}
 
-	setTexture(v?: Three.Texture) {
-		this.texture = v;
-		this.updateMaterial();
-	}
+	updateMaps(maps: ViewportMaps) {
+		if (!this.mesh) return;
+		const material = this.mesh.material as Three.MeshStandardMaterial;
 
-	updateMaterial() {
-		if (!this.mesh || !this.texture) return;
-		// @ts-expect-error bwehhhh
-		this.mesh.material.map = this.texture;
+		// TODO: Make sure this is getting freed somehow to avoid texture data memleak
+		material.map = maps.color?.clone() ?? null;
+
+		if (material.map) {
+			material.map.magFilter = Three.LinearFilter;
+		}
+
+		material.normalMap = maps.normal ?? null;
+
+		if (material.normalMap) {
+			material.normalMap.magFilter = Three.LinearFilter;
+			// material.normalMap.flipY = true;
+		}
+		
+		material.normalScale.set(1, -1);
+		material.needsUpdate = true;
+
+		this.#refitSubscriber.update();
 	}
 
 	refit(rects: RectEntry[]) {
-		if (!this.hotspotter || !this.mesh || !this.texture) return;
+		this.#refitSubscriber.use();
+
+		if (!this.hotspotter || !this.mesh || !this.size)
+			return;
+
 		this.hotspotter.setRects(rects);
-		this.hotspotter.setSize(this.texture.width, this.texture.height)
+		this.hotspotter.setSize(...this.size)
 		this.hotspotter.fit(
-			this.mesh!.geometry.getAttribute('uv2')!,
-			this.mesh!.geometry.getAttribute('uv')!,
+			this.mesh.geometry.getAttribute('uv')
 		);
 	}
 
-	async init() {
-		const group = await new GLTFLoader().loadAsync(Cube1);
-		// console.log(group);
+	setup() {
+		const loader = new GLTFLoader();
+		loader.load(Cube1, group => {
+			if (this.disposed) return;
 
-		this.mesh = group.scene.children[0] as Three.Mesh;
-		const mbm = this.mesh.material as Three.MeshStandardMaterial;
-		mbm.aoMap!.colorSpace = Three.SRGBColorSpace;
-		mbm.aoMapIntensity = 1.2;
-		// this.mesh.material.aoMap = this.mesh.material.map;
-		this.hotspotter = new ModelHotspotter(this.mesh.geometry);
+			this.mesh = group.scene.children[0] as Three.Mesh;
+			const material = this.mesh.material as Three.MeshStandardMaterial;
 
-		this.scene.add(new Three.AmbientLight(0xffffff, 3.0));
-		this.scene.add(this.mesh);
+			if (material.isMeshStandardMaterial) {
+				if (material.aoMap) {
+					material.aoMap.colorSpace = Three.SRGBColorSpace;
+					material.aoMapIntensity = 1.2;
+				}
+			}
+	
+			this.hotspotter = new ModelHotspotter(this.mesh.geometry);
+			this.scene.add(this.mesh);
 
-		const geo = this.mesh.geometry;
-		const uvSrc = geo.getAttribute('uv')!;
-		geo.setAttribute('uv2', uvSrc.clone());
-		this.updateMaterial();
+			this.#refitSubscriber.update();
+		});
 
-		// this.mesh.scale.set(32, 32, 32);
-		// this.mesh.material.side = Three.BackSide;
+		super.setup();
 	}
 }

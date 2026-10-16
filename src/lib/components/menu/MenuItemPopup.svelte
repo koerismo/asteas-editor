@@ -1,5 +1,6 @@
 <script lang="ts">
 	import type { HTMLAttributes } from 'svelte/elements';
+	import Styles from '$lib/css/components/menu.module.scss';
 
 	let {
 		children,
@@ -13,7 +14,7 @@
 	} & HTMLAttributes<HTMLDivElement> = $props();
 </script>
 
-<div {...args} style:width={width} bind:this={element} popover="auto" class="sheet">
+<div {...args} style:width={width} bind:this={element} popover="auto" class={Styles.Sheet}>
 	{@render children?.()}
 </div>
 

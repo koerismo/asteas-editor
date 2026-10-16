@@ -2,18 +2,75 @@ import { createContext } from 'svelte';
 import type { VImageEither, Vtf } from 'vtf-js';
 import { on } from 'svelte/events';
 
-import { RectEntry, RectFile } from './file.js';
-import { AABB } from './aabb.js';
+import { RectEntry } from './file.js';
+import { AABB, type RectLike } from './aabb.js';
 
 import { makeSubscriber } from  './history/reactive.js';
 import { History } from './history/history.js';
-import { EditorIO } from './disk_io.js';
 
-function makeId(type: string, id: number) {
-	return type + '#' + id;
+import type { Texture } from 'three';
+import { TextureSync } from './gpu_sync.svelte.js';
+// import { EditorIO } from './file_uploader.js';
+
+// function makeId(type: string, id: number) {
+// 	return type + '#' + id;
+// }
+
+export interface TextureMaps<T> {
+	color?: T;
+	normal?: T;
+	height?: T;
+}
+
+export type ViewportMaps = TextureMaps<Texture>;
+export type DocumentMaps = TextureMaps<VImageEither>;
+
+
+export class ViewportState {
+	#mapCacheSubscriber = makeSubscriber();
+	#mapCache: ViewportMaps = {};
+
+	/** GPU texture cache. See {@link DocumentState} for the document CPU ones. */
+	get mapCache(): Readonly<ViewportMaps> {
+		this.#mapCacheSubscriber.use();
+		return this.#mapCache;
+	}
+
+	enable3d: boolean = $state.raw(false);
+	meshScale3d: number = $state.raw(1.0);
+	useLighting3d: boolean = $state.raw(true);
+
+	setCacheMap(key: keyof ViewportMaps, tex: Texture | undefined) {
+		this.#mapCache[key] = tex;
+		this.#mapCacheSubscriber.update();
+	}
+}
+
+export interface AtlasFile {
+	name: string;
+	width: number;
+	height: number;
+	maps: DocumentMaps;
+	rects: RectLike[];
 }
 
 export class EditorState {
+	readonly textureSync = new TextureSync(this);
+	readonly viewport = new ViewportState();
+
+	#document: DocumentState | undefined = $state.raw();
+	get document() { return this.#document; }
+
+	clearDocument() {
+		this.#document = undefined;
+	}
+
+	setDocument(document: DocumentState) {
+		this.#document = document;
+	}
+}
+
+export class DocumentState implements AtlasFile {
 	#history = new History<string>();
 	#selection = new Set<number>();
 	#rects: RectEntry[] = [];
@@ -21,13 +78,27 @@ export class EditorState {
 	#selectSubscriber = makeSubscriber();
 	#rectSubscriber = makeSubscriber();
 
-	public readonly io = new EditorIO(this);
+	public name: string;
+	public width: number = $state.raw(1024);
+	public height: number = $state.raw(1024);
 
-	public active: boolean = $state.raw(false);
-	public filename: string = $state.raw()!;
-
-	public image: VImageEither | undefined = $state.raw();
+	public maps: DocumentMaps = $state({});
 	public vtf: Vtf | undefined = $state.raw();
+
+	constructor(name: string, rects: RectEntry[]) {
+		if (import.meta.env.DEV && name.includes('.'))
+			throw Error('FOOTGUN WARNING: Name should not have extension!');
+		this.name = name;
+		this.#rects = rects;
+	}
+
+	static fromAtlasFile(file: AtlasFile): DocumentState {
+		const state = new DocumentState(file.name, file.rects.map(v => new RectEntry(v)));
+		state.width = file.width;
+		state.height = file.height;
+		state.maps = file.maps;
+		return state;
+	}
 
 	get selection(): ReadonlySet<number> {
 		this.#selectSubscriber.use();
@@ -39,64 +110,20 @@ export class EditorState {
 		return this.#rects;
 	}
 
-	clearRectFile() {
-		this.#selection.clear();
-		this.#history.clear();
-		
-		this.#rects = [];
-		this.filename = undefined!;
-		this.active = false;
-		
-		this.#selectSubscriber.update();
-		this.#rectSubscriber.update();
-	}
-
-	clearImage() {
-		this.image = undefined!;
-		this.vtf = undefined!;
-	}
-
-	setRectFile(
-			name: string,
-			rects: RectFile,
-		) {
-		this.#selection.clear();
-		this.#history.clear();
-
-		this.#rects = rects.rects;
-		this.filename = name;
-		this.active = true;
-
-		this.#selectSubscriber.update();
-		this.#rectSubscriber.update();
-	}
-
-	setImage(
-			image: VImageEither,
-			vtf: Vtf | undefined,
-		) {
-		this.image = image;
-		this.vtf = vtf;
-	}
+	// setMap(map: keyof DocumentMaps, image?: VImageEither<VPixelArray<ArrayBuffer>>) {
+	// 	this.maps[map] = image;
+	// }
 
 	mount() {
 		return on(document, 'keydown', this._onKeyDown.bind(this));
 	}
 
 	undo() {
-		return this.#history.undo();
+		this.#history.undo();
 	}
 
 	redo() {
-		return this.#history.redo();
-	}
-
-	getWidth() {
-		return this.image?.width ?? 512;
-	}
-
-	getHeight() {
-		return this.image?.height ?? 512;
+		this.#history.redo();
 	}
 
 	canUndo() { return this.#history.canUndo(); }
@@ -104,7 +131,7 @@ export class EditorState {
 
 	_validateId(index: number) {
 		if (index < 0 || index >= this.#rects.length)
-			throw `Bad index ${index}!`;
+			throw Error(`Bad index ${index}!`);
 	}
 
 	_onKeyDown(event: KeyboardEvent) {
@@ -134,7 +161,7 @@ export class EditorState {
 
 		for (const v of indices) {
 			if (typeof v !== 'number')
-				throw 'whoops';
+				throw Error('whoops');
 			this._validateId(v);
 		}
 
@@ -274,7 +301,7 @@ export class EditorState {
 		for (let i=0; i<this.#rects.length; i++) {
 			if (remove.includes(i)) continue;
 			next[idx] = this.#rects[i];
-			if (idx >= next.length) throw 'oob on remove!!';
+			if (idx >= next.length) throw Error('oob on remove!!');
 			idx++;
 		}
 
@@ -282,7 +309,7 @@ export class EditorState {
 		for (let i=0; i<add.length; i++) {
 			next[idx] = add[i];
 			indicesOut[i] = idx;
-			if (idx >= next.length) throw 'oob on add!!';
+			if (idx >= next.length) throw Error('oob on add!!');
 			idx++;
 		}
 
@@ -326,4 +353,5 @@ export class EditorState {
 	}
 }
 
-export const [getEditorCtx, setEditorCtx] = createContext<EditorState>();
+export const [getState, setState] = createContext<EditorState>();
+

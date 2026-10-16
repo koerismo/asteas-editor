@@ -1,0 +1,244 @@
+import * as Three from 'three';
+import BakeVert from './shader.vert?raw';
+import BakeFrag from './shader.frag?raw';
+import CopyVert from './screen.vert?raw';
+import CopyFrag from './screen.frag?raw';
+import type { RectLike } from '$lib/core/aabb.js';
+import { VImageData } from 'vtf-js';
+
+export const enum BakeMode {
+	None,
+	Height,
+	Normal,
+	Combined,
+}
+
+export interface BakerOptions {
+	mode: BakeMode;
+	radius?: number;
+	bevel?: number;
+	expo?: number;
+	intensity?: number;
+}
+
+const rectGeometry = new Three.PlaneGeometry(1, 1);
+rectGeometry.translate(0.5, 0.5, 0);
+
+const quadGeometry = new Three.PlaneGeometry(2, 2);
+
+function makeBakeMaterial(mode: BakeMode) {
+	return new Three.ShaderMaterial({
+		vertexShader: BakeVert,
+		fragmentShader: BakeFrag,
+		side: Three.DoubleSide,
+		// transparent: true,
+		uniforms: {
+			uBevel: { value: 0.0 },
+			uRadius: { value: 0.0 },
+			uExpo: { value: 1.0 },
+			uIntensity: { value: 1.0 },
+		},
+		defines: {
+			'BAKE_MODE': mode,
+			'MODE_HEIGHT': BakeMode.Height,
+			'MODE_NORMAL': BakeMode.Normal,
+			'MODE_COMBINED': BakeMode.Combined,
+		}
+	});
+}
+
+function makeCopyMaterial(texture: Three.Texture) {
+	return new Three.ShaderMaterial({
+		vertexShader: CopyVert,
+		fragmentShader: CopyFrag,
+		defines: { FLIP_V: 1, FLIP_GREEN: 0 },
+		// transparent: true,
+		uniforms: {
+			uMap: { value: texture },
+		}
+	});
+}
+
+const BG_HEIGHT = new Three.Color(0.0, 0.0, 0.0);
+const BG_NORMAL = new Three.Color(0.5, 0.5, 1.0);
+
+const bakeMaterialHeight = makeBakeMaterial(BakeMode.Height);
+const bakeMaterialNormal = makeBakeMaterial(BakeMode.Normal);
+const bakeMaterialCombined = makeBakeMaterial(BakeMode.Combined);
+
+const kMaxRects = 128;
+
+export class Baker {
+	protected options: BakerOptions = { mode: BakeMode.None };
+	protected stale: boolean = true;
+	
+	public canvas?: OffscreenCanvas | HTMLCanvasElement;
+	protected renderer: Three.WebGLRenderer;
+	protected mesh: Three.InstancedMesh<Three.BufferGeometry, Three.ShaderMaterial>;
+
+	protected rtScene = new Three.Scene();
+	protected copyScene = new Three.Scene();
+
+	protected camera = new Three.OrthographicCamera();
+	protected rtt = new Three.WebGLRenderTarget();
+
+	constructor(canvas?: OffscreenCanvas | HTMLCanvasElement, mode?: BakeMode) {
+		this.canvas = canvas;
+
+		this.rtScene = new Three.Scene();
+
+		this.mesh = new Three.InstancedMesh(rectGeometry, bakeMaterialCombined, kMaxRects);
+		this.mesh.frustumCulled = false;
+
+		this.rtScene.add(this.mesh);
+		this.setMode(mode ?? BakeMode.None);
+
+		this.camera = new Three.OrthographicCamera();
+		this.camera.position.set(0, 0, 10);
+		this.camera.near = 1.0;
+
+		this.rtt = new Three.WebGLRenderTarget();
+		const copyPlane = new Three.Mesh(quadGeometry, makeCopyMaterial(this.rtt.texture));
+		this.copyScene.add(copyPlane);
+
+		this.renderer = new Three.WebGLRenderer({
+			canvas: this.canvas,
+			alpha: true,
+			depth: false,
+			preserveDrawingBuffer: true,
+		});
+
+		this.renderer.autoClear = false;
+	}
+
+	render() {
+		if (
+			!this.rtt.width ||
+			!this.rtt.height ||
+			this.options.mode === BakeMode.None
+		) return;
+
+		this.renderer.setRenderTarget(this.rtt);
+		this.renderer.setViewport(0, 0, this.rtt.width, this.rtt.height);
+		this.renderer.clear();
+		this.renderer.render(this.rtScene, this.camera);
+
+		if (this.canvas && this.canvas.width && this.canvas.height) {
+			this.renderer.setRenderTarget(null);
+			this.renderer.setViewport(0, 0, this.canvas.width, this.canvas.height);
+			this.renderer.render(this.copyScene, this.camera);
+		}
+
+		this.stale = false;
+	}
+
+	getStale() {
+		return this.stale;
+	}
+
+	getData() {
+		const data = new Uint8Array(this.rtt.width * this.rtt.height * 4);
+		this.renderer.readRenderTargetPixels(this.rtt, 0, 0, this.rtt.width, this.rtt.height, data);
+		return new VImageData(data, this.rtt.width, this.rtt.height);
+	}
+
+	async toBlob(type: 'image/png' = 'image/png'): Promise<Blob> {
+		const canvas = this.canvas;
+		if (!canvas)
+			throw Error('Baker requires an attached canvas to generate a Blob!');
+
+		if (canvas instanceof OffscreenCanvas)
+			return await canvas.convertToBlob({ type, quality: 100 });
+
+		return new Promise<Blob>((resolve, reject) => {
+			canvas.toBlob(blob => {
+				if (blob) resolve(blob);
+				else reject(Error('Failed to convert canvas to Blob!'));
+			}, type, 100);
+		});
+	}
+
+	#updateOptions() {
+		this.mesh.material.uniforms.uRadius.value = this.options.radius ?? 0;
+		this.mesh.material.uniforms.uBevel.value = this.options.bevel ?? 0;
+		this.mesh.material.uniforms.uExpo.value = this.options.expo ?? 1;
+		this.mesh.material.uniforms.uIntensity.value = this.options.intensity ?? this.getDefaultIntensity();
+		this.mesh.material.uniformsNeedUpdate = true;
+	}
+
+	setMode(mode: BakeMode) {
+		this.options.mode = mode;
+		this.stale = true;
+
+		switch (mode) {
+			case BakeMode.Normal:
+				this.rtScene.background = BG_NORMAL;
+				this.mesh.material = bakeMaterialNormal;
+				break;
+			case BakeMode.Height:
+				this.rtScene.background = BG_HEIGHT;
+				this.mesh.material = bakeMaterialHeight;
+				break;
+			case BakeMode.Combined:
+				this.rtScene.background = null;
+				this.mesh.material = bakeMaterialCombined;
+				break;
+		}
+	}
+
+	getDefaultIntensity() {
+		const expo = this.options.expo ?? 1.0;
+		return 1 / expo;
+	}
+
+	setOptions(options: Omit<BakerOptions, 'mode'>) {
+		this.options.radius = options.radius;
+		this.options.bevel = options.bevel;
+		this.options.expo = options.expo;
+		this.options.intensity = options.intensity;
+		this.stale = true;
+		this.#updateOptions();
+	}
+
+	setSize(width: number, height: number, scale: number) {
+		if (this.canvas) {
+			this.canvas.width = width;
+			this.canvas.height = height;
+		}
+
+		if (width === this.rtt.width && height !== this.rtt.height)
+			return;
+		
+		this.rtt.setSize(width, height);
+		this.camera.bottom = 0;
+		this.camera.left = 0;
+		this.camera.right = width / scale;
+		this.camera.top = height / scale;
+		this.camera.updateProjectionMatrix();
+		this.stale = true;
+	}
+
+	setRects(rects: RectLike[]) {
+		const mat4 = new Three.Matrix4().identity();
+		const count = Math.min(rects.length, kMaxRects);
+
+		const withBounds = (x: number, y: number, w: number, h: number) => {
+			mat4.set(
+				w, 0, 0, x,
+				0, h, 0, y,
+				0, 0, 1, 0,
+				0, 0, 0, 1,
+			);
+		}
+
+		this.mesh.count = count;
+		for (let i = 0; i < count; i++) {
+			const r = rects[i];
+			withBounds(r.min_x, r.min_y, r.max_x - r.min_x, r.max_y - r.min_y);
+			this.mesh.setMatrixAt(i, mat4);
+		}
+
+		this.mesh.instanceMatrix.needsUpdate = true;
+		this.stale = true;
+	}
+}

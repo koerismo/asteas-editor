@@ -1,4 +1,4 @@
-@mixin btn-fill {
+@mixin btn-fill($hover: true) {
 	appearance: none;
 	border: none;
 
@@ -12,19 +12,21 @@
 		height: 0.9em;
 	}
 
-	&:hover, &:focus-visible {
-		background-color: var(--bg-2);
-		color: var(--text);
-	}
-
-	&:disabled {
-		background-color: var(--bg-2);
-		color: var(--text-4);
-	}
-
-	&:focus-visible {
-		outline: solid 1px var(--accent-500);
-		outline-offset: -1px;
+	@if $hover {
+		&:hover, &:focus-visible {
+			background-color: var(--bg-2);
+			color: var(--text);
+		}
+	
+		&:disabled {
+			background-color: var(--bg-2);
+			color: var(--text-4);
+		}
+	
+		&:focus-visible {
+			outline: solid 1px var(--accent-500);
+			outline-offset: -1px;
+		}
 	}
 }
 
@@ -45,11 +47,15 @@
 }
 
 @mixin btn-fill-accent($hoverable: true) {
-	@include btn-fill-arbitrary(var(--accent), var(--accent-400));
+	@if $hoverable {
+		@include btn-fill-arbitrary(var(--accent), var(--accent-400));
+	} @else {
+		@include btn-fill-arbitrary(var(--accent), false);
+	}
 }
 
 @mixin btn-fill-danger($hoverable: true) {
-	@include btn-fill-arbitrary(var(--danger-500), var(--danger-500));
+	@include btn-fill-arbitrary(var(--danger-500));
 }
 
 @mixin btn-radius() {

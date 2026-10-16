@@ -1,0 +1,59 @@
+.Sheet {
+	color: unset;
+	background: var(--bg-2);
+	border: 1px solid var(--border);
+	border-radius: var(--radius-md);
+
+	padding: 0.5em;
+	position: absolute;
+	inset: unset;
+
+	margin-top: 0.2em;
+
+	&:popover-open {
+		display: flex;
+		flex-direction: column;
+		gap: 0.4em;
+	}
+
+	> i {
+		color: var(--text-3);
+		font-size: 0.9em;
+	}
+
+	.WideInput {
+		flex-grow: 1;
+	}
+}
+
+.Sheet > .Group {
+	--gap: 0.4em;
+	--hr-margin: 0.1em;
+
+	display: flex;
+	flex-direction: column;
+	gap: var(--gap);
+	border-top: 1px solid var(--border);
+	padding: calc(var(--gap) + var(--hr-margin) * 2) 0;
+	margin-top: 0.4em;
+
+	&[hidden] {
+		display: none;
+	}
+
+	&.disabled {
+		opacity: 0.5;
+	}
+}
+
+.Sheet .Row {
+	display: flex;
+	gap: 0.6em;
+	place-items: center;
+	justify-content: stretch;
+
+	> span {
+		flex-grow: 1;
+		color: var(--text-2);
+	}
+}

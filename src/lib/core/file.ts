@@ -1,46 +1,21 @@
-import { HotspotRect, VHotspotResource } from 'vtf-js/resources';
-import { AABB, type AABBLike } from './aabb.js';
+import { HotspotRect } from 'vtf-js/resources';
+import { AABB, type AABBLike, type RectLike } from './aabb.js';
 
-export class RectFile {
-	public version: number = 1;
-	public rects: Readonly<RectEntry>[] = [];
-
-	static fromResource(res: VHotspotResource) {
-		const file = new RectFile(res.version);
-		file.setRectsFrom(res.rects);
-		return file;
-	}
-
-	static fromRects(rects: HotspotRect[]) {
-		const file = new RectFile(1);
-		file.setRectsFrom(rects);
-		return file;
-	}
-
-	constructor(version: number, rects?: RectEntry[]) {
-		this.version = version;
-		if (rects) this.rects = rects;
-	}
-
-	setRectsFrom(rects: (AABBLike | HotspotRect)[]) {
-		this.rects = rects.map(v => new RectEntry(v));
-	}
-
-	toResource(): VHotspotResource {
-		return new VHotspotResource(
-			0,
-			1,
-			0,
-			this.rects.map(v => v.toHotspotRect())
-		);
-	}
+export function toHotspotRect(rect: RectLike) {
+	return new HotspotRect(
+		rect.flags,
+		rect.min_x,
+		rect.min_y,
+		rect.max_x,
+		rect.max_y,
+	);
 }
 
 export class RectEntry extends AABB implements AABBLike {
 	flags: number = 0;
 
 	static g_rectCount = 0;
-	uuid = (RectEntry.g_rectCount++);
+	uuid = RectEntry.g_rectCount++;
 
 	constructor(rect?: HotspotRect | RectEntry | AABBLike) {
 		super();
@@ -48,15 +23,5 @@ export class RectEntry extends AABB implements AABBLike {
 			this.copy(rect);
 			this.flags = 'flags' in rect ? rect.flags : 0;
 		}
-	}
-
-	toHotspotRect() {
-		return new HotspotRect(
-			this.flags,
-			this.min_x,
-			this.min_y,
-			this.max_x,
-			this.max_y
-		);
 	}
 }

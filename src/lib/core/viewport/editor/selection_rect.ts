@@ -5,7 +5,7 @@ import Handle from '$lib/assets/viewport/handle.png';
 
 const handleGeometry = new Three.PlaneGeometry(1, 1);
 const handleMaterial = new Three.MeshBasicMaterial({
-	map: await (new Three.TextureLoader().loadAsync(Handle)),
+	map: await new Three.TextureLoader().loadAsync(Handle),
 	side: Three.DoubleSide,
 	alphaTest: 0.5,
 });
@@ -13,20 +13,25 @@ const handleMaterial = new Three.MeshBasicMaterial({
 const rectGeometry = new Three.PlaneGeometry(1, 1);
 rectGeometry.translate(0.5, 0.5, 0);
 
-const borderMaterial = makeMaterial(0x615FFF, 1.0);
-const centerMaterial = makeMaterial(0x615FFF, 0.1);
-const centerActiveMaterial = makeMaterial(0x615FFF, 0.3);
-const selectionBoxMaterial = makeMaterial(0xFFFFFF, 0.2);
+const borderMaterial = makeMaterial(0x615fff, 1.0);
+const centerMaterial = makeMaterial(0x615fff, 0.1);
+const centerActiveMaterial = makeMaterial(0x615fff, 0.3);
+const selectionBoxMaterial = makeMaterial(0xffffff, 0.2);
 
 function makeMaterial(color: number, opacity: number) {
-	return new Three.MeshBasicMaterial({ color, opacity, transparent: opacity < 1.0, side: Three.DoubleSide });
+	return new Three.MeshBasicMaterial({
+		color,
+		opacity,
+		transparent: opacity < 1.0,
+		side: Three.DoubleSide,
+	});
 }
 
 const HANDLE_SIZE = 32;
 const V_XNEG = new Three.Vector3(-1, 1, 1);
 const V_YNEG = new Three.Vector3(1, -1, 1);
 
-export type RectMode = typeof RectMode[keyof typeof RectMode];
+export type RectMode = (typeof RectMode)[keyof typeof RectMode];
 export const RectMode = {
 	Invalid: -1,
 	Default: 0,
@@ -42,10 +47,18 @@ export class VisualRect extends Three.Object3D {
 	visual_aabb: AABB;
 
 	protected pixelSize: number;
-	protected borderMeshes = new Three.InstancedMesh(rectGeometry, borderMaterial, 4);
+	protected borderMeshes = new Three.InstancedMesh(
+		rectGeometry,
+		borderMaterial,
+		4,
+	);
 	protected centerMesh = new Three.Mesh(rectGeometry, centerMaterial);
 
-	constructor(rect: RectEntry | AABB, pixelSize: number = 0.0, initMode: boolean = true) {
+	constructor(
+		rect: RectEntry | AABB,
+		pixelSize: number = 0.0,
+		initMode: boolean = true,
+	) {
 		super();
 		this.borderMeshes.frustumCulled = false;
 		this.pixelSize = pixelSize;
@@ -59,8 +72,7 @@ export class VisualRect extends Three.Object3D {
 		this.add(this.borderMeshes);
 		this.add(this.centerMesh);
 
-		if (initMode)
-			this.setMode(RectMode.Default);
+		if (initMode) this.setMode(RectMode.Default);
 	}
 
 	setRect(rect: RectEntry) {
@@ -70,7 +82,7 @@ export class VisualRect extends Three.Object3D {
 
 	copyBounds(bounds: AABB) {
 		if (import.meta.env.DEV && bounds instanceof RectEntry) {
-			throw 'FOOTGUN WARNING: Use setRect instead for rects!';
+			throw Error('FOOTGUN WARNING: Use setRect instead for rects!');
 		}
 		this.rect.copy(bounds);
 		this.visualSync();
@@ -78,18 +90,19 @@ export class VisualRect extends Three.Object3D {
 
 	setMode(mode: RectMode) {
 		if (this.mode === mode) return;
-		this.borderMeshes.visible = (mode !== RectMode.Dragging);
-		this.centerMesh.material = mode === RectMode.Default ? centerMaterial : centerActiveMaterial;
+		this.borderMeshes.visible = mode !== RectMode.Dragging;
+		this.centerMesh.material =
+			mode === RectMode.Default ? centerMaterial : centerActiveMaterial;
 		this.updateMesh();
 	}
-	
+
 	updateMesh(): boolean {
 		if (!this.visible) return false;
 		if (this.borderMeshes.visible) this._setupEdges();
 		this._setupCenter();
 		return true;
 	}
-	
+
 	visualSetTranslation(x: number, y: number) {
 		this.visual_aabb.copy(this.rect);
 		this.visual_aabb.translate(x, y);
@@ -97,12 +110,12 @@ export class VisualRect extends Three.Object3D {
 
 	visualSetCorner(corner: number, pos: Three.Vector2Like) {
 		const bb = this.visual_aabb;
-		corner & 1
-			? bb.max_x = Math.max(pos.x, bb.min_x + 1)
-			: bb.min_x = Math.min(pos.x, bb.max_x - 1);
-		corner & 2
-			? bb.max_y = Math.max(pos.y, bb.min_y + 1)
-			: bb.min_y = Math.min(pos.y, bb.max_y - 1);
+
+		if (corner & 1) bb.max_x = Math.max(pos.x, bb.min_x + 1);
+		else bb.min_x = Math.min(pos.x, bb.max_x - 1);
+
+		if (corner & 2) bb.max_y = Math.max(pos.y, bb.min_y + 1);
+		else bb.min_y = Math.min(pos.y, bb.max_y - 1);
 	}
 
 	visualSetBounds(bounds: AABB) {
@@ -128,13 +141,13 @@ export class VisualRect extends Three.Object3D {
 	getPointCorner(pt: Three.Vector2Like): number {
 		const bottom = pt.y > this.rect.center_y;
 		const right = pt.x > this.rect.center_x;
-		
+
 		const cx = right ? this.rect.max_x : this.rect.min_x;
 		const cy = bottom ? this.rect.max_y : this.rect.min_y;
 		const r = this.pixelSize * HANDLE_SIZE * 0.5;
 
 		if (Math.abs(pt.x - cx) > r || Math.abs(pt.y - cy) > r) return -1;
-		return (bottom ? 2 : 0) + (+right);
+		return (bottom ? 2 : 0) + +right;
 	}
 
 	setPixelSize(pixelSize: number) {
@@ -152,26 +165,27 @@ export class VisualRect extends Three.Object3D {
 		const h = this.visual_aabb.height;
 
 		const withBounds = (x: number, y: number, w: number, h: number) => {
+			// prettier-ignore
 			mat4.set(
 				w, 0, 0, x,
 				0, h, 0, y,
 				0, 0, 1, 0,
 				0, 0, 0, 1,
 			);
-		}
+		};
 
 		const S1 = this.pixelSize;
 		const S2 = S1 * 2;
 
 		withBounds(ab.min_x - S1, ab.min_y, w + S2, -S1);
 		this.borderMeshes.setMatrixAt(0, mat4);
-		
+
 		withBounds(ab.min_x - S1, ab.max_y, w + S2, S1);
 		this.borderMeshes.setMatrixAt(1, mat4);
-		
+
 		withBounds(ab.min_x, ab.min_y, -S1, h);
 		this.borderMeshes.setMatrixAt(2, mat4);
-		
+
 		withBounds(ab.max_x, ab.min_y, S1, h);
 		this.borderMeshes.setMatrixAt(3, mat4);
 
@@ -187,7 +201,11 @@ export class VisualRect extends Three.Object3D {
 }
 
 export class SelectionRect extends VisualRect {
-	protected handleMeshes = new Three.InstancedMesh(handleGeometry, handleMaterial, 4);
+	protected handleMeshes = new Three.InstancedMesh(
+		handleGeometry,
+		handleMaterial,
+		4,
+	);
 
 	constructor(aabb: AABB) {
 		super(aabb, 0.0, false);
@@ -202,7 +220,7 @@ export class SelectionRect extends VisualRect {
 		if (this.mode === mode) return;
 		this.borderMeshes.visible = false;
 		this.centerMesh.visible = mode === RectMode.Dragging;
-		this.handleMeshes.visible = (mode !== RectMode.Default && mode !== RectMode.Dragging);
+		this.handleMeshes.visible = mode !== RectMode.Default && mode !== RectMode.Dragging;
 		this.updateMesh();
 	}
 
@@ -239,5 +257,4 @@ export class SelectionRect extends VisualRect {
 
 		this.handleMeshes.instanceMatrix.needsUpdate = true;
 	}
-	
 }

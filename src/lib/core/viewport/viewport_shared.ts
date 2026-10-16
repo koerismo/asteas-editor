@@ -1,6 +1,5 @@
 import type { Camera, Scene, WebGLRenderer } from 'three';
-import { Disposable } from './disposable.js';
-// import { MouseComponent } from './mouse.js';
+import { Disposable } from '../disposable.js';
 
 export abstract class Viewport<T extends Camera> extends Disposable {
 	needsCameraUpdate = true;
@@ -19,7 +18,7 @@ export abstract class Viewport<T extends Camera> extends Disposable {
 	#onResize() {
 		clearTimeout(this.#resizeEndTimeout);
 		this.needsCameraUpdate = true;
-		this.#resizeEndTimeout = setTimeout(() => this.#onResizeEnd(), 100);
+		this.#resizeEndTimeout = setTimeout(() => { this.#onResizeEnd(); }, 100);
 	}
 
 	#onResizeEnd() {
@@ -37,30 +36,35 @@ export abstract class Viewport<T extends Camera> extends Disposable {
 
 	#started = false;
 
-	start() {
+	setup() {
 		if (this.#started)
-			throw 'Viewport start() run multiple times!';
-		
+			throw Error('Viewport setup() run multiple times!');
+
 		this.#started = true;
 		this.#onResizeEnd();
 
 		const observer = new ResizeObserver(this.#onResize.bind(this));
 		observer.observe(this.renderer.domElement);
 
-		// Begin render loop.
+		// Add listeners for deconstruction
+		this.disposables.push(() => {
+			observer.disconnect();
+			this.renderer.dispose();
+		});
+
+		// Begin render loop
 		this.render();
-		this.disposables.push(() => observer.disconnect());
 	}
 
 	render() {
 		if (this.disposed) return;
-		
+
 		if (this.needsCameraUpdate) {
 			this.needsCameraUpdate = false;
 			this.updateCamera();
 		}
 
 		this.renderer.render(this.scene, this.camera);
-		requestAnimationFrame(() => this.render());
+		requestAnimationFrame(() => { this.render(); });
     }
 }

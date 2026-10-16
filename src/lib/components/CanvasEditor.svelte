@@ -1,27 +1,32 @@
 <script lang="ts">
 	import { onMount } from 'svelte';
 	import type { EditorViewport } from '$lib/core/viewport/editor/_index.svelte.js';
-	import { getEditorCtx } from '$lib/core/context.svelte.js';
+	import { getState } from '$lib/core/context.svelte.js';
 	import LoadingIcon from '@lucide/svelte/icons/loader-circle';
+	// import ContextMenu from './menu/ContextMenu.svelte';
 
 	let canvas: HTMLCanvasElement;
 	let renderer: EditorViewport;
+	// let contextMenu: ContextMenu;
+
+	const editor = getState();
 	let loading = $state(false);
-	const context = getEditorCtx();
 	
 	onMount(() => {
 		let cancel = false;
 
-		async function initCanvas() {
+		(async () => {
 			loading = true;
 			const { EditorViewport } = await import('$lib/core/viewport/editor/_index.svelte.js');
-			if (cancel) return;
-			renderer = new EditorViewport(canvas, context);
-			loading = false;
-		}
+			const tmp = new EditorViewport(canvas, editor);
 
-		initCanvas();
-		
+			if (cancel) return;
+
+			renderer = tmp;
+			loading = false;
+			await editor.textureSync.initialize();
+		})();
+
 		return () => {
 			cancel = true;
 			renderer?.dispose();
@@ -34,6 +39,25 @@
 	<div class="loader" class:loading>
 		<LoadingIcon></LoadingIcon>
 	</div>
+	<!-- <ContextMenu bind:this={contextMenu}>
+		<h4>hi</h4>
+		<PickerFlags
+			oninput={onFlagsSet}
+			options={[
+				[IconRotate, HotSpotRectFlags.AllowRotation, 'Allow rotation'],
+				[IconFlip, HotSpotRectFlags.AllowReflection, 'Allow reflection'],
+			]}
+			value={rect.flags}
+		></PickerFlags>
+		<PickerFlags
+			oninput={onFlagsSet}
+			options={[
+				['x', HotSpotRectFlags.TileX, 'Tile horizontal'],
+				['y', HotSpotRectFlags.TileY, 'Tile vertical'],
+			]}
+			value={rect.flags}
+		></PickerFlags>
+	</ContextMenu> -->
 </div>
 
 <style>

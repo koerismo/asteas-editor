@@ -1,4 +1,2 @@
 allowBuilds:
   '@parcel/watcher': true
-minimumReleaseAgeExclude:
-  - vtf-js@1.2.2

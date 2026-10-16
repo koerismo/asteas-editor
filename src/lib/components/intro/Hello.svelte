@@ -1,16 +1,23 @@
 <script lang="ts">
-	import Upload from "../buttons/Upload.svelte";
+	import Upload from "../buttons/UploadArea.svelte";
 	import HelloExample from "./HelloExample.svelte";
 	import Icon from '$lib/assets/logo-white.svg';
-	import { getEditorCtx } from "$lib/core/context.svelte.js";
-	import { EditorIO } from "$lib/core/disk_io";
+	import { DocumentState, getState } from '$lib/core/context.svelte.js';
+	import { UploadHandler } from '$lib/core/file_uploader.js';
 	
-	const context = getEditorCtx();
-
+	const editor = getState();
 	
-	function onFiles(files: FileList) {
+	async function onFiles(files: FileList) {
 		if (!files.length) return;
-		context.io.loadFiles(files, true);
+		
+		const handler = new UploadHandler();
+		await handler.loadFiles(files);
+
+		const atlas = handler.toAtlasFile();
+		if (!atlas) return;
+
+		const document = DocumentState.fromAtlasFile(atlas);
+		editor.setDocument(document);
 	}
 
 	import ThumbExample from '$lib/assets/examples/thumb_example.jpg';
@@ -24,7 +31,7 @@
 	<HelloExample
 		{thumb}
 		{url}
-		{context}
+		{editor}
 		{title}
 		{author}></HelloExample>
 {/snippet}
