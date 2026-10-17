@@ -67,13 +67,13 @@
 
 	$effect(() => {
 		if (editor.document) {
-			const S = options.common.scale;
-			const w = editor.document.width * S, h = editor.document.height * S;
-			heightBaker?.setSize(w, h, S);
-			normalBaker?.setSize(w, h, S);
+			const scale = options.common.scale;
+			const width = editor.document.width, height = editor.document.height;
+			heightBaker?.setSize(width, height, scale);
+			normalBaker?.setSize(width, height, scale);
 		} else {
-			heightBaker?.setSize(0, 0, 1);
-			normalBaker?.setSize(0, 0, 1);
+			heightBaker?.setSize(0, 0);
+			normalBaker?.setSize(0, 0);
 		}
 	});
 

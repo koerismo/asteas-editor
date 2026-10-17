@@ -66,7 +66,10 @@ const bakeMaterialHeight = makeBakeMaterial(BakeMode.Height);
 const bakeMaterialNormal = makeBakeMaterial(BakeMode.Normal);
 const bakeMaterialCombined = makeBakeMaterial(BakeMode.Combined);
 
-const kMaxRects = 128;
+// TODO: Determine this dynamically.
+const kMaxRects = 256;
+
+let emit_max_rects_warning = true;
 
 export class Baker {
 	protected options: BakerOptions = { mode: BakeMode.None };
@@ -200,20 +203,28 @@ export class Baker {
 		this.#updateOptions();
 	}
 
-	setSize(width: number, height: number, scale: number) {
+	setSize(width: number, height: number, renderScale: number = 1) {
+		const rtWidth = Math.round(width * renderScale);
+		const rtHeight = Math.round(height * renderScale);
+	
 		if (this.canvas) {
-			this.canvas.width = width;
-			this.canvas.height = height;
+			this.canvas.width = rtWidth;
+			this.canvas.height = rtHeight;
 		}
 
-		if (width === this.rtt.width && height !== this.rtt.height)
-			return;
-		
-		this.rtt.setSize(width, height);
+		if (
+			rtWidth === this.rtt.width &&
+			rtHeight === this.rtt.height &&
+			width === this.camera.right &&
+			height === this.camera.top
+		) return;
+
+		this.rtt.setSize(rtWidth, rtHeight);
 		this.camera.bottom = 0;
 		this.camera.left = 0;
-		this.camera.right = width / scale;
-		this.camera.top = height / scale;
+		this.camera.right = width;
+		this.camera.top = height;
+
 		this.camera.updateProjectionMatrix();
 		this.stale = true;
 	}
@@ -221,6 +232,11 @@ export class Baker {
 	setRects(rects: RectLike[]) {
 		const mat4 = new Three.Matrix4().identity();
 		const count = Math.min(rects.length, kMaxRects);
+
+		if (rects.length > kMaxRects && emit_max_rects_warning) {
+			emit_max_rects_warning = false;
+			console.warn(`Exceeded ${kMaxRects} rects. Some will not be rendered in map bakes!`);
+		}
 
 		const withBounds = (x: number, y: number, w: number, h: number) => {
 			mat4.set(
