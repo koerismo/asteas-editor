@@ -13,7 +13,7 @@ export async function load(file: Blob, filter: UploadType): Promise<LoadResult> 
 
 	return {
 		atlas: { rects },
-	}
+	};
 }
 
 export function save(src: AtlasFile): File {
@@ -30,7 +30,12 @@ export function decode(data: ArrayBuffer): HotspotRect[] {
 }
 
 export function encode(rects: RectLike[]): ArrayBuffer {
-	const res = new VHotspotResource(0, 1, 0, rects.map(v => toHotspotRect(v)));
+	const res = new VHotspotResource(
+		0,
+		1,
+		0,
+		rects.map((v) => toHotspotRect(v)),
+	);
 
 	// eslint-disable-next-line @typescript-eslint/no-non-null-assertion
 	return res.encode(null!);

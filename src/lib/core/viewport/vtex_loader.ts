@@ -12,7 +12,7 @@ import {
 } from 'three';
 import Vtf, { VFormats, type VImageEither } from 'vtf-js';
 
-const formatMap: Partial<Record<VFormats, { format: CompressedPixelFormat, size: number }>> = {
+const formatMap: Partial<Record<VFormats, { format: CompressedPixelFormat; size: number }>> = {
 	[VFormats.DXT1]: { format: RGB_S3TC_DXT1_Format, size: 8 },
 	[VFormats.DXT3]: { format: RGBA_S3TC_DXT3_Format, size: 16 },
 	[VFormats.DXT5]: { format: RGBA_S3TC_DXT5_Format, size: 16 },
@@ -32,15 +32,21 @@ export const VTextureLoader = {
 		if (image.isEncoded && image.format in formatMap) {
 			// eslint-disable-next-line @typescript-eslint/no-non-null-assertion
 			const compressedFormat = formatMap[image.format]!;
-			const texture = new CompressedTexture([{
-				data: image.data,
-				width: image.width,
-				height: image.height
-			}], image.width, image.height, compressedFormat.format);
+			const texture = new CompressedTexture(
+				[
+					{
+						data: image.data,
+						width: image.width,
+						height: image.height,
+					},
+				],
+				image.width,
+				image.height,
+				compressedFormat.format,
+			);
 
 			return this.applyFlags(texture, srgb);
-		}
-		else {
+		} else {
 			const imageRawU8 = image.decode().coerce(Uint8Array);
 			const texture = new DataTexture(imageRawU8.data, imageRawU8.width, imageRawU8.height);
 			return this.applyFlags(texture, srgb);

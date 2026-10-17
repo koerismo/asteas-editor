@@ -4,11 +4,11 @@ import GridFrag from './grid.frag?raw';
 import { makeShaderMaterial, type ParamsToUniforms } from '../shader_material.js';
 
 type GridShaderParams = ParamsToUniforms<{
-	uInvProjectionMatrix: Three.Matrix4,
-	uPixelSize: Three.Vector2,
-	uGridPower: number,
-	uMousePos: Three.Vector2,
-	opacity: number,
+	uInvProjectionMatrix: Three.Matrix4;
+	uPixelSize: Three.Vector2;
+	uGridPower: number;
+	uMousePos: Three.Vector2;
+	opacity: number;
 }>;
 
 const gridMaterial = makeShaderMaterial<GridShaderParams>({
@@ -25,17 +25,11 @@ const gridMaterial = makeShaderMaterial<GridShaderParams>({
 	transparent: true,
 });
 
-export class GridObject extends Three.Mesh<
-	Three.PlaneGeometry,
-	typeof gridMaterial
-> {
+export class GridObject extends Three.Mesh<Three.PlaneGeometry, typeof gridMaterial> {
 	gridPower = 0.0;
 
 	constructor() {
-		super(
-			new Three.PlaneGeometry(2, 2),
-			gridMaterial
-		);
+		super(new Three.PlaneGeometry(2, 2), gridMaterial);
 
 		this.renderOrder = 99;
 		this.frustumCulled = false;
@@ -54,9 +48,8 @@ export class GridObject extends Three.Mesh<
 		renderer.getSize(pixelSize);
 		pixelSize.x /= devicePixelRatio;
 		pixelSize.y /= devicePixelRatio;
-
 	}
-	
+
 	setGridPower(v: number) {
 		this.gridPower = v;
 		this.material.uniforms.uGridPower.value = v;

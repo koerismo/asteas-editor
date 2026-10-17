@@ -12,9 +12,9 @@ import * as VtfFormat from './formats/vtf_atlas_texture.js';
 
 export interface DownloadOptions {
 	vtf: { on: boolean; source?: Vtf };
-	hot: { on: boolean; };
-	rect: { on: boolean; };
-	obj: { on: boolean; };
+	hot: { on: boolean };
+	rect: { on: boolean };
+	obj: { on: boolean };
 }
 
 export async function download(files: File[], filename?: string) {
@@ -23,7 +23,7 @@ export async function download(files: File[], filename?: string) {
 	if (files.length > 1) {
 		const zip = await downloadZip(files).blob();
 		a.href = URL.createObjectURL(zip);
-		a.download = setFileExt(filename ?? (files[0].name), '.zip');
+		a.download = setFileExt(filename ?? files[0].name, '.zip');
 	} else {
 		a.href = URL.createObjectURL(files[0]);
 		a.download = files[0].name;
@@ -35,26 +35,21 @@ export async function download(files: File[], filename?: string) {
 	a.remove();
 }
 
-
 export class AtlasDownloadHandler {
-	constructor(
-		public file: AtlasFile,
-	) {}
+	constructor(public file: AtlasFile) {}
 
 	async toCollection(options: DownloadOptions): Promise<File[]> {
 		const files: File[] = [];
 
-		if (options.hot.on)
-			files.push(this.toBinary());
+		if (options.hot.on) files.push(this.toBinary());
 
-		if (options.rect.on)
-			files.push(this.toText());
+		if (options.rect.on) files.push(this.toText());
 
-		if (options.obj.on)
-			files.push(this.toObj());
+		if (options.obj.on) files.push(this.toObj());
 
 		if (options.vtf.on) {
-			if (!options.vtf.source) throw Error('Vtf embedder must be modifying an existing file!');
+			if (!options.vtf.source)
+				throw Error('Vtf embedder must be modifying an existing file!');
 			files.push(await this.embedToVtf(options.vtf.source));
 		}
 

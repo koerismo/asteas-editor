@@ -1,10 +1,7 @@
 import { VImageData } from 'vtf-js';
 import { UploadType, type LoadResult } from '../file_uploader.js';
 
-export async function load(
-	file: File,
-	filter: UploadType,
-): Promise<LoadResult> {
+export async function load(file: File, filter: UploadType): Promise<LoadResult> {
 	if (!(filter & UploadType.kMaps)) return {};
 	const color = await decode(file);
 	return {
@@ -12,18 +9,12 @@ export async function load(
 	};
 }
 
-export async function save(
-	img: VImageData<Uint8Array<ArrayBuffer>>,
-): Promise<Blob> {
+export async function save(img: VImageData<Uint8Array<ArrayBuffer>>): Promise<Blob> {
 	const srcData = img.data;
 	const canvas = new OffscreenCanvas(img.width, img.height);
 
 	const data = new ImageData(
-		new Uint8ClampedArray(
-			srcData.buffer,
-			srcData.byteOffset,
-			srcData.length,
-		),
+		new Uint8ClampedArray(srcData.buffer, srcData.byteOffset, srcData.length),
 		img.width,
 		img.height,
 	);
@@ -52,16 +43,11 @@ export async function decode(file: Blob): Promise<VImageData> {
 	img.remove();
 
 	return new VImageData(
-		new Uint8Array(
-			rawData.data.buffer,
-			rawData.data.byteOffset,
-			rawData.data.length,
-		),
+		new Uint8Array(rawData.data.buffer, rawData.data.byteOffset, rawData.data.length),
 		rawData.width,
 		rawData.height,
 	);
 }
-
 
 // async function getPngSize(file: Blob): Promise<[number, number]> {
 // 	const view = DataBuffer.ref(await file.arrayBuffer());

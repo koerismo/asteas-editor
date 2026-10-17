@@ -5,7 +5,7 @@ import { on } from 'svelte/events';
 import { RectEntry } from './file.js';
 import { AABB, type RectLike } from './aabb.js';
 
-import { makeSubscriber } from  './history/reactive.js';
+import { makeSubscriber } from './history/reactive.js';
 import { History } from './history/history.js';
 
 import type { Texture } from 'three';
@@ -24,7 +24,6 @@ export interface TextureMaps<T> {
 
 export type ViewportMaps = TextureMaps<Texture>;
 export type DocumentMaps = TextureMaps<VImageEither>;
-
 
 export class ViewportState {
 	#mapCacheSubscriber = makeSubscriber();
@@ -59,7 +58,9 @@ export class EditorState {
 	readonly viewport = new ViewportState();
 
 	#document: DocumentState | undefined = $state.raw();
-	get document() { return this.#document; }
+	get document() {
+		return this.#document;
+	}
 
 	clearDocument() {
 		this.#document = undefined;
@@ -93,7 +94,10 @@ export class DocumentState implements AtlasFile {
 	}
 
 	static fromAtlasFile(file: AtlasFile): DocumentState {
-		const state = new DocumentState(file.name, file.rects.map(v => new RectEntry(v)));
+		const state = new DocumentState(
+			file.name,
+			file.rects.map((v) => new RectEntry(v)),
+		);
 		state.width = file.width;
 		state.height = file.height;
 		state.maps = file.maps;
@@ -132,12 +136,15 @@ export class DocumentState implements AtlasFile {
 		this.#history.redo();
 	}
 
-	canUndo() { return this.#history.canUndo(); }
-	canRedo() { return this.#history.canRedo(); }
+	canUndo() {
+		return this.#history.canUndo();
+	}
+	canRedo() {
+		return this.#history.canRedo();
+	}
 
 	_validateId(index: number) {
-		if (index < 0 || index >= this.#rects.length)
-			throw Error(`Bad index ${index}!`);
+		if (index < 0 || index >= this.#rects.length) throw Error(`Bad index ${index}!`);
 	}
 
 	_onKeyDown(event: KeyboardEvent) {
@@ -166,8 +173,7 @@ export class DocumentState implements AtlasFile {
 		const next = new Set(indices);
 
 		for (const v of indices) {
-			if (typeof v !== 'number')
-				throw Error('whoops');
+			if (typeof v !== 'number') throw Error('whoops');
 			this._validateId(v);
 		}
 
@@ -183,7 +189,7 @@ export class DocumentState implements AtlasFile {
 			undo: () => {
 				this.#selection = prev;
 				this.#selectSubscriber.update();
-			}
+			},
 		});
 	}
 
@@ -223,7 +229,7 @@ export class DocumentState implements AtlasFile {
 		for (const key in entries) {
 			next[key] = new AABB().copy(entries[key]);
 		}
-		
+
 		this.#history.add({
 			type: 'set_rect_bounds',
 			fastMerge: false,
@@ -240,14 +246,14 @@ export class DocumentState implements AtlasFile {
 					this.#rects[+key].copy(prev[key]);
 				}
 				this.#rectSubscriber.update();
-			}
+			},
 		});
 	}
 
 	$setRectFlags(indices: ArrayLike<number>, flags: number, mask: number) {
 		const oldFlags = new Uint16Array(indices.length);
 
-		for (let i=0; i<indices.length; i++) {
+		for (let i = 0; i < indices.length; i++) {
 			oldFlags[i] = this.#rects[indices[i]].flags;
 		}
 
@@ -256,22 +262,21 @@ export class DocumentState implements AtlasFile {
 			fastMerge: false,
 			run: true,
 			redo: () => {
-				for (let i=0; i<indices.length; i++) {
+				for (let i = 0; i < indices.length; i++) {
 					const rect = this.#rects[indices[i]];
-					rect.flags ^= (rect.flags & mask);
-					rect.flags |= (flags & mask);
+					rect.flags ^= rect.flags & mask;
+					rect.flags |= flags & mask;
 				}
 				this.#rectSubscriber.update();
 			},
-	
+
 			undo: () => {
-				for (let i=0; i<indices.length; i++) {
+				for (let i = 0; i < indices.length; i++) {
 					this.#rects[indices[i]].flags = oldFlags[i];
 				}
 				this.#rectSubscriber.update();
-			}
+			},
 		});
-		
 	}
 
 	$setRects(rects: RectEntry[]) {
@@ -285,14 +290,14 @@ export class DocumentState implements AtlasFile {
 			fastMerge: true,
 			run: true,
 
-			redo: ( ) => {
+			redo: () => {
 				this.#rects = next;
 				this.#rectSubscriber.update();
 			},
 			undo: () => {
 				this.#rects = prev;
 				this.#rectSubscriber.update();
-			}
+			},
 		});
 	}
 
@@ -304,7 +309,7 @@ export class DocumentState implements AtlasFile {
 		this.$selectionRemove(remove);
 
 		let idx = 0;
-		for (let i=0; i<this.#rects.length; i++) {
+		for (let i = 0; i < this.#rects.length; i++) {
 			if (remove.includes(i)) continue;
 			next[idx] = this.#rects[i];
 			if (idx >= next.length) throw Error('oob on remove!!');
@@ -312,7 +317,7 @@ export class DocumentState implements AtlasFile {
 		}
 
 		const indicesOut = new Array<number>(add.length);
-		for (let i=0; i<add.length; i++) {
+		for (let i = 0; i < add.length; i++) {
 			next[idx] = add[i];
 			indicesOut[i] = idx;
 			if (idx >= next.length) throw Error('oob on add!!');
@@ -324,14 +329,14 @@ export class DocumentState implements AtlasFile {
 			fastMerge: true,
 			run: true,
 
-			redo: ( ) => {
+			redo: () => {
 				this.#rects = next;
 				this.#rectSubscriber.update();
 			},
 			undo: () => {
 				this.#rects = prev;
 				this.#rectSubscriber.update();
-			}
+			},
 		});
 
 		return indicesOut;
@@ -342,9 +347,9 @@ export class DocumentState implements AtlasFile {
 	}
 
 	$rectsClone(rects: Iterable<number>): number[] {
-		const next = Array.from(rects, v => {
+		const next = Array.from(rects, (v) => {
 			this._validateId(v);
-			return new RectEntry(this.#rects[v])
+			return new RectEntry(this.#rects[v]);
 		});
 
 		return this.$rectsAdd(next);
@@ -360,4 +365,3 @@ export class DocumentState implements AtlasFile {
 }
 
 export const [getState, setState] = createContext<EditorState>();
-

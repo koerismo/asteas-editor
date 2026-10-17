@@ -23,9 +23,9 @@ export class PreviewViewport extends Viewport<Three.PerspectiveCamera> {
 	size?: Three.Vector2Tuple;
 
 	constructor(
-			public canvas: HTMLCanvasElement,
-			public state: EditorState,
-		) {
+		public canvas: HTMLCanvasElement,
+		public state: EditorState,
+	) {
 		super(
 			canvas,
 			new Three.WebGLRenderer({ antialias: true, canvas }),
@@ -64,15 +64,15 @@ export class PreviewViewport extends Viewport<Three.PerspectiveCamera> {
 				$effect(() => {
 					if (!state.document) return;
 					console.log('Refitting...');
-					this.refit(state.document.rects)
+					this.refit(state.document.rects);
 				});
-				
+
 				$effect(() => {
 					if (!state.document) return;
 					this.updateMaps(state.viewport.mapCache);
 					this.updateSize(state.document.width, state.document.height);
 				});
-			})
+			}),
 		);
 
 		this.disposables.push(on(this.canvas, 'mousemove', this.onMouseMove.bind(this)));
@@ -87,11 +87,11 @@ export class PreviewViewport extends Viewport<Three.PerspectiveCamera> {
 		this.orbit.rotation.x -= event.movementY * 0.01;
 		this.orbit.rotation.y -= event.movementX * 0.01;
 	}
-	
+
 	onWheel(event: WheelEvent) {
 		this.camera.position.z += event.deltaY * 0.01;
 	}
-	
+
 	updateCamera() {
 		this.camera.aspect = this.canvas.clientWidth / this.canvas.clientHeight;
 		this.camera.updateProjectionMatrix();
@@ -104,8 +104,7 @@ export class PreviewViewport extends Viewport<Three.PerspectiveCamera> {
 	// }
 
 	updateSize(width: number, height: number) {
-		if (this.size && this.size[0] === width && this.size[1] === height)
-			return;
+		if (this.size && this.size[0] === width && this.size[1] === height) return;
 
 		this.size = [width, height];
 		this.#refitSubscriber.update();
@@ -128,7 +127,7 @@ export class PreviewViewport extends Viewport<Three.PerspectiveCamera> {
 			material.normalMap.magFilter = Three.LinearFilter;
 			// material.normalMap.flipY = true;
 		}
-		
+
 		material.normalScale.set(1, -1);
 		material.needsUpdate = true;
 
@@ -138,19 +137,16 @@ export class PreviewViewport extends Viewport<Three.PerspectiveCamera> {
 	refit(rects: RectEntry[]) {
 		this.#refitSubscriber.use();
 
-		if (!this.hotspotter || !this.mesh || !this.size)
-			return;
+		if (!this.hotspotter || !this.mesh || !this.size) return;
 
 		this.hotspotter.setRects(rects);
-		this.hotspotter.setSize(...this.size)
-		this.hotspotter.fit(
-			this.mesh.geometry.getAttribute('uv')
-		);
+		this.hotspotter.setSize(...this.size);
+		this.hotspotter.fit(this.mesh.geometry.getAttribute('uv'));
 	}
 
 	setup() {
 		const loader = new GLTFLoader();
-		loader.load(Cube1, group => {
+		loader.load(Cube1, (group) => {
 			if (this.disposed) return;
 
 			this.mesh = group.scene.children[0] as Three.Mesh;
@@ -162,7 +158,7 @@ export class PreviewViewport extends Viewport<Three.PerspectiveCamera> {
 					material.aoMapIntensity = 1.2;
 				}
 			}
-	
+
 			this.hotspotter = new ModelHotspotter(this.mesh.geometry);
 			this.scene.add(this.mesh);
 

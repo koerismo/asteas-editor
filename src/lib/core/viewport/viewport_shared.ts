@@ -18,7 +18,9 @@ export abstract class Viewport<T extends Camera> extends Disposable {
 	#onResize() {
 		clearTimeout(this.#resizeEndTimeout);
 		this.needsCameraUpdate = true;
-		this.#resizeEndTimeout = setTimeout(() => { this.#onResizeEnd(); }, 100);
+		this.#resizeEndTimeout = setTimeout(() => {
+			this.#onResizeEnd();
+		}, 100);
 	}
 
 	#onResizeEnd() {
@@ -27,7 +29,7 @@ export abstract class Viewport<T extends Camera> extends Disposable {
 		this.renderer.setSize(
 			parentEl.clientWidth * devicePixelRatio,
 			parentEl.clientHeight * devicePixelRatio,
-			false
+			false,
 		);
 		this.needsCameraUpdate = true;
 	}
@@ -37,8 +39,7 @@ export abstract class Viewport<T extends Camera> extends Disposable {
 	#started = false;
 
 	setup() {
-		if (this.#started)
-			throw Error('Viewport setup() run multiple times!');
+		if (this.#started) throw Error('Viewport setup() run multiple times!');
 
 		this.#started = true;
 		this.#onResizeEnd();
@@ -65,6 +66,8 @@ export abstract class Viewport<T extends Camera> extends Disposable {
 		}
 
 		this.renderer.render(this.scene, this.camera);
-		requestAnimationFrame(() => { this.render(); });
-    }
+		requestAnimationFrame(() => {
+			this.render();
+		});
+	}
 }

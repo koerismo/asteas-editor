@@ -314,8 +314,7 @@ $color-black: #000;
 $color-white: #fff;
 
 :root {
-
-	--danger-50:  #{$color-red-50};
+	--danger-50: #{$color-red-50};
 	--danger-100: #{$color-red-100};
 	--danger-200: #{$color-red-200};
 	--danger-300: #{$color-red-300};
@@ -327,7 +326,7 @@ $color-white: #fff;
 	--danger-900: #{$color-red-900};
 	--danger-950: #{$color-red-950};
 
-	--accent-50:  #{$color-indigo-50};
+	--accent-50: #{$color-indigo-50};
 	--accent-100: #{$color-indigo-100};
 	--accent-200: #{$color-indigo-200};
 	--accent-300: #{$color-indigo-300};
@@ -339,7 +338,7 @@ $color-white: #fff;
 	--accent-900: #{$color-indigo-900};
 	--accent-950: #{$color-indigo-950};
 
-	--surface-50:  #{$color-zinc-50};
+	--surface-50: #{$color-zinc-50};
 	--surface-100: #{$color-zinc-100};
 	--surface-200: #{$color-zinc-200};
 	--surface-300: #{$color-zinc-300};
@@ -378,12 +377,12 @@ $color-white: #fff;
 	--accent: #{$color-indigo-500};
 
 	--text-h: #{$color-zinc-100};
-	--text:   #{$color-zinc-200};
+	--text: #{$color-zinc-200};
 	--text-2: #{$color-zinc-300};
 	--text-3: #{$color-zinc-400};
 	--text-4: #{$color-zinc-500};
 
-	--bg:   #{$color-zinc-900};
+	--bg: #{$color-zinc-900};
 	--bg-2: #{$color-zinc-800};
 	--bg-3: #{$color-zinc-700};
 	--bg-4: #{$color-zinc-600};

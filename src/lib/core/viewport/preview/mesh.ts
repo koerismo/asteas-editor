@@ -10,10 +10,10 @@ const kPreviewConfig = new WeightConfig();
 export class ModelHotspotter {
 	geo: Three.BufferGeometry;
 	islands: AABB[] = [];
-	
+
 	rects: Rect[] = [];
 	fitter = new RectFitter(kPreviewConfig);
-	
+
 	fitScale = 1.0;
 	size = new Vec2(1, 1);
 	uvIslandName = 'island';
@@ -27,13 +27,15 @@ export class ModelHotspotter {
 		geo.setAttribute(this.uvFixName, uvsOut);
 
 		this._parseIslands(uvsIn, uvsOut);
-		
+
 		uvsIn.array.set(uvsOut.array);
 		uvsIn.needsUpdate = true;
 	}
 
 	setRects(rects: RectEntry[]) {
-		this.rects = rects.map(v => new Rect(v.flags, new Vec2(v.min_x, v.min_y), new Vec2(v.max_x, v.max_y)));
+		this.rects = rects.map(
+			(v) => new Rect(v.flags, new Vec2(v.min_x, v.min_y), new Vec2(v.max_x, v.max_y)),
+		);
 	}
 
 	setSize(w: number, h: number) {
@@ -62,9 +64,8 @@ export class ModelHotspotter {
 		// while connections are still made, merge down each face to its neighbors with lower indices
 
 		const sortedFaces = new Uint16Array(faceCorners.length / 3);
-		for (let i=0; i<sortedFaces.length; i++)
-			sortedFaces[i] = i * 3;
-		
+		for (let i = 0; i < sortedFaces.length; i++) sortedFaces[i] = i * 3;
+
 		sortedFaces.sort((faceA, faceB) => {
 			const vertex1A = faceCorners[faceA];
 			const vertex1B = faceCorners[faceB];
@@ -76,8 +77,8 @@ export class ModelHotspotter {
 		const islandBounds: AABB[] = [];
 		let islandIdx = -1;
 		let islandVMax = -Infinity;
-	
-		for (let face=0; face<sortedFaces.length; face++) {
+
+		for (let face = 0; face < sortedFaces.length; face++) {
 			const index = sortedFaces[face];
 			const vtx1 = faceCorners[index];
 			const vtx2 = faceCorners[index + 1];
@@ -89,13 +90,13 @@ export class ModelHotspotter {
 
 			const vMin = Math.min(vv1, vv2, vv3);
 			const vMax = Math.max(vv1, vv2, vv3);
-			
+
 			if (vMin === vMax) {
 				console.warn('wtf');
 			}
 
 			if (vMin > islandVMax) {
-				islandIdx ++;
+				islandIdx++;
 				islandBounds[islandIdx] = new AABB().invalidate();
 				islandVMax = vMax;
 				// console.log('Created island at', islandVMax);
@@ -113,10 +114,11 @@ export class ModelHotspotter {
 		this.geo.setAttribute(this.uvIslandName, islandAttribute);
 
 		// Find bounds of each island
-		for (let i=0; i<faceCorners.length; i++) {
+		for (let i = 0; i < faceCorners.length; i++) {
 			const vertexIdx = faceCorners[i];
 			const uvIdx = vertexIdx * 2;
-			const u = srcUvs[uvIdx], v = srcUvs[uvIdx + 1];
+			const u = srcUvs[uvIdx],
+				v = srcUvs[uvIdx + 1];
 
 			const island = vertexIslands[vertexIdx];
 			islandBounds[island].expandToPoint(u, v);
@@ -128,7 +130,7 @@ export class ModelHotspotter {
 		// rescale islands to fill UV space
 
 		const islandTf = new Float64Array(islandBounds.length * 4);
-		for (let i=0, idx=0; i<islandBounds.length; i++) {
+		for (let i = 0, idx = 0; i < islandBounds.length; i++) {
 			const island = islandBounds[i];
 			if (!island.isValid()) {
 				console.warn('Empty island', i, '!');
@@ -140,24 +142,29 @@ export class ModelHotspotter {
 				if (island.width === 0 && island.height === 0) {
 					console.warn('Point UVs on island ' + i + '!');
 				} else {
-					console.warn('Bad UVs on island ' + i + '!', island.width === 0, island.height === 0);
+					console.warn(
+						'Bad UVs on island ' + i + '!',
+						island.width === 0,
+						island.height === 0,
+					);
 				}
 			}
 
 			islandTf[idx++] = island.min_x;
 			islandTf[idx++] = island.min_y;
-			islandTf[idx++] = island.width ? (1 / island.width) : 1;
-			islandTf[idx++] = island.height ? (1 / island.height) : 1;
+			islandTf[idx++] = island.width ? 1 / island.width : 1;
+			islandTf[idx++] = island.height ? 1 / island.height : 1;
 		}
-		
-		for (let i=0, idx=0; i<uvSrcAttribute.count; i++, idx+=2) {
+
+		for (let i = 0, idx = 0; i < uvSrcAttribute.count; i++, idx += 2) {
 			const islandIdx = vertexIslands[i];
 			const tfIdx = islandIdx * 4;
 
-			const u = srcUvs[idx], v = srcUvs[idx + 1];
-			const dstU = (u - islandTf[tfIdx])     * (islandTf[tfIdx + 2]);
-			const dstV = (v - islandTf[tfIdx + 1]) * (islandTf[tfIdx + 3]);
-			
+			const u = srcUvs[idx],
+				v = srcUvs[idx + 1];
+			const dstU = (u - islandTf[tfIdx]) * islandTf[tfIdx + 2];
+			const dstV = (v - islandTf[tfIdx + 1]) * islandTf[tfIdx + 3];
+
 			outUvs[idx] = dstU;
 			outUvs[idx + 1] = dstV;
 		}
@@ -176,7 +183,9 @@ export class ModelHotspotter {
 		const vertexIslands = islandAttribute.array;
 
 		if (targetUvAttribute.count !== uvCount) {
-			throw Error(`Target mesh size does not match analyzed mesh! (${targetUvAttribute.count} !== ${uvCount})`);
+			throw Error(
+				`Target mesh size does not match analyzed mesh! (${targetUvAttribute.count} !== ${uvCount})`,
+			);
 		}
 
 		const xFormBuffer = new Float64Array(this.islands.length * 6);
@@ -187,26 +196,29 @@ export class ModelHotspotter {
 
 		const flipping = new Vec2(1, 1);
 
-		for (let i=0, idx=0; i<this.islands.length; i++, idx+=6) {
+		for (let i = 0, idx = 0; i < this.islands.length; i++, idx += 6) {
 			this.islands[i].getSize(islandSize);
-			islandSize.x *= this.size.x * this.fitScale * 2.0; 
+			islandSize.x *= this.size.x * this.fitScale * 2.0;
 			islandSize.y *= this.size.y * this.fitScale * 2.0;
 
 			const rectIdx = this.fitter.FitRectToSurface(this.rects, islandSize, output);
-			const mat3x2 = xForms[i] = new Mat3x2(xFormBuffer.subarray(idx, idx + 6));
+			const mat3x2 = (xForms[i] = new Mat3x2(xFormBuffer.subarray(idx, idx + 6)));
 			if (rectIdx !== -1) {
-
 				let rotation = 0;
-				if (this.rects[rectIdx].CanRotate() && Math.random() > 0.5)
-					rotation = 2;
-				if (output.rotated)
-					rotation -= 1;
+				if (this.rects[rectIdx].CanRotate() && Math.random() > 0.5) rotation = 2;
+				if (output.rotated) rotation -= 1;
 
-				flipping.x = this.rects[rectIdx].CanReflect() && Math.random() > 0.5
-					? -1
-					: 1;
+				flipping.x = this.rects[rectIdx].CanReflect() && Math.random() > 0.5 ? -1 : 1;
 
-				this.fitter.GetFinalTransform(this.size, this.rects[rectIdx], output.tiling, 0, rotation, flipping, mat3x2);
+				this.fitter.GetFinalTransform(
+					this.size,
+					this.rects[rectIdx],
+					output.tiling,
+					0,
+					rotation,
+					flipping,
+					mat3x2,
+				);
 			} else {
 				mat3x2.values.set([1, 0, 0, 1, 0, 0]);
 			}
@@ -214,7 +226,7 @@ export class ModelHotspotter {
 
 		const vec = new Vec2();
 
-		for (let i=0, idx=0; i<uvCount; i++, idx+=2) {
+		for (let i = 0, idx = 0; i < uvCount; i++, idx += 2) {
 			const islandIdx = vertexIslands[i];
 			vec.Set(srcUvs[idx], srcUvs[idx + 1]);
 			xForms[islandIdx].Multiply(vec, vec);

@@ -36,7 +36,7 @@ export class EditorViewport extends Viewport<Three.OrthographicCamera> {
 	// contextMenu: ContextMenu;
 
 	state: EditorState;
-	
+
 	selected: number[] = [];
 	visualRects: VisualRect[] = [];
 	selectionRect: SelectionRect;
@@ -60,7 +60,9 @@ export class EditorViewport extends Viewport<Three.OrthographicCamera> {
 	zoom: number = 1 / 512;
 
 	/** TODO: This desyncs for a short period of time when rects are added/deleted */
-	hasSelection() { return this.selected.length !== 0; }
+	hasSelection() {
+		return this.selected.length !== 0;
+	}
 	mouseSelectedCorner: number = -1;
 	mouseSelectedWithin: boolean = false;
 
@@ -68,14 +70,11 @@ export class EditorViewport extends Viewport<Three.OrthographicCamera> {
 	imagePlane = new Three.Mesh(
 		kCommonQuad,
 		new Three.MeshBasicMaterial({
-			side: Three.BackSide
-		})
+			side: Three.BackSide,
+		}),
 	);
 
-	constructor(
-			canvas: HTMLCanvasElement,
-			state: EditorState,
-		) {
+	constructor(canvas: HTMLCanvasElement, state: EditorState) {
 		super(
 			canvas,
 			new Three.WebGLRenderer({ canvas, antialias: true, depth: false }),
@@ -98,7 +97,7 @@ export class EditorViewport extends Viewport<Three.OrthographicCamera> {
 		this.selectionRect = new SelectionRect(new AABB());
 		this.selectionRect.setMode(RectMode.Handles);
 		this.scene.add(this.selectionRect);
-		
+
 		this.disposables.push(
 			$effect.root(() => {
 				$effect(() => {
@@ -116,7 +115,7 @@ export class EditorViewport extends Viewport<Three.OrthographicCamera> {
 						this.centerCamera();
 					}
 				});
-			})
+			}),
 		);
 
 		// Begin render loop!
@@ -136,13 +135,13 @@ export class EditorViewport extends Viewport<Three.OrthographicCamera> {
 		this.camera.left = -ratio * area;
 		this.camera.right = ratio * area;
 		this.grid.setGridPower(Math.max(Math.log2(area) - 4, 1));
-		
+
 		this.selectionRect.setPixelSize(this.pixelSize);
 		for (let i = 0; i < this.visualRects.length; i++) {
 			this.visualRects[i].setPixelSize(this.pixelSize);
 		}
 
-		this.pixelSize = area / this.canvas.height * devicePixelRatio;
+		this.pixelSize = (area / this.canvas.height) * devicePixelRatio;
 		this.camera.updateProjectionMatrix();
 	}
 
@@ -170,7 +169,7 @@ export class EditorViewport extends Viewport<Three.OrthographicCamera> {
 		const mX = this.mouse.pos_nrm.x * 2 - 1;
 		const mY = this.mouse.pos_nrm.y * 2 - 1;
 
-		this.camera.position.x += mX * farMovement * this.canvas.width / this.canvas.height;
+		this.camera.position.x += (mX * farMovement * this.canvas.width) / this.canvas.height;
 		this.camera.position.y += mY * farMovement;
 		this.needsCameraUpdate = true;
 	}
@@ -185,19 +184,18 @@ export class EditorViewport extends Viewport<Three.OrthographicCamera> {
 			this.selectionRect.visualSetTranslation(x, y);
 			this.selectionRect.updateMesh();
 
-			for (let i=0; i<this.selected.length; i++) {
+			for (let i = 0; i < this.selected.length; i++) {
 				const rect = this.visualRects[this.selected[i]];
 				rect.visualSetTranslation(x, y);
 				rect.updateMesh();
 			}
-		}
-		else {
+		} else {
 			const x = snap(this.mouseWorldPos.x, gridSnapUser);
 			const y = snap(this.mouseWorldPos.y, gridSnapUser);
 			const v: Vec2Like = { x, y };
 			this.selectionRect.visualSetCorner(corner, v);
 			this.selectionRect.updateMesh();
-			
+
 			const ab1 = this.selectionRect.rect;
 			const ab2 = this.selectionRect.visual_aabb;
 
@@ -206,7 +204,7 @@ export class EditorViewport extends Viewport<Three.OrthographicCamera> {
 			const trans_x = ab2.min_x - ab1.min_x * scale_x;
 			const trans_y = ab2.min_y - ab1.min_y * scale_y;
 
-			for (let i=0; i<this.selected.length; i++) {
+			for (let i = 0; i < this.selected.length; i++) {
 				const rect = this.visualRects[this.selected[i]];
 				rect.visualSetScaleTranslation(scale_x, scale_y, trans_x, trans_y);
 				rect.visual_aabb.snap(gridSnap);
@@ -221,7 +219,7 @@ export class EditorViewport extends Viewport<Three.OrthographicCamera> {
 
 		const rectBounds: Record<number, AABB> = {};
 
-		for (let i=0; i<this.selected.length; i++) {
+		for (let i = 0; i < this.selected.length; i++) {
 			const rectIdx = this.selected[i];
 			const rect = this.visualRects[rectIdx];
 			rectBounds[rectIdx] = rect.visual_aabb;
@@ -237,7 +235,7 @@ export class EditorViewport extends Viewport<Three.OrthographicCamera> {
 
 		const document = this.getDocument();
 		if (!document) return;
-		
+
 		const withinSelectionBox = this.hasSelection() && this.mouseSelectedWithin;
 		const selectionBoxCorner = this.mouseSelectedCorner;
 
@@ -292,7 +290,7 @@ export class EditorViewport extends Viewport<Three.OrthographicCamera> {
 			case UserAction.CopyTranslating:
 				this.updateVisual(event.offsetX, event.offsetY, this.mouseSelectedCorner);
 				break;
-			
+
 			case UserAction.Selecting:
 				this.selectionRect.visualExpandToPoint(this.mouseWorldPos);
 				this.selectionRect.updateMesh();
@@ -303,12 +301,24 @@ export class EditorViewport extends Viewport<Three.OrthographicCamera> {
 
 		if (!this.currentAction && this.hasSelection()) {
 			switch (this.selectionRect.getPointCorner(this.mouseWorldPos)) {
-				case 0: { cursor = 'nw-resize'; break }
-				case 1: { cursor = 'ne-resize'; break }
-				case 2: { cursor = 'sw-resize'; break }
-				case 3: { cursor = 'se-resize'; break }
+				case 0: {
+					cursor = 'nw-resize';
+					break;
+				}
+				case 1: {
+					cursor = 'ne-resize';
+					break;
+				}
+				case 2: {
+					cursor = 'sw-resize';
+					break;
+				}
+				case 3: {
+					cursor = 'se-resize';
+					break;
+				}
 			}
-	
+
 			if (!cursor) {
 				if (this.selectionRect.rect.containsPoint(this.mouseWorldPos)) {
 					cursor = 'move';
@@ -340,7 +350,7 @@ export class EditorViewport extends Viewport<Three.OrthographicCamera> {
 
 		if (this.currentAction === UserAction.Selecting) {
 			const selection = new Set<number>();
-			for (let i=0; i<this.visualRects.length; i++) {
+			for (let i = 0; i < this.visualRects.length; i++) {
 				const rect = this.visualRects[i];
 				if (this.selectionRect.visual_aabb.overlapsRect(rect.rect)) {
 					selection.add(i);
@@ -348,7 +358,7 @@ export class EditorViewport extends Viewport<Three.OrthographicCamera> {
 			}
 
 			if (event.shiftKey) {
-				document.$selectionAdd(selection)
+				document.$selectionAdd(selection);
 			} else {
 				document.$setSelection(selection);
 			}
@@ -359,13 +369,13 @@ export class EditorViewport extends Viewport<Three.OrthographicCamera> {
 		if (!this.currentAction) {
 			if (this.mouseSelectedCorner === -1) {
 				let selectIdx = -1;
-				for (let i=0; i<this.visualRects.length; i++) {
+				for (let i = 0; i < this.visualRects.length; i++) {
 					const rect = this.visualRects[i];
 					if (!rect.rect.containsPoint(this.mouseWorldPos)) continue;
 					selectIdx = i;
 					break;
 				}
-				
+
 				if (selectIdx !== -1) {
 					if (event.shiftKey) {
 						document.$selectionToggle(selectIdx);
@@ -388,7 +398,7 @@ export class EditorViewport extends Viewport<Three.OrthographicCamera> {
 
 	setSelection(selection: ReadonlySet<number>) {
 		this.selected.length = selection.size;
-		
+
 		let i = 0;
 		for (const v of selection) {
 			this.selected[i++] = v;
@@ -423,14 +433,13 @@ export class EditorViewport extends Viewport<Three.OrthographicCamera> {
 	rebuildSelectionRect() {
 		this.selectionRect.visible = false;
 		this.selectionRect.rect.set(Infinity, Infinity, -Infinity, -Infinity);
-		
+
 		if (this.hasSelection()) {
-			for (let i=0; i<this.selected.length; i++) {
+			for (let i = 0; i < this.selected.length; i++) {
 				const rect = this.visualRects[this.selected[i]];
 				// TODO: Update types
 				// eslint-disable-next-line @typescript-eslint/no-unnecessary-condition
-				if (rect)
-					this.selectionRect.rect.expandToRect(rect.rect);
+				if (rect) this.selectionRect.rect.expandToRect(rect.rect);
 			}
 
 			if (this.selectionRect.rect.isValid()) {
@@ -440,7 +449,7 @@ export class EditorViewport extends Viewport<Three.OrthographicCamera> {
 		}
 	}
 
-	worldToScreen(i: Three.Vector2Like, out: { x: number; y: number; }) {
+	worldToScreen(i: Three.Vector2Like, out: { x: number; y: number }) {
 		const m = this.camera.projectionMatrix.elements;
 		const v = this.camera.matrixWorldInverse.elements;
 		out.x = m[0] * i.x + m[4] * i.y + m[12] + v[12];
@@ -449,7 +458,7 @@ export class EditorViewport extends Viewport<Three.OrthographicCamera> {
 		out.y = out.y * -0.5 - 0.5;
 	}
 
-	screenToWorld(i: Three.Vector2Like, out: { x: number; y: number; }) {
+	screenToWorld(i: Three.Vector2Like, out: { x: number; y: number }) {
 		const m = this.camera.projectionMatrixInverse.elements;
 		const v = this.camera.matrixWorld.elements;
 		const x = i.x * 2 - 1;
@@ -459,7 +468,7 @@ export class EditorViewport extends Viewport<Three.OrthographicCamera> {
 	}
 
 	getRectAtPoint(point: Three.Vector2Like) {
-		for (let i=0; i<this.visualRects.length; i++) {
+		for (let i = 0; i < this.visualRects.length; i++) {
 			const rect = this.visualRects[i];
 			if (!rect.rect.containsPoint(point)) continue;
 			return i;
@@ -486,8 +495,7 @@ export class EditorViewport extends Viewport<Three.OrthographicCamera> {
 			this.imagePlane.material.map = null;
 			this.imagePlane.visible = false;
 			return;
-		}
-		else {
+		} else {
 			this.imagePlane.visible = true;
 		}
 

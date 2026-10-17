@@ -16,7 +16,9 @@ export class HistoryActionGroup<T> {
 		const prev = this.items.length && this.items[this.items.length - 1];
 		if (action.fastMerge && prev && prev.fastMerge && prev.type === action.type) {
 			// TODO: Precautionary context binding. Is this necessary?
-			prev.redo = () => { action.redo(); }
+			prev.redo = () => {
+				action.redo();
+			};
 			// console.info('Merging with quick method!');
 		} else {
 			this.items.push(Object.assign({}, action));
@@ -25,13 +27,11 @@ export class HistoryActionGroup<T> {
 	}
 
 	undo() {
-		for (let i = this.items.length - 1; i >= 0; i--)
-			this.items[i].undo();
+		for (let i = this.items.length - 1; i >= 0; i--) this.items[i].undo();
 	}
 
 	redo() {
-		for (let i = 0; i < this.items.length; i++)
-			this.items[i].redo();
+		for (let i = 0; i < this.items.length; i++) this.items[i].redo();
 	}
 }
 
@@ -46,7 +46,7 @@ export class History<T> {
 		this._undoRedoEffect.use();
 		return this._pos > 0;
 	}
-	
+
 	canRedo() {
 		this._undoRedoEffect.use();
 		return this._pos < this._history.length;
@@ -71,7 +71,7 @@ export class History<T> {
 	commit() {
 		if (!this._working_group.items.length) return;
 
-		this._pos ++;
+		this._pos++;
 		this._history.length = this._pos;
 		this._history[this._pos - 1] = this._working_group;
 
@@ -81,7 +81,7 @@ export class History<T> {
 
 	undo() {
 		if (this._pos <= 0) return;
-		this._pos --;
+		this._pos--;
 		this._history[this._pos].undo();
 		this._undoRedoEffect.update();
 	}
@@ -89,7 +89,7 @@ export class History<T> {
 	redo() {
 		if (this._pos >= this._history.length) return;
 		this._history[this._pos].redo();
-		this._pos ++;
+		this._pos++;
 		this._undoRedoEffect.update();
 	}
 }

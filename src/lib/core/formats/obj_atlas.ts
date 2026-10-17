@@ -13,7 +13,6 @@ interface OBJMeshDict {
 	faces: number[][];
 }
 
-
 const kSplitRegex = /\s+/g;
 const kDefaultFlags = HotSpotRectFlags.AllowRotation | HotSpotRectFlags.AllowReflection;
 
@@ -21,10 +20,7 @@ const kDefaultFlags = HotSpotRectFlags.AllowRotation | HotSpotRectFlags.AllowRef
 
 const OBJFormat = {
 	encode({ vertices, uvs, faces }: OBJMeshDict): string {
-		const output: string[] = [
-			'# ' + getProduct(),
-			'o Atlas'
-		];
+		const output: string[] = ['# ' + getProduct(), 'o Atlas'];
 
 		for (let idx = 0; idx < vertices.length;) {
 			output.push('v ' + vertices[idx++] + ' ' + vertices[idx++] + ' ' + vertices[idx++]);
@@ -36,7 +32,7 @@ const OBJFormat = {
 
 		for (let i = 0; i < faces.length; i++) {
 			const f = faces[i];
-			const lineOut = f.map(v => (v+1) + '/' + (v+1));
+			const lineOut = f.map((v) => v + 1 + '/' + (v + 1));
 			output.push('f ' + lineOut.join(' '));
 		}
 
@@ -60,12 +56,12 @@ const OBJFormat = {
 
 			const newId = vertCount;
 			vertCache[hash] = newId;
-			vertCount ++;
+			vertCount++;
 
 			vertices.push(objVerts[vertIdx], objVerts[vertIdx + 1], objVerts[vertIdx + 2]);
 			uvs.push(objUvs[uvIdx], objUvs[uvIdx + 1]);
 			return newId;
-		}
+		};
 
 		for (let i = 0; i < lines.length; i++) {
 			const line = lines[i];
@@ -82,14 +78,14 @@ const OBJFormat = {
 					objUvs.push(+args[0], +(args[1] ?? 0));
 					break;
 				case 'f':
-					faces.push(args.map<number>(v => {
-						const VUN = v.split('/', 3);
-						const V = +VUN[0], U = +VUN[1];
-						return getVert(
-							(V - 1) * 3,
-							(U - 1) * 2
-						);
-					}));
+					faces.push(
+						args.map<number>((v) => {
+							const VUN = v.split('/', 3);
+							const V = +VUN[0],
+								U = +VUN[1];
+							return getVert((V - 1) * 3, (U - 1) * 2);
+						}),
+					);
 					break;
 			}
 		}
@@ -98,18 +94,22 @@ const OBJFormat = {
 			uvs,
 			vertices,
 			faces,
-		}
+		};
 	},
 } as const;
 
 // #region Atlas transpiler
 
-export async function load(file: Blob, filter: UploadType, context: LoadAtlasMeta): Promise<LoadResult> {
+export async function load(
+	file: Blob,
+	filter: UploadType,
+	context: LoadAtlasMeta,
+): Promise<LoadResult> {
 	if (!(filter & UploadType.kAtlas)) return {};
 
 	const text = await file.text();
 	const rects = decode(text, context.width, context.height);
-	return { atlas: { rects } }
+	return { atlas: { rects } };
 }
 
 export function save(src: AtlasFile): File {
@@ -130,7 +130,8 @@ export function decode(text: string, width: number, height: number): HotspotRect
 
 		for (let j = 0; j < face.length; j++) {
 			const idx = face[j] * 2;
-			const u = uvs[idx], v = 1.0 - uvs[idx + 1];
+			const u = uvs[idx],
+				v = 1.0 - uvs[idx + 1];
 			if (u < min_x) min_x = u;
 			if (u > max_x) max_x = u;
 			if (v < min_y) min_y = v;
@@ -150,7 +151,7 @@ export function decode(text: string, width: number, height: number): HotspotRect
 }
 
 export function encode(rects: RectLike[], width: number, height: number): string {
-	let vertCount = 0
+	let vertCount = 0;
 
 	const vertices: number[] = [];
 	const uvs: number[] = [];
@@ -160,19 +161,19 @@ export function encode(rects: RectLike[], width: number, height: number): string
 		const hash = x.toString() + ',' + y.toString();
 		if (hash in vertCache) return vertCache[hash];
 
-		vertices.push(x / width * 2 - 1, 0, y / height * 2 - 1);
+		vertices.push((x / width) * 2 - 1, 0, (y / height) * 2 - 1);
 		uvs.push(x / width, 1 - y / height);
 
 		const index = vertCount;
 		vertCache[hash] = vertCount;
-		vertCount ++;
+		vertCount++;
 
 		return index;
 	};
 
 	const faces: number[][] = [];
 
-	for (let i=0; i<rects.length; i++) {
+	for (let i = 0; i < rects.length; i++) {
 		const rect = rects[i];
 		const v1 = getVert(rect.min_x, rect.min_y);
 		const v2 = getVert(rect.max_x, rect.min_y);

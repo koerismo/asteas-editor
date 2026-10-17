@@ -20,8 +20,8 @@ export interface LoadResult {
 	/** The document maps to assign. */
 	maps?: DocumentMaps;
 	/** The atlas rects to assign, with optional associated metadata. */
-	atlas?: { rects: AtlasFile['rects'], meta?: LoadAtlasMeta };
-};
+	atlas?: { rects: AtlasFile['rects']; meta?: LoadAtlasMeta };
+}
 
 export const enum UploadType {
 	kInvalid = 0x0,
@@ -32,7 +32,7 @@ export const enum UploadType {
 
 /**
  * `abc.def` -> `def`
- * 
+ *
  * `abc` -> `abc`
  */
 export function getFileExt(s: string): string {
@@ -45,9 +45,7 @@ export function getFileName(s: string): string {
 
 export function setFileExt(s: string, to: string): string {
 	const dot = s.lastIndexOf('.');
-	return dot === -1
-		? s + to
-		: s.slice(0, dot) + to;
+	return dot === -1 ? s + to : s.slice(0, dot) + to;
 }
 
 export class UploadHandler {
@@ -76,9 +74,8 @@ export class UploadHandler {
 
 	/** Creates a new document from the uploaded results. */
 	toAtlasFile(): AtlasFile | undefined {
-
 		const atlas: LoadResult['atlas'] = this.#result.atlas ?? { rects: [] };
-		const maps: LoadResult['maps'] = this.#result.maps ?? { };
+		const maps: LoadResult['maps'] = this.#result.maps ?? {};
 
 		const metaFromColor = (): LoadAtlasMeta | undefined => {
 			if (!maps.color) return;
@@ -99,7 +96,7 @@ export class UploadHandler {
 			height: meta.height,
 			rects: atlas.rects,
 			maps: maps,
-		}
+		};
 	}
 
 	/** Loads the given file into this context, returning success state. */
@@ -124,9 +121,7 @@ export class UploadHandler {
 				if (this.#context) {
 					result = await ObjFormat.load(file, filter, this.#context);
 				} else {
-					console.warn(
-						'Cannot load OBJ without an active document context!',
-					);
+					console.warn('Cannot load OBJ without an active document context!');
 				}
 				break;
 
@@ -181,9 +176,7 @@ export class UploadHandler {
 		}
 
 		if (!all_files) {
-			console.warn(
-				'One or more uploaded files were skipped. All parameters are filled!',
-			);
+			console.warn('One or more uploaded files were skipped. All parameters are filled!');
 		}
 
 		return no_warn && all_files;

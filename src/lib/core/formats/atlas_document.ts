@@ -30,15 +30,11 @@ const enum Role {
 }
 
 function compressBlob(blob: Blob): Response {
-	return new Response(
-		blob.stream().pipeThrough(new CompressionStream('deflate')),
-	);
+	return new Response(blob.stream().pipeThrough(new CompressionStream('deflate')));
 }
 
 function decompressBlob(blob: Blob): Response {
-	return new Response(
-		blob.stream().pipeThrough(new DecompressionStream('deflate')),
-	);
+	return new Response(blob.stream().pipeThrough(new DecompressionStream('deflate')));
 }
 
 // Atl, version 0x1
@@ -155,11 +151,11 @@ export async function decode(file: File) {
 	const chunkCount = fileView.read_u16();
 	if (chunkCount === 0 || chunkCount > 100)
 		throw Error('Bad chunk count!? ' + chunkCount + ' items!');
-	
+
 	const chunkList: IntermediateChunk[] = [];
 	chunkList.length = chunkCount;
 
-	for (let i=0; i<chunkCount; i++) {
+	for (let i = 0; i < chunkCount; i++) {
 		// eslint-disable-next-line @typescript-eslint/no-unsafe-enum-assignment
 		const role: Role = fileView.read_u8();
 		const compress = !!fileView.read_u8();
@@ -171,15 +167,14 @@ export async function decode(file: File) {
 
 		const byteLength = bodyView.read_u16();
 		let data = bodyView.read_u8array(byteLength, false);
-		if (compress)
-			data = await decompressBlob(new Blob([data], { type })).bytes();
+		if (compress) data = await decompressBlob(new Blob([data], { type })).bytes();
 
 		chunkList[i] = {
 			role,
 			compress,
 			type,
 			data,
-		}
+		};
 	}
 
 	let rects: RectLike[] | undefined;
@@ -200,7 +195,6 @@ export async function decode(file: File) {
 				break;
 			}
 			case Role.kMap: {
-
 				break;
 			}
 		}

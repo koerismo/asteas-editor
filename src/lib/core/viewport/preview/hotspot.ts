@@ -10,14 +10,13 @@ interface Ref<T> {
 	v: T;
 }
 
-
 const kFloatEpsilon = 0.0001;
 const kFloatInf = Infinity;
 
 type FloatArray = Float32Array | Float64Array;
 
 function f32swap<T extends FloatArray>(a: T, b: T) {
-	for (let i=0, t: number; i<a.length; i++) {
+	for (let i = 0, t: number; i < a.length; i++) {
 		t = a[i];
 		a[i] = b[i];
 		b[i] = t;
@@ -31,17 +30,25 @@ export class Vec2 {
 		this.xy = [x, y];
 	}
 
-	get x(): number { return this.xy[0]; }
-	get y(): number { return this.xy[1]; }
-	set x(v: number) { this.xy[0] = v; }
-	set y(v: number) { this.xy[1] = v; }
+	get x(): number {
+		return this.xy[0];
+	}
+	get y(): number {
+		return this.xy[1];
+	}
+	set x(v: number) {
+		this.xy[0] = v;
+	}
+	set y(v: number) {
+		this.xy[1] = v;
+	}
 
 	Normalized(length?: Ref<number>) {
 		const l = Math.hypot.apply(null, this.xy);
 		if (length) length.v = l;
 		return new Vec2(this.x / l, this.y / l);
 	}
-	
+
 	Swapped() {
 		return new Vec2(this.y, this.x);
 	}
@@ -84,22 +91,21 @@ export class Mat3x2 {
 	}
 
 	Multiply(input: Vec2, output: Vec2) {
-        const x = input.x * this.x[0] + input.y * this.y[0] + this.z[0];
-        output.y = input.x * this.x[1] + input.y * this.y[1] + this.z[1];
+		const x = input.x * this.x[0] + input.y * this.y[0] + this.z[0];
+		output.y = input.x * this.x[1] + input.y * this.y[1] + this.z[1];
 		output.x = x;
 	}
 }
 
 // HotspotRectFlags_t
 export const enum RectFlags_t {
-    enable_rotation   = 0x1,  // Can this region be randomly rotated?
-    enable_reflection = 0x2,  // Can this region be randomly horizontally flipped?
-    alt_group         = 0x4,  // If true, this region belongs to the alternate group.
-    tile_x            = 0x8,  // Can this region tile horizontally?
-    tile_y            = 0x10, // Can this region tile vertically?
-    tile_x_y          = 0x18,
-};
-
+	enable_rotation = 0x1, // Can this region be randomly rotated?
+	enable_reflection = 0x2, // Can this region be randomly horizontally flipped?
+	alt_group = 0x4, // If true, this region belongs to the alternate group.
+	tile_x = 0x8, // Can this region tile horizontally?
+	tile_y = 0x10, // Can this region tile vertically?
+	tile_x_y = 0x18,
+}
 
 // HotspotRect_t
 export class Rect {
@@ -109,26 +115,41 @@ export class Rect {
 		public maxs: Vec2,
 	) {}
 
-    GetWidth() { return this.maxs.x - this.mins.x; }
-    GetHeight() { return this.maxs.y - this.mins.y; }
+	GetWidth() {
+		return this.maxs.x - this.mins.x;
+	}
+	GetHeight() {
+		return this.maxs.y - this.mins.y;
+	}
 
-    CanRotate() { return !!(this.flags & RectFlags_t.enable_rotation) }
-    CanReflect() { return !!(this.flags & RectFlags_t.enable_reflection) }
-    CanTile() { return !!(this.flags & RectFlags_t.tile_x_y) }
-    CanTileX() { return !!(this.flags & RectFlags_t.tile_x) }
-    CanTileY() { return !!(this.flags & RectFlags_t.tile_y) }
-    IsAltGroup() { return !!(this.flags & RectFlags_t.alt_group) }
-};
-
+	CanRotate() {
+		return !!(this.flags & RectFlags_t.enable_rotation);
+	}
+	CanReflect() {
+		return !!(this.flags & RectFlags_t.enable_reflection);
+	}
+	CanTile() {
+		return !!(this.flags & RectFlags_t.tile_x_y);
+	}
+	CanTileX() {
+		return !!(this.flags & RectFlags_t.tile_x);
+	}
+	CanTileY() {
+		return !!(this.flags & RectFlags_t.tile_y);
+	}
+	IsAltGroup() {
+		return !!(this.flags & RectFlags_t.alt_group);
+	}
+}
 
 export class RectFitResult {
-    constructor(
+	constructor(
 		public rect_idx: number,
-		public rotated: boolean
+		public rotated: boolean,
 	) {}
 
-    tiling: Vec2 = new Vec2(0, 0);
-    score: number = 0;
+	tiling: Vec2 = new Vec2(0, 0);
+	score: number = 0;
 
 	Copy(v: RectFitResult) {
 		this.rect_idx = v.rect_idx;
@@ -136,7 +157,7 @@ export class RectFitResult {
 		this.tiling.Copy(v.tiling);
 		this.score = v.score;
 	}
-};
+}
 
 export class RectFile {
 	constructor(
@@ -147,28 +168,26 @@ export class RectFile {
 }
 
 export class WeightConfig {
-    // Aspect scores are raised to the power of ~6.0 when either dimension of the rect approaches 0
-    pow_cardinality = 6.0;
-    // perfect aspect = 100.0, worst-case approaches 0.0
-    weight_dot = 100.0;
-    // perfect scale = 50.0,
-    // 2x smaller/larger = 0.5 * (50.0) = 25.0,
-    // 4x smaller/larger = 0.25 * (50.0) = 12.5
-    weight_scale = 50.0;
-    // 1x1 tiling = 0.0, 12x12 tiling = -0.144
-    weight_tiling = -0.001;
-    // The error margin within which matches can be randomized.
-    error_margin = 0.1;
+	// Aspect scores are raised to the power of ~6.0 when either dimension of the rect approaches 0
+	pow_cardinality = 6.0;
+	// perfect aspect = 100.0, worst-case approaches 0.0
+	weight_dot = 100.0;
+	// perfect scale = 50.0,
+	// 2x smaller/larger = 0.5 * (50.0) = 25.0,
+	// 4x smaller/larger = 0.25 * (50.0) = 12.5
+	weight_scale = 50.0;
+	// 1x1 tiling = 0.0, 12x12 tiling = -0.144
+	weight_tiling = -0.001;
+	// The error margin within which matches can be randomized.
+	error_margin = 0.1;
 }
 
 export class RectFitter {
-	constructor(
-		public config: WeightConfig = new WeightConfig()
-	) {}
+	constructor(public config: WeightConfig = new WeightConfig()) {}
 
 	protected GetCardinalityFactor(nrm_dir: Vec2, max_v: number): number {
 		const basis = Math.abs(nrm_dir.x) + Math.abs(nrm_dir.y);
-		return Math.max(1.0, max_v - (basis - 1.0) * (max_v - 1.0) / Math.SQRT2);
+		return Math.max(1.0, max_v - ((basis - 1.0) * (max_v - 1.0)) / Math.SQRT2);
 	}
 
 	protected GetBasicScore(dims_surf: Vec2, dims_rect: Vec2): number {
@@ -183,15 +202,11 @@ export class RectFitter {
 
 		let scale_weight = 0.0;
 		if (len_rect.v > kFloatEpsilon && len_surf.v > kFloatEpsilon) {
-			scale_weight = len_rect.v > len_surf.v
-				? len_surf.v / len_rect.v
-				: len_rect.v / len_surf.v;
+			scale_weight =
+				len_rect.v > len_surf.v ? len_surf.v / len_rect.v : len_rect.v / len_surf.v;
 		}
 
-		return (
-			dot_weight * this.config.weight_dot +
-			scale_weight * this.config.weight_scale
-		);
+		return dot_weight * this.config.weight_dot + scale_weight * this.config.weight_scale;
 	}
 
 	protected GetTiledScoreOnAxis(
@@ -200,18 +215,23 @@ export class RectFitter {
 		major_axis: number,
 		use_major: boolean,
 		use_minor: boolean,
-		out_tiling: Vec2
+		out_tiling: Vec2,
 	): number {
-		const minor_axis = 1 - major_axis;    
+		const minor_axis = 1 - major_axis;
 
 		const major_axis_scale = dims_surf.xy[major_axis] / dims_rect.xy[major_axis];
-		const major_axis_count = use_major
-			? Math.max(1, Math.round(major_axis_scale))
-			: 1;
+		const major_axis_count = use_major ? Math.max(1, Math.round(major_axis_scale)) : 1;
 
 		const major_axis_tiled_scale = major_axis_scale / major_axis_count;
 		const minor_axis_count = use_minor
-			? Math.max(1, Math.round(dims_surf.xy[minor_axis] / dims_rect.xy[minor_axis] / major_axis_tiled_scale))
+			? Math.max(
+					1,
+					Math.round(
+						dims_surf.xy[minor_axis] /
+							dims_rect.xy[minor_axis] /
+							major_axis_tiled_scale,
+					),
+				)
 			: 1;
 
 		out_tiling.xy[major_axis] = major_axis_count;
@@ -222,54 +242,58 @@ export class RectFitter {
 		return this.GetBasicScore(dims_surf, dims_rect_tiled) + tiling_weight;
 	}
 
-	protected GetTiledScore(
-		dims_surf: Vec2,
-		rect: Rect,
-		out_score: Ref<number>,
-		out_tiling: Vec2
-	) {
+	protected GetTiledScore(dims_surf: Vec2, rect: Rect, out_score: Ref<number>, out_tiling: Vec2) {
 		const dims_rect = new Vec2(rect.GetWidth(), rect.GetHeight());
 
 		const can_tile_x = rect.CanTileX();
 		const can_tile_y = rect.CanTileY();
 		const use_minor_axis = can_tile_x && can_tile_y;
 
-		const major_axis =
-			+(use_minor_axis ? (dims_surf.y > dims_surf.x) : can_tile_y);
+		const major_axis = +(use_minor_axis ? dims_surf.y > dims_surf.x : can_tile_y);
 
-		const tiling_1 = new Vec2(), tiling_2 = new Vec2();
-		const score_1 = this.GetTiledScoreOnAxis(dims_surf, dims_rect, major_axis, true, use_minor_axis, tiling_1);
-		const score_2 = this.GetTiledScoreOnAxis(dims_surf, dims_rect, 1 - major_axis, use_minor_axis, true, tiling_2);
+		const tiling_1 = new Vec2(),
+			tiling_2 = new Vec2();
+		const score_1 = this.GetTiledScoreOnAxis(
+			dims_surf,
+			dims_rect,
+			major_axis,
+			true,
+			use_minor_axis,
+			tiling_1,
+		);
+		const score_2 = this.GetTiledScoreOnAxis(
+			dims_surf,
+			dims_rect,
+			1 - major_axis,
+			use_minor_axis,
+			true,
+			tiling_2,
+		);
 
 		const t2 = score_2 > score_1;
 		out_score.v = t2 ? score_2 : score_1;
 		out_tiling.Copy(t2 ? tiling_2 : tiling_1);
 	}
 
-	GetScore(
-		dims_surf: Vec2,
-		rect: Rect,
-		out_result: RectFitResult,
-	) {
+	GetScore(dims_surf: Vec2, rect: Rect, out_result: RectFitResult) {
 		const width = rect.GetWidth();
 		const height = rect.GetHeight();
 
 		// Tiled texture
 		if (rect.CanTile() && width && height) {
 			const score = Ref<number>();
-			this.GetTiledScore(dims_surf, rect,  score, out_result.tiling);
+			this.GetTiledScore(dims_surf, rect, score, out_result.tiling);
 			out_result.score = score.v;
 		} else {
 			out_result.tiling = new Vec2(1, 1);
-			out_result.score = this.GetBasicScore(dims_surf, new Vec2(rect.GetWidth(), rect.GetHeight()));
+			out_result.score = this.GetBasicScore(
+				dims_surf,
+				new Vec2(rect.GetWidth(), rect.GetHeight()),
+			);
 		}
 	}
 
-	FitRectToSurface(
-		rects: Rect[],
-		surf_dims: Vec2,
-		out_result: RectFitResult,
-	) {
+	FitRectToSurface(rects: Rect[], surf_dims: Vec2, out_result: RectFitResult) {
 		// let fit_count = rects.length;
 		// for (let i=0; i<rects.length; i++) {
 		// 	if (rects[i].CanRotate()) fit_count ++;
@@ -318,8 +342,7 @@ export class RectFitter {
 			best_fits.push(fit_idx);
 		}
 
-		if (best_fits.length == 0)
-			return -1;
+		if (best_fits.length == 0) return -1;
 
 		const result_idx = best_fits[Math.round(Math.random() * (best_fits.length - 1))];
 		const result = fit_results[result_idx];
@@ -329,13 +352,13 @@ export class RectFitter {
 	}
 
 	GetFinalTransform(
-        tex_size: Vec2,
-        rect: Rect,
-        tiling: Vec2,
-        inset: number,
-        rotation: number,
-        scaling: Vec2,
-        m: Mat3x2
+		tex_size: Vec2,
+		rect: Rect,
+		tiling: Vec2,
+		inset: number,
+		rotation: number,
+		scaling: Vec2,
+		m: Mat3x2,
 	) {
 		// Calculate bounds
 		const scale_x = (rect.GetWidth() * tiling.x - inset * 2.0) / tex_size.x;
@@ -343,27 +366,32 @@ export class RectFitter {
 		const offset_x = (rect.mins.x + inset) / tex_size.x;
 		const offset_y = (rect.mins.y + inset) / tex_size.y;
 
-		const xB = scaling.x * -0.5 + 0.5;  // basis
-		const yB = scaling.y * -0.5 + 0.5;  // basis
-		const yiB = 1 - yB;                 // inverse basis
-		const xiB = 1 - xB;                 // inverse basis
-		const xM = scaling.x;               // slope
-		const yM = scaling.y;               // slope
-		const xiM = -xM;                    // inverse slope
-		const yiM = -yM;                    // inverse slope
+		const xB = scaling.x * -0.5 + 0.5; // basis
+		const yB = scaling.y * -0.5 + 0.5; // basis
+		const yiB = 1 - yB; // inverse basis
+		const xiB = 1 - xB; // inverse basis
+		const xM = scaling.x; // slope
+		const yM = scaling.y; // slope
+		const xiM = -xM; // inverse slope
+		const yiM = -yM; // inverse slope
 
 		// Create identity matrix
-		m.x[0] = xM;  m.x[1] =  0;
-		m.y[0] =  0;  m.y[1] = yM;
-		m.z[0] = xB;  m.z[1] = yB;
+		m.x[0] = xM;
+		m.x[1] = 0;
+		m.y[0] = 0;
+		m.y[1] = yM;
+		m.z[0] = xB;
+		m.z[1] = yB;
 
 		// Rotate
 		if (rotation === 2) {
-			m.x[0] = xiM; m.y[1] = yiM;
-			m.z[0] = xiB; m.z[1] = yiB;
+			m.x[0] = xiM;
+			m.y[1] = yiM;
+			m.z[0] = xiB;
+			m.z[1] = yiB;
 		} else if (rotation) {
 			f32swap(m.x, m.y);
-			if (rotation > 0)  {
+			if (rotation > 0) {
 				m.x[1] = xiM;
 				m.z[1] = xiB;
 			} else {

@@ -13,16 +13,17 @@
 	}
 
 	@if $hover {
-		&:hover, &:focus-visible {
+		&:hover,
+		&:focus-visible {
 			background-color: var(--bg-2);
 			color: var(--text);
 		}
-	
+
 		&:disabled {
 			background-color: var(--bg-2);
 			color: var(--text-4);
 		}
-	
+
 		&:focus-visible {
 			outline: solid 1px var(--accent-500);
 			outline-offset: -1px;
@@ -35,7 +36,8 @@
 	color: var(--text-h);
 
 	@if $color-hover {
-		&:hover, &:focus-visible {
+		&:hover,
+		&:focus-visible {
 			background-color: #{$color-hover};
 		}
 

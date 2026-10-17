@@ -35,6 +35,7 @@ export abstract class AABB_Methods implements AABBLike {
 	}
 
 	containsPoint(v: Vec2Like): boolean {
+		// prettier-ignore
 		return (
 			v.x >= this.min_x && v.x <= this.max_x &&
 			v.y >= this.min_y && v.y <= this.max_y
@@ -85,13 +86,16 @@ export abstract class AABB_Methods implements AABBLike {
 			isFinite(this.min_x) &&
 			isFinite(this.min_y) &&
 			isFinite(this.max_x) &&
-			isFinite(this.max_y));
+			isFinite(this.max_y)
+		);
 	}
 
 	equals(v: AABB) {
 		return (
-			v.min_x === this.min_x && v.min_y === this.min_y &&
-			v.max_x === this.max_x && v.max_y === this.max_y
+			v.min_x === this.min_x &&
+			v.min_y === this.min_y &&
+			v.max_x === this.max_x &&
+			v.max_y === this.max_y
 		);
 	}
 
@@ -119,7 +123,7 @@ export abstract class AABB_Methods implements AABBLike {
 		this.max_y = s(this.max_y);
 	}
 
-	copy(b: { min_x: number; max_x: number; min_y: number; max_y: number; }) {
+	copy(b: { min_x: number; max_x: number; min_y: number; max_y: number }) {
 		this.set(b.min_x, b.min_y, b.max_x, b.max_y);
 		return this;
 	}

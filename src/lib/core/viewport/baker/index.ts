@@ -39,11 +39,11 @@ function makeBakeMaterial(mode: BakeMode) {
 			uIntensity: { value: 1.0 },
 		},
 		defines: {
-			'BAKE_MODE': mode,
-			'MODE_HEIGHT': BakeMode.Height,
-			'MODE_NORMAL': BakeMode.Normal,
-			'MODE_COMBINED': BakeMode.Combined,
-		}
+			BAKE_MODE: mode,
+			MODE_HEIGHT: BakeMode.Height,
+			MODE_NORMAL: BakeMode.Normal,
+			MODE_COMBINED: BakeMode.Combined,
+		},
 	});
 }
 
@@ -55,7 +55,7 @@ function makeCopyMaterial(texture: Three.Texture) {
 		// transparent: true,
 		uniforms: {
 			uMap: { value: texture },
-		}
+		},
 	});
 }
 
@@ -74,7 +74,7 @@ let emit_max_rects_warning = true;
 export class Baker {
 	protected options: BakerOptions = { mode: BakeMode.None };
 	protected stale: boolean = true;
-	
+
 	public canvas?: OffscreenCanvas | HTMLCanvasElement;
 	protected renderer: Three.WebGLRenderer;
 	protected mesh: Three.InstancedMesh<Three.BufferGeometry, Three.ShaderMaterial>;
@@ -115,11 +115,7 @@ export class Baker {
 	}
 
 	render() {
-		if (
-			!this.rtt.width ||
-			!this.rtt.height ||
-			this.options.mode === BakeMode.None
-		) return;
+		if (!this.rtt.width || !this.rtt.height || this.options.mode === BakeMode.None) return;
 
 		this.renderer.setRenderTarget(this.rtt);
 		this.renderer.setViewport(0, 0, this.rtt.width, this.rtt.height);
@@ -147,17 +143,20 @@ export class Baker {
 
 	async toBlob(type: 'image/png' = 'image/png'): Promise<Blob> {
 		const canvas = this.canvas;
-		if (!canvas)
-			throw Error('Baker requires an attached canvas to generate a Blob!');
+		if (!canvas) throw Error('Baker requires an attached canvas to generate a Blob!');
 
 		if (canvas instanceof OffscreenCanvas)
 			return await canvas.convertToBlob({ type, quality: 100 });
 
 		return new Promise<Blob>((resolve, reject) => {
-			canvas.toBlob(blob => {
-				if (blob) resolve(blob);
-				else reject(Error('Failed to convert canvas to Blob!'));
-			}, type, 100);
+			canvas.toBlob(
+				(blob) => {
+					if (blob) resolve(blob);
+					else reject(Error('Failed to convert canvas to Blob!'));
+				},
+				type,
+				100,
+			);
 		});
 	}
 
@@ -165,7 +164,8 @@ export class Baker {
 		this.mesh.material.uniforms.uRadius.value = this.options.radius ?? 0;
 		this.mesh.material.uniforms.uBevel.value = this.options.bevel ?? 0;
 		this.mesh.material.uniforms.uExpo.value = this.options.expo ?? 1;
-		this.mesh.material.uniforms.uIntensity.value = this.options.intensity ?? this.getDefaultIntensity();
+		this.mesh.material.uniforms.uIntensity.value =
+			this.options.intensity ?? this.getDefaultIntensity();
 		this.mesh.material.uniformsNeedUpdate = true;
 	}
 
@@ -206,7 +206,7 @@ export class Baker {
 	setSize(width: number, height: number, renderScale: number = 1) {
 		const rtWidth = Math.round(width * renderScale);
 		const rtHeight = Math.round(height * renderScale);
-	
+
 		if (this.canvas) {
 			this.canvas.width = rtWidth;
 			this.canvas.height = rtHeight;
@@ -217,7 +217,8 @@ export class Baker {
 			rtHeight === this.rtt.height &&
 			width === this.camera.right &&
 			height === this.camera.top
-		) return;
+		)
+			return;
 
 		this.rtt.setSize(rtWidth, rtHeight);
 		this.camera.bottom = 0;
@@ -239,13 +240,14 @@ export class Baker {
 		}
 
 		const withBounds = (x: number, y: number, w: number, h: number) => {
+			// prettier-ignore
 			mat4.set(
 				w, 0, 0, x,
 				0, h, 0, y,
 				0, 0, 1, 0,
 				0, 0, 0, 1,
 			);
-		}
+		};
 
 		this.mesh.count = count;
 		for (let i = 0; i < count; i++) {

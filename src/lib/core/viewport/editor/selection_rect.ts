@@ -47,18 +47,10 @@ export class VisualRect extends Three.Object3D {
 	visual_aabb: AABB;
 
 	protected pixelSize: number;
-	protected borderMeshes = new Three.InstancedMesh(
-		rectGeometry,
-		borderMaterial,
-		4,
-	);
+	protected borderMeshes = new Three.InstancedMesh(rectGeometry, borderMaterial, 4);
 	protected centerMesh = new Three.Mesh(rectGeometry, centerMaterial);
 
-	constructor(
-		rect: RectEntry | AABB,
-		pixelSize: number = 0.0,
-		initMode: boolean = true,
-	) {
+	constructor(rect: RectEntry | AABB, pixelSize: number = 0.0, initMode: boolean = true) {
 		super();
 		this.borderMeshes.frustumCulled = false;
 		this.pixelSize = pixelSize;
@@ -201,11 +193,7 @@ export class VisualRect extends Three.Object3D {
 }
 
 export class SelectionRect extends VisualRect {
-	protected handleMeshes = new Three.InstancedMesh(
-		handleGeometry,
-		handleMaterial,
-		4,
-	);
+	protected handleMeshes = new Three.InstancedMesh(handleGeometry, handleMaterial, 4);
 
 	constructor(aabb: AABB) {
 		super(aabb, 0.0, false);
