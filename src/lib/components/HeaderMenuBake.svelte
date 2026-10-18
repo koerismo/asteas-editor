@@ -28,16 +28,20 @@
 	const options = $state({
 		common: {
 			scale: 1,
+		},
+
+		bake: {
 			radius: 0.0,
 			bevel: 8.0,
 			expo: 1.8,
+			directx: false,
 		},
+
 		height: {
 			on: true,
 		},
 		normals: {
 			on: true,
-			dx: false,
 		},
 	});
 
@@ -78,8 +82,8 @@
 	});
 
 	$effect(() => {
-		heightBaker?.setOptions(options.common);
-		normalBaker?.setOptions(options.common);
+		heightBaker?.setOptions(options.bake);
+		normalBaker?.setOptions(options.bake);
 	});
 
 	async function bake() {
@@ -96,6 +100,8 @@
 		if (options.normals.on) {
 			normalBaker.render();
 			editor.document.maps.normal = normalBaker.getData();
+			// TODO: Drive this in a less silly way
+			editor.viewport.useDxNormals3d = options.bake.directx;
 		} else {
 			editor.document.maps.normal = undefined;
 		}
@@ -143,21 +149,25 @@
 
 	<div class={Styles.Group} class:disabled={!options.height.on && !options.normals.on}>
 		<b>Options</b>
-		<label class={Styles.Row}>
+		<label class={Styles.Row} title="The bake resolution as a multiple of the document size">
 			<span>Scale</span>
 			<Picker bind:index={scaleGetSet.value} options={['.25x', '.5x', '1x', '2x', '4x']}></Picker>
 		</label>
-		<label class={Styles.Row}>
+		<label class={Styles.Row} title="The size of the rect rounded edge">
 			<span>Radius</span>
-			<Numeric bind:value={options.common.radius} min="0" max="256" step="8"></Numeric>
+			<Numeric bind:value={options.bake.radius} min="0" max="256" step="8"></Numeric>
 		</label>
-		<label class={Styles.Row}>
+		<label class={Styles.Row} title="The depth of the rect bevel">
 			<span>Bevel</span>
-			<Numeric bind:value={options.common.bevel} min="0" max="256" step="8"></Numeric>
+			<Numeric bind:value={options.bake.bevel} min="0" max="256" step="8"></Numeric>
 		</label>
-		<label class={Styles.Row}>
+		<label class={Styles.Row} title="The curvature of the bevel">
 			<span>Exponent</span>
-			<Numeric bind:value={options.common.expo} min="0.1" max="4.0" step="0.1"></Numeric>
+			<Numeric bind:value={options.bake.expo} min="0.1" max="4.0" step="0.1"></Numeric>
+		</label>
+		<label class={Styles.Row} title="Whether to bake DirectX-format normals">
+			<span>DirectX Format</span>
+			<Checkbox bind:checked={options.bake.directx}></Checkbox>
 		</label>
 		<!-- <label>
 			<span>DirectX</span>

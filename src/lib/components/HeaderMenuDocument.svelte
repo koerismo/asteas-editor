@@ -4,7 +4,6 @@
 	import MenuItem from './menu/MenuItem.svelte';
 	import Button from './buttons/Button.svelte';
 
-	import Checkbox from './inputs/Checkbox.svelte';
 	import Numeric from './inputs/Numeric.svelte';
 	import MapUpload from './inputs/MapUpload.svelte';
 	// import PickerMultiple from './pickers/PickerMultiple.svelte';
@@ -72,7 +71,7 @@
 			<MapUpload state={editor} key="height"></MapUpload>
 		</div>
 	</div>
-	
+
 	<div class={Styles.Group}>
 		<b>Atlas</b>
 		<AtlasUpload state={editor}></AtlasUpload>

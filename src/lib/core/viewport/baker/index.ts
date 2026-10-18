@@ -6,6 +6,12 @@ import CopyFrag from './screen.frag?raw';
 import type { RectLike } from '$lib/core/aabb.js';
 import { VImageData } from 'vtf-js';
 
+import {
+	makeShaderMaterial,
+	type ParamsToUniforms,
+	type TypedShaderMaterial,
+} from '../shader_material.js';
+
 export const enum BakeMode {
 	None,
 	Height,
@@ -19,45 +25,54 @@ export interface BakerOptions {
 	bevel?: number;
 	expo?: number;
 	intensity?: number;
+	directx?: boolean;
 }
+
+type RectUniforms = ParamsToUniforms<{
+	uBevel: number;
+	uRadius: number;
+	uExpo: number;
+	uIntensity: number;
+	uInvertY: boolean;
+}>;
+
+type CopyUniforms = ParamsToUniforms<{ uMap: Three.Texture }>;
 
 const rectGeometry = new Three.PlaneGeometry(1, 1);
 rectGeometry.translate(0.5, 0.5, 0);
 
 const quadGeometry = new Three.PlaneGeometry(2, 2);
 
-function makeBakeMaterial(mode: BakeMode) {
-	return new Three.ShaderMaterial({
+const makeBakeMaterial = (mode: BakeMode) =>
+	makeShaderMaterial<RectUniforms>({
 		vertexShader: BakeVert,
 		fragmentShader: BakeFrag,
 		side: Three.DoubleSide,
-		// transparent: true,
 		uniforms: {
 			uBevel: { value: 0.0 },
 			uRadius: { value: 0.0 },
 			uExpo: { value: 1.0 },
 			uIntensity: { value: 1.0 },
+			uInvertY: { value: false },
 		},
 		defines: {
 			BAKE_MODE: mode,
 			MODE_HEIGHT: BakeMode.Height,
 			MODE_NORMAL: BakeMode.Normal,
 			MODE_COMBINED: BakeMode.Combined,
+			FLIP_V: true,
 		},
 	});
-}
 
-function makeCopyMaterial(texture: Three.Texture) {
-	return new Three.ShaderMaterial({
+const makeCopyMaterial = (texture: Three.Texture) =>
+	makeShaderMaterial<CopyUniforms>({
 		vertexShader: CopyVert,
 		fragmentShader: CopyFrag,
-		defines: { FLIP_V: 1, FLIP_GREEN: 0 },
-		// transparent: true,
+		defines: { FLIP_V: true },
 		uniforms: {
 			uMap: { value: texture },
 		},
 	});
-}
 
 const BG_HEIGHT = new Three.Color(0.0, 0.0, 0.0);
 const BG_NORMAL = new Three.Color(0.5, 0.5, 1.0);
@@ -77,10 +92,14 @@ export class Baker {
 
 	public canvas?: OffscreenCanvas | HTMLCanvasElement;
 	protected renderer: Three.WebGLRenderer;
-	protected mesh: Three.InstancedMesh<Three.BufferGeometry, Three.ShaderMaterial>;
+	protected rectMesh: Three.InstancedMesh<
+		Three.BufferGeometry,
+		TypedShaderMaterial<RectUniforms>
+	>;
 
 	protected rtScene = new Three.Scene();
 	protected copyScene = new Three.Scene();
+	protected copyMesh: Three.Mesh<Three.BufferGeometry, TypedShaderMaterial<CopyUniforms>>;
 
 	protected camera = new Three.OrthographicCamera();
 	protected rtt = new Three.WebGLRenderTarget();
@@ -90,10 +109,10 @@ export class Baker {
 
 		this.rtScene = new Three.Scene();
 
-		this.mesh = new Three.InstancedMesh(rectGeometry, bakeMaterialCombined, kMaxRects);
-		this.mesh.frustumCulled = false;
+		this.rectMesh = new Three.InstancedMesh(rectGeometry, bakeMaterialCombined, kMaxRects);
+		this.rectMesh.frustumCulled = false;
 
-		this.rtScene.add(this.mesh);
+		this.rtScene.add(this.rectMesh);
 		this.setMode(mode ?? BakeMode.None);
 
 		this.camera = new Three.OrthographicCamera();
@@ -101,8 +120,8 @@ export class Baker {
 		this.camera.near = 1.0;
 
 		this.rtt = new Three.WebGLRenderTarget();
-		const copyPlane = new Three.Mesh(quadGeometry, makeCopyMaterial(this.rtt.texture));
-		this.copyScene.add(copyPlane);
+		this.copyMesh = new Three.Mesh(quadGeometry, makeCopyMaterial(this.rtt.texture));
+		this.copyScene.add(this.copyMesh);
 
 		this.renderer = new Three.WebGLRenderer({
 			canvas: this.canvas,
@@ -161,12 +180,16 @@ export class Baker {
 	}
 
 	#updateOptions() {
-		this.mesh.material.uniforms.uRadius.value = this.options.radius ?? 0;
-		this.mesh.material.uniforms.uBevel.value = this.options.bevel ?? 0;
-		this.mesh.material.uniforms.uExpo.value = this.options.expo ?? 1;
-		this.mesh.material.uniforms.uIntensity.value =
-			this.options.intensity ?? this.getDefaultIntensity();
-		this.mesh.material.uniformsNeedUpdate = true;
+		// Update rect mesh
+		const uniforms = this.rectMesh.material.uniforms;
+		uniforms.uRadius.value = this.options.radius ?? 0;
+		uniforms.uBevel.value = this.options.bevel ?? 0;
+		uniforms.uExpo.value = this.options.expo ?? 1;
+		uniforms.uIntensity.value = this.options.intensity ?? this.#getDefaultIntensity();
+		uniforms.uInvertY.value = this.options.directx ?? false;
+
+		// Update copy-to-canvas mesh
+		this.copyMesh.material.uniformsNeedUpdate = true;
 	}
 
 	setMode(mode: BakeMode) {
@@ -176,29 +199,26 @@ export class Baker {
 		switch (mode) {
 			case BakeMode.Normal:
 				this.rtScene.background = BG_NORMAL;
-				this.mesh.material = bakeMaterialNormal;
+				this.rectMesh.material = bakeMaterialNormal;
 				break;
 			case BakeMode.Height:
 				this.rtScene.background = BG_HEIGHT;
-				this.mesh.material = bakeMaterialHeight;
+				this.rectMesh.material = bakeMaterialHeight;
 				break;
 			case BakeMode.Combined:
 				this.rtScene.background = null;
-				this.mesh.material = bakeMaterialCombined;
+				this.rectMesh.material = bakeMaterialCombined;
 				break;
 		}
 	}
 
-	getDefaultIntensity() {
+	#getDefaultIntensity() {
 		const expo = this.options.expo ?? 1.0;
 		return 1 / expo;
 	}
 
-	setOptions(options: Omit<BakerOptions, 'mode'>) {
-		this.options.radius = options.radius;
-		this.options.bevel = options.bevel;
-		this.options.expo = options.expo;
-		this.options.intensity = options.intensity;
+	setOptions(options: Omit<BakerOptions, 'mode'> & { mode?: BakeMode }) {
+		this.options = Object.assign({ mode: this.options.mode }, options);
 		this.stale = true;
 		this.#updateOptions();
 	}
@@ -249,14 +269,14 @@ export class Baker {
 			);
 		};
 
-		this.mesh.count = count;
+		this.rectMesh.count = count;
 		for (let i = 0; i < count; i++) {
 			const r = rects[i];
 			withBounds(r.min_x, r.min_y, r.max_x - r.min_x, r.max_y - r.min_y);
-			this.mesh.setMatrixAt(i, mat4);
+			this.rectMesh.setMatrixAt(i, mat4);
 		}
 
-		this.mesh.instanceMatrix.needsUpdate = true;
+		this.rectMesh.instanceMatrix.needsUpdate = true;
 		this.stale = true;
 	}
 }

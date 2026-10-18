@@ -125,10 +125,9 @@ export class PreviewViewport extends Viewport<Three.PerspectiveCamera> {
 
 		if (material.normalMap) {
 			material.normalMap.magFilter = Three.LinearFilter;
-			// material.normalMap.flipY = true;
 		}
 
-		material.normalScale.set(1, -1);
+		material.normalScale.set(1, this.state.viewport.useDxNormals3d ? 1 : -1);
 		material.needsUpdate = true;
 
 		this.#refitSubscriber.update();

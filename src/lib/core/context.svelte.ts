@@ -38,6 +38,7 @@ export class ViewportState {
 	enable3d: boolean = $state.raw(false);
 	meshScale3d: number = $state.raw(1.0);
 	useLighting3d: boolean = $state.raw(true);
+	useDxNormals3d: boolean = $state.raw(false);
 
 	setCacheMap(key: keyof ViewportMaps, tex: Texture | undefined) {
 		this.#mapCache[key] = tex;

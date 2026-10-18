@@ -8,6 +8,7 @@ varying vec2 vSize;
 uniform float uBevel;
 uniform float uExpo;
 uniform float uIntensity;
+uniform bool uInvertY;
 
 float roundedSquareSdf(in vec2 pos, in vec2 size, in float radius) {
     vec2 q = abs(pos) - size + radius;
@@ -52,7 +53,8 @@ void main() {
 			float expoDeriv = uExpo * pow(depthFac, uExpo - 1.0);
 			vec3 normal = normalize(vec3(offset * expoDeriv * uIntensity, 1.0));
 			rgb = normal * 0.5 + vec3(0.5);
-			rgb = vec3(rgb.r, 1.0 - rgb.g, rgb.b);
+			if (uInvertY != FLIP_V)
+				rgb = vec3(rgb.r, 1.0 - rgb.g, rgb.b);
 		}
 	#endif
 

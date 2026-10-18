@@ -6,7 +6,7 @@ export type ParamsToUniforms<T extends AnyParams> = {
 	[key in keyof T]: IUniform<T[key]>;
 };
 
-export type TypedShaderMaterial<T extends AnyUniforms> = ShaderMaterial & {
+export type TypedShaderMaterial<T extends AnyUniforms> = Omit<ShaderMaterial, 'uniforms'> & {
 	uniforms: T;
 };
 export type TypedShaderParams<T extends AnyUniforms> = ShaderMaterialParameters & {

@@ -4,15 +4,15 @@
 	interface Props {
 		options: string[];
 		index?: number;
-		value?: string;
+		// value?: string;
 	}
 
-	let { options, index = $bindable(-1), value }: Props = $props();
+	let { options, index = $bindable(-1) }: Props = $props();
 
-	$effect(() => {
-		if (index < 0 || index >= options.length) return;
-		value = options[index];
-	});
+	// $effect(() => {
+	// 	if (index < 0 || index >= options.length) return;
+	// 	value = options[index];
+	// });
 
 	function setValue(i: number) {
 		index = i;
